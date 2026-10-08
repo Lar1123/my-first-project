@@ -408,7 +408,7 @@ function showHandover(winner) {
     const names = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
     document.getElementById('handoverText').innerHTML =
         '<span class="who">' + names[winner] + '</span> получил взятку.<br>' +
-        'Кто разыгрывает следующий ход?';
+        'С какой руки хотите сделать следующий ход?';
     document.getElementById('handoverPanel').classList.add('show');
     render();
 }
