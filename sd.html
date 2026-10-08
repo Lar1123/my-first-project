@@ -2,18 +2,86 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Тренажёр: розыгрыш масти</title>
+<title>Тренажёр по розыгрышу масти</title>
 <style>
     * { box-sizing: border-box; }
     html, body {
         margin: 0; padding: 0;
-        width: 100%; height: 100vh;
+        width: 100%; min-height: 100vh;
         background: radial-gradient(ellipse at center, #6b7d80 0%, #3c4a4d 100%);
         font-family: "Segoe UI", Tahoma, Arial, sans-serif;
         color: #fff;
-        overflow: hidden;
         user-select: none;
     }
+
+    /* ============ МЕНЮ ============ */
+    .menu-screen {
+        min-height: 100vh;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .menu-screen.hidden { display: none; }
+    .menu-title {
+        font-size: 32px; font-weight: bold;
+        color: #ffd700;
+        text-shadow: 2px 2px 6px #000;
+        margin: 0 0 12px 0;
+        text-align: center;
+    }
+    .menu-subtitle {
+        color: #d1e7dd;
+        margin-bottom: 40px;
+        font-size: 16px;
+    }
+    .task-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        max-width: 1100px;
+        width: 100%;
+    }
+    .task-card {
+        background: rgba(0, 0, 0, 0.55);
+        border: 2px solid #ffd700;
+        border-radius: 14px;
+        padding: 22px 24px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        position: relative;
+    }
+    .task-card:hover {
+        background: rgba(255, 215, 0, 0.15);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(255, 215, 0, 0.35);
+    }
+    .task-card .num {
+        font-size: 13px; color: #ffd700; font-weight: bold;
+        letter-spacing: 1.5px; text-transform: uppercase;
+        opacity: 0.85;
+    }
+    .task-card .name {
+        font-size: 20px; font-weight: bold; color: #fff;
+        margin-top: 8px; line-height: 1.35;
+        padding-right: 30px;
+    }
+    .task-card .arrow {
+        position: absolute;
+        top: 22px; right: 22px;
+        font-size: 22px; color: #ffd700;
+    }
+
+    /* ============ ЭКРАН ЗАДАЧИ ============ */
+    .task-screen {
+        position: fixed;
+        inset: 0;
+        width: 100%; height: 100vh;
+        overflow: hidden;
+    }
+    .task-screen.hidden { display: none; }
+
     .table { position: relative; width: 100%; height: 100%; }
 
     .title {
@@ -70,8 +138,7 @@
         position: absolute;
         top: 4px; left: 6px;
         display: flex; flex-direction: column;
-        align-items: center;
-        line-height: 1;
+        align-items: center; line-height: 1;
     }
     .card .corner .rank { font-size: 28px; font-weight: 900; }
     .card .corner .suit { font-size: 22px; margin-top: 1px; }
@@ -107,8 +174,6 @@
         justify-items: center;
         pointer-events: none;
     }
-
-    /* Анимация — ТОЛЬКО для самой свежей карты */
     .trick-area .card.entering { animation: flyIn 0.3s ease-out; }
     @keyframes flyIn {
         from { transform: scale(1.5); opacity: 0; }
@@ -116,8 +181,7 @@
     }
 
     .handover-panel {
-        position: absolute;
-        top: 50%; left: 50%;
+        position: absolute; top: 50%; left: 50%;
         transform: translate(-50%, -50%);
         background: rgba(0, 0, 0, 0.92);
         border: 3px solid #ffd700;
@@ -132,9 +196,7 @@
     .handover-panel.show { display: block; }
     .handover-text {
         font-size: 19px; font-weight: bold;
-        color: #ffd700;
-        margin-bottom: 18px;
-        line-height: 1.4;
+        color: #ffd700; margin-bottom: 18px; line-height: 1.4;
     }
     .handover-text .who { color: #fff; }
     .handover-buttons { display: flex; gap: 22px; justify-content: center; }
@@ -154,19 +216,16 @@
     }
 
     .result-panel {
-        position: absolute;
-        top: 50%; left: 50%;
+        position: absolute; top: 50%; left: 50%;
         transform: translate(-50%, -50%) scale(0.9);
         background: rgba(0, 0, 0, 0.88);
         border-radius: 18px;
         padding: 32px 44px;
         text-align: center;
-        max-width: 720px;
-        width: 80%;
+        max-width: 720px; width: 80%;
         z-index: 30;
         box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-        opacity: 0;
-        pointer-events: none;
+        opacity: 0; pointer-events: none;
         transition: opacity 0.4s, transform 0.4s;
     }
     .result-panel.show {
@@ -184,59 +243,78 @@
     }
     .result-title {
         font-size: 34px; font-weight: 900;
-        margin-bottom: 16px;
-        letter-spacing: 0.5px;
+        margin-bottom: 16px; letter-spacing: 0.5px;
     }
     .result-panel.win .result-title  { color: #4caf50; }
     .result-panel.lose .result-title { color: #ff5555; }
     .result-explanation {
-        font-size: 16px;
-        line-height: 1.55;
-        color: #eaeaea;
-        text-align: left;
+        font-size: 16px; line-height: 1.55;
+        color: #eaeaea; text-align: left;
     }
     .result-explanation b { color: #ffd700; }
 
-    .restart-btn {
+    .restart-btn, .back-btn {
         position: absolute;
-        top: 14px; right: 14px;
+        top: 14px;
         padding: 10px 20px;
         font-size: 15px; font-weight: bold;
-        background: #ffd700; color: #223;
-        border: none; border-radius: 8px;
+        border-radius: 8px;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         z-index: 40;
+        font-family: inherit;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .restart-btn {
+        right: 14px;
+        background: #ffd700; color: #223;
+        border: none;
     }
     .restart-btn:hover { background: #ffea00; }
+    .back-btn {
+        left: 14px;
+        background: #223; color: #ffd700;
+        border: 2px solid #ffd700;
+    }
+    .back-btn:hover { background: #ffd700; color: #223; }
 </style>
 </head>
 <body>
 
-<div class="table">
-    <div class="title">Розыгрыш Т В 9 против 8 5 4</div>
+<!-- ==================== МЕНЮ ==================== -->
+<div class="menu-screen" id="menuScreen">
+    <h1 class="menu-title">Тренажёр по розыгрышу масти</h1>
+    <div class="menu-subtitle">Выберите задачу</div>
+    <div class="task-grid" id="taskGrid"></div>
+</div>
 
-    <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
-    <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
-    <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
-    <div class="hand hand-E" id="handE"><div class="hand-label">Восток</div></div>
+<!-- ==================== ЭКРАН ЗАДАЧИ ==================== -->
+<div class="task-screen hidden" id="taskScreen">
+    <div class="table">
+        <div class="title" id="taskTitle"></div>
 
-    <div class="trick-area" id="trickArea"></div>
+        <button class="back-btn" onclick="showMenu()">← К задачам</button>
+        <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
 
-    <div class="handover-panel" id="handoverPanel">
-        <div class="handover-text" id="handoverText"></div>
-        <div class="handover-buttons">
-            <button onclick="chooseLeader('N')">Север</button>
-            <button onclick="chooseLeader('S')">Юг</button>
+        <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
+        <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
+        <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
+        <div class="hand hand-E" id="handE"><div class="hand-label">Восток</div></div>
+
+        <div class="trick-area" id="trickArea"></div>
+
+        <div class="handover-panel" id="handoverPanel">
+            <div class="handover-text" id="handoverText"></div>
+            <div class="handover-buttons">
+                <button onclick="chooseLeader('N')">Север</button>
+                <button onclick="chooseLeader('S')">Юг</button>
+            </div>
+        </div>
+
+        <div class="result-panel" id="resultPanel">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-explanation" id="resultExplanation"></div>
         </div>
     </div>
-
-    <div class="result-panel" id="resultPanel">
-        <div class="result-title" id="resultTitle"></div>
-        <div class="result-explanation" id="resultExplanation"></div>
-    </div>
-
-    <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
 </div>
 
 <script>
@@ -258,51 +336,10 @@ let waiting = null;
 let correct = true;
 let trick2Order = null;
 let trick2Step = 0;
+let currentTask = null;
 
 /* ============================================================
-   Новая сдача
-   ============================================================ */
-function newDeal() {
-    const wHasKing = Math.random() < 0.5;
-
-    hands = {
-        N: ['8','5','4'],
-        S: ['A','J','9'],
-        W: wHasKing ? ['K','7','2'] : ['Q','7','2'],
-        E: wHasKing ? ['Q','6','3'] : ['K','6','3']
-    };
-
-    trick = [];
-    phase = 'trick1';
-    waiting = null;
-    correct = true;
-    trick2Order = null;
-    trick2Step = 0;
-
-    hideHandover();
-    hideResult();
-    render();
-    startTrick1();
-}
-
-/* ============================================================
-   Ход 1
-   ============================================================ */
-function startTrick1() {
-    setTimeout(() => {
-        playCard('N', '4');
-        setTimeout(() => {
-            playCard('E', '3');
-            setTimeout(() => {
-                waiting = { player: 'S' };
-                render();
-            }, 450);
-        }, 550);
-    }, 400);
-}
-
-/* ============================================================
-   Примитивы
+   Универсальные помощники
    ============================================================ */
 function playCard(player, card) {
     hands[player] = hands[player].filter(c => c !== card);
@@ -328,27 +365,17 @@ function getAutoCard(player) {
 }
 
 /* ============================================================
-   Логика защитника
-   ----------------------------------------------------------------
-   1) Если защитник уже сыграл в этой взятке — не кроет.
-   2) Если партнёр уже покрыл фигурой (K или Q) — не тратит фигуру,
-      кладёт самую младшую.
-   3) Иначе кроет фигурой только на импас (старшая карта декларанта
-      в этой взятке — 9 или В).
-   4) Во всех прочих случаях — самая младшая.
+   ИИ защитника для задачи 1 (сохраняет импас-логику)
    ============================================================ */
-function defenderPlay(player) {
-    // 1) уже играл
+function defenderTask1(player) {
     if (trick.some(t => t.player === player)) return getAutoCard(player);
 
-    // 2) партнёр уже покрыл фигурой
     const partner = (player === 'W') ? 'E' : 'W';
     const partnerCovered = trick.some(t =>
         t.player === partner && (t.card === 'K' || t.card === 'Q')
     );
     if (partnerCovered) return getAutoCard(player);
 
-    // 3) что сыграл декларант (N или S) в этой взятке
     const decCards = trick.filter(t => t.player === 'N' || t.player === 'S');
     if (decCards.length === 0) return getAutoCard(player);
 
@@ -363,27 +390,194 @@ function defenderPlay(player) {
 }
 
 /* ============================================================
+   ИИ защитника для задачи 2 (2-я рука малой, 3/4 берут)
+   ============================================================ */
+function defenderTask2(player) {
+    if (trick.some(t => t.player === player)) return getAutoCard(player);
+
+    const position = trick.length;
+
+    let currentBest = null;
+    for (const t of trick) {
+        if (!currentBest || RANK_ORDER[t.card] > RANK_ORDER[currentBest.card]) {
+            currentBest = t;
+        }
+    }
+    if (!currentBest) return getAutoCard(player);
+
+    const partner = (player === 'W') ? 'E' : 'W';
+    if (currentBest.player === partner) return getAutoCard(player);
+    if (position === 1) return getAutoCard(player);
+
+    const sorted = [...hands[player]].sort((a, b) => RANK_ORDER[a] - RANK_ORDER[b]);
+    for (const c of sorted) {
+        if (RANK_ORDER[c] > RANK_ORDER[currentBest.card]) return c;
+    }
+    return getAutoCard(player);
+}
+
+/* ============================================================
+   СПИСОК ЗАДАЧ
+   ----------------------------------------------------------------
+   Чтобы добавить новую задачу — просто допишите ещё один объект
+   в этот массив. Структура задачи:
+     id              — уникальный номер
+     shortTitle      — короткое название для карточки в меню
+     fullTitle       — заголовок на экране задачи
+     deal()          — функция, возвращает { N:[...], S:[...], W:[...], E:[...] }
+     prePlay         — массив авто-ходов перед действием ученика в 1-й взятке
+     expectedSouth1  — какую карту должен сыграть Юг в 1-й взятке
+     correctLeader   — с какой руки нужно ходить после 1-й взятки ('N' или 'S')
+     expectedTrick2  — { 'N': '9', 'S': 'J' } — какие карты ждём от людей
+     defenderPlay    — функция ИИ защитника
+     explanation     — HTML-текст, показываемый при победе
+   ============================================================ */
+const TASKS = [
+    {
+        id: 1,
+        shortTitle: 'Т В 9 против 8 5 4',
+        fullTitle: 'Задача 1: Розыгрыш Т В 9 против 8 5 4',
+        deal: () => {
+            const wHasKing = Math.random() < 0.5;
+            return {
+                N: ['8','5','4'],
+                S: ['A','J','9'],
+                W: wHasKing ? ['K','7','2'] : ['Q','7','2'],
+                E: wHasKing ? ['Q','6','3'] : ['K','6','3']
+            };
+        },
+        prePlay: [['N','4'], ['E','3']],
+        expectedSouth1: '9',
+        correctLeader: 'N',
+        expectedTrick2: { 'S': 'J' },
+        defenderPlay: defenderTask1,
+        explanation:
+            'Двойной импас: сначала играем <b>девяткой</b>. ' +
+            'Если её берут королём или дамой, после этого проводится ' +
+            'импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
+            'Порядок ходов менять нельзя: второго импаса не существует, ' +
+            'если первый не прошёл.<br><br>' +
+            'Расчёт на то, что фигуры разделены — дама в одной руке, ' +
+            'король в другой. Это игра на наилучший шанс.'
+    },
+    {
+        id: 2,
+        shortTitle: 'В 9 2 против Д 4 3',
+        fullTitle: 'Задача 2: Розыгрыш В 9 2 против Д 4 3',
+        deal: () => ({
+            N: ['J','9','2'],
+            S: ['Q','4','3'],
+            W: ['K','T','5'],
+            E: ['A','8','6']
+        }),
+        prePlay: [['N','2'], ['E','6']],
+        expectedSouth1: 'Q',
+        correctLeader: 'S',
+        expectedTrick2: { 'S': '3', 'N': '9' },
+        defenderPlay: defenderTask2,
+        explanation:
+            'Вы разыграли масть правильно!<br><br>' +
+            '<b>1. Сначала ход к Даме.</b> Её забирает старшая фигура (Король).<br><br>' +
+            '<b>2. Затем ход от Юга к 9ке Севера</b> — импас десятки. ' +
+            'Запад на второй руке кладёт малую, Восток бьёт Тузом.<br><br>' +
+            '<b>3. Валет Севера</b> остаётся старшим и забирает десятку Запада.<br><br>' +
+            'Порядок ходов менять нельзя: второго импаса не существует, ' +
+            'если первый не прошёл.'
+    }
+];
+
+/* ============================================================
+   МЕНЮ
+   ============================================================ */
+function renderMenu() {
+    const grid = document.getElementById('taskGrid');
+    grid.innerHTML = '';
+    TASKS.forEach(task => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.onclick = () => loadTask(task.id);
+        card.innerHTML =
+            '<div class="arrow">→</div>' +
+            '<div class="num">Задача ' + task.id + '</div>' +
+            '<div class="name">' + task.shortTitle + '</div>';
+        grid.appendChild(card);
+    });
+}
+
+function showMenu() {
+    document.getElementById('menuScreen').classList.remove('hidden');
+    document.getElementById('taskScreen').classList.add('hidden');
+}
+
+function loadTask(taskId) {
+    currentTask = TASKS.find(t => t.id === taskId);
+    if (!currentTask) return;
+    document.getElementById('menuScreen').classList.add('hidden');
+    document.getElementById('taskScreen').classList.remove('hidden');
+    document.getElementById('taskTitle').innerText = currentTask.fullTitle;
+    newDeal();
+}
+
+/* ============================================================
+   Новая сдача
+   ============================================================ */
+function newDeal() {
+    if (!currentTask) return;
+    hands = currentTask.deal();
+    trick = [];
+    phase = 'trick1';
+    waiting = null;
+    correct = true;
+    trick2Order = null;
+    trick2Step = 0;
+
+    hideHandover();
+    hideResult();
+    render();
+    startTrick1();
+}
+
+/* ============================================================
+   Ход 1
+   ============================================================ */
+function startTrick1() {
+    const prePlay = currentTask.prePlay;
+    let delay = 400;
+    prePlay.forEach(([player, card], idx) => {
+        setTimeout(() => {
+            playCard(player, card);
+            if (idx === prePlay.length - 1) {
+                setTimeout(() => {
+                    waiting = { player: 'S' };
+                    render();
+                }, 450);
+            }
+        }, delay);
+        delay += 550;
+    });
+}
+
+/* ============================================================
    Клик ученика
    ============================================================ */
 function onCardClick(player, card) {
     if (!waiting) return;
-    const w = waiting.player;
-    const matches = Array.isArray(w) ? w.includes(player) : w === player;
-    if (!matches) return;
+    if (waiting.player !== player) return;
     waiting = null;
 
     if (phase === 'trick1' && player === 'S') {
-        if (card !== '9') correct = false;
+        if (card !== currentTask.expectedSouth1) correct = false;
         playCard('S', card);
         setTimeout(() => {
-            playCard('W', defenderPlay('W'));
+            playCard('W', currentTask.defenderPlay('W'));
             setTimeout(afterTrick1, 850);
         }, 600);
         return;
     }
 
     if (phase === 'trick2') {
-        if (player === 'S' && card !== 'J') correct = false;
+        const expected = currentTask.expectedTrick2[player];
+        if (expected && card !== expected) correct = false;
         playCard(player, card);
         trick2Step++;
         processTrick2();
@@ -421,7 +615,7 @@ function chooseLeader(player) {
     if (phase !== 'handover') return;
     hideHandover();
 
-    if (player !== 'N') correct = false;
+    if (player !== currentTask.correctLeader) correct = false;
 
     phase = 'trick2';
     const base = ['N','E','S','W'];
@@ -453,7 +647,7 @@ function processTrick2() {
         waiting = { player };
         render();
     } else {
-        const card = defenderPlay(player);
+        const card = currentTask.defenderPlay(player);
         setTimeout(() => {
             playCard(player, card);
             trick2Step++;
@@ -482,11 +676,10 @@ function runTrick3(winner) {
 }
 
 /* ============================================================
-   Показать результат
+   Результат
    ============================================================ */
 function showResult() {
     phase = 'done';
-
     trick = [];
     hands = { N:[], S:[], W:[], E:[] };
     render();
@@ -501,18 +694,11 @@ function showResult() {
         if (correct) {
             panel.classList.add('win');
             title.innerText = 'Ты справился!';
-            expl.innerHTML =
-                'Двойной импас: сначала играем <b>девяткой</b>. ' +
-                'Если её берут королём или дамой, после этого проводится ' +
-                'импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
-                'Порядок ходов менять нельзя: второго импаса не существует, ' +
-                'если первый не прошёл.<br><br>' +
-                'Расчёт на то, что фигуры разделены — дама в одной руке, ' +
-                'король в другой. Это игра на наилучший шанс.';
+            expl.innerHTML = currentTask.explanation;
         } else {
             panel.classList.add('lose');
             title.innerText = 'Упс. Попробуй ещё раз.';
-            expl.innerHTML = '';
+            expl.innerHTML = 'Нажми «Новая попытка» и внимательно следи за порядком ходов.';
         }
 
         panel.classList.add('show');
@@ -583,7 +769,7 @@ function renderTrick() {
         const pos = positions[player];
         const el = createCardEl(card, true);
         el.classList.add('played');
-        if (idx === lastIdx) el.classList.add('entering');   // анимируем только свежую
+        if (idx === lastIdx) el.classList.add('entering');
         el.style.gridRow = pos.row;
         el.style.gridColumn = pos.col;
         area.appendChild(el);
@@ -593,7 +779,8 @@ function renderTrick() {
 /* ============================================================
    Старт
    ============================================================ */
-newDeal();
+renderMenu();
+showMenu();
 </script>
 
 </body>
