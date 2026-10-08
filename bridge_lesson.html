@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Розыгрыш онерных секвенций — Урок 1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, Arial, sans-serif;
+    background: #eef1f5;
+    margin: 0; padding: 0;
+    color: #222;
+  }
+  .slide {
+    display: none;
+    max-width: 1200px;
+    margin: 30px auto 100px;
+    background: #fff;
+    padding: 50px 70px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    min-height: 700px;
+  }
+  .slide.active { display: block; }
+  h1 {
+    color: #1a3a6b;
+    font-size: 46px;
+    margin: 0 0 24px;
+    border-bottom: 4px solid #1a3a6b;
+    padding-bottom: 12px;
+  }
+  h2 {
+    color: #1a3a6b;
+    font-size: 36px;
+    margin: 24px 0 18px;
+  }
+  p, li {
+    font-size: 26px;
+    line-height: 1.5;
+  }
+  li { margin-bottom: 8px; }
+  ul, ol { padding-left: 34px; }
+
+  .cards {
+    font-family: "Courier New", monospace;
+    font-size: 34px;
+    background: #f6f8fa;
+    border: 1px solid #d8dee6;
+    padding: 20px 32px;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 16px 0;
+    letter-spacing: 3px;
+    line-height: 1.6;
+    white-space: pre;
+  }
+  .cards pre {
+    font-family: inherit;
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+  }
+
+  .conclusion {
+    background: #fff8e1;
+    border-left: 6px solid #f5b400;
+    padding: 16px 26px;
+    margin-top: 26px;
+    border-radius: 8px;
+    font-size: 26px;
+    line-height: 1.5;
+  }
+  .conclusion::before { content: "💡 "; font-size: 26px; }
+
+  .task-title {
+    color: #1a3a6b;
+    font-size: 34px;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 12px;
+  }
+
+  .toggle-answer {
+    display: inline-block;
+    margin-top: 22px;
+    padding: 14px 28px;
+    font-size: 24px;
+    font-family: inherit;
+    font-weight: bold;
+    color: #fff;
+    background: #2a5a9b;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: background 0.15s;
+  }
+  .toggle-answer:hover { background: #3568ab; }
+
+  .answer {
+    display: none;
+    margin-top: 18px;
+    padding: 22px 28px;
+    background: #e8f0ff;
+    border-left: 6px solid #2a5a9b;
+    border-radius: 10px;
+    font-size: 26px;
+    line-height: 1.5;
+  }
+  .answer.open { display: block; }
+
+  .nav {
+    position: fixed;
+    bottom: 22px; right: 22px;
+    display: flex; gap: 12px;
+    z-index: 100;
+  }
+  .nav button {
+    padding: 14px 26px;
+    font-size: 20px;
+    border: none;
+    background: #1a3a6b;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  .nav button:hover { background: #2a5a9b; }
+  .counter {
+    position: fixed;
+    bottom: 34px; left: 34px;
+    font-size: 18px;
+    color: #667;
+    background: rgba(255,255,255,0.92);
+    padding: 8px 18px;
+    border-radius: 22px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .hint { font-size: 18px; color: #889; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ================= Слайд 1. Титул ================= -->
+<section class="slide active">
+  <h1>Розыгрыш онерных секвенций</h1>
+  <p><b>Урок 1.</b> Импас, игра к онерам.</p>
+  <ol>
+    <li>Розыгрыш ТВ9 против ххх</li>
+    <li>Розыгрыш В92 против Д43</li>
+    <li>Игра к онерам</li>
+    <li>Выводы</li>
+    <li>Задачи</li>
+  </ol>
+  <p class="hint">Управление: ← → или пробел. Ответы открываются кнопкой «Показать ответ».</p>
+</section>
+
+<!-- ================= Слайд 2 ================= -->
+<section class="slide">
+  <h1>1. Розыгрыш ТВ9 против ххх</h1>
+  <p>Импас — это слишком просто. Давайте начнём с двух.</p>
+  <div class="cards">ТВ9&nbsp;&nbsp;&nbsp;854</div>
+  <ul>
+    <li>Сначала проводится импас десятки.</li>
+    <li>Если девятка взята королём или дамой — импас оставшейся фигуры.</li>
+    <li>Порядок ходов изменить нельзя: второго импаса не существует, если первый не удался.</li>
+    <li>Расклад, на который мы играем: фигуры разделены (Дама в одной руке, Король в другой).</li>
+  </ul>
+  <div class="conclusion">Начинаем с импаса десятки. Играем на разделённых оперов.</div>
+</section>
+
+<!-- ================= Слайд 3 ================= -->
+<section class="slide">
+  <h1>2. Розыгрыш В92 против Д43</h1>
+  <div class="cards">В92&nbsp;&nbsp;&nbsp;Д43</div>
+  <ul>
+    <li>Импас десятки даёт одну взятку в половине случаев.</li>
+    <li>Лучше, если возможно, вообще ничего не делать — пусть оппоненты сами вскроют масть.</li>
+    <li>Если инициатива нужна — идём двойкой к Даме. У следующего игрока может оказаться второй онер, синглетная десятка, или он может ошибиться.</li>
+    <li>Если ничего не выйдет — остаётся время для импаса десятки.</li>
+  </ul>
+  <div class="conclusion">Сохраняем дополнительный шанс: сначала малая к Даме, затем импас десятки.</div>
+</section>
+
+<!-- ================= Слайд 4 ================= -->
+<section class="slide">
+  <h1>3. Игра к онерам</h1>
+  <p>Избегайте, насколько возможно, ходов старшими картами.</p>
+  <p>Поясним принцип на примерах.</p>
+</section>
+
+<!-- ================= Слайд 5 ================= -->
+<section class="slide">
+  <h2>КДхх против Вхх</h2>
+  <ul>
+    <li>Игнорируем распределение 3-3 (36%).</li>
+    <li>Боремся против 4-2 (48%) — чтобы не потерять две взятки.</li>
+    <li>Ходим малой к КДхх.</li>
+    <li>Если Туз не появился и Король взял — повторяем.</li>
+  </ul>
+  <div class="conclusion">Дайте оппоненту возможность положить Туза на фоску.</div>
+</section>
+
+<!-- ================= Слайд 6 ================= -->
+<section class="slide">
+  <h2>КДхх против Вхх — продолжение</h2>
+  <p>У игрока перед двумя онерами может быть второй Туз. Дайте ему использовать его на фоску.</p>
+  <p>Игра к Валету такого эффекта не даст: если он удержит взятку, всё равно придётся отдать Короля на второго Туза — и в масти будет две отдачи (на Туза и на 10ку).</p>
+  <div class="conclusion">Следовательно, играем к двум онерам.</div>
+</section>
+
+<!-- ================= Слайд 7. Вывод исправлен ================= -->
+<section class="slide">
+  <h2>Три взятки при втором Тузе</h2>
+  <ul>
+    <li>Единственная надежда на три взятки — Туз второй.</li>
+    <li>Определяем, у кого он, и играем так, чтобы Туз был слева от ходящего.</li>
+    <li>Если угадали и Король (или Дама) выиграл — играем малыми с обеих рук в следующую взятку.</li>
+    <li>Надеемся, что выпадет Туз.</li>
+  </ul>
+  <div class="cards"><pre>      Т9
+К432      Д765
+      В108</pre></div>
+  <div class="conclusion">Угадайте, у кого Туз, и далее играйте малой с надеждой, что он второй.</div>
+</section>
+
+<!-- ================= Слайд 8 ================= -->
+<section class="slide">
+  <h2>В53 против ТД42</h2>
+  <div class="cards">В53&nbsp;&nbsp;ТД42</div>
+  <ul>
+    <li>При 3-3 берём три взятки без проблем.</li>
+    <li>При 4-2 — смотрим на информацию из торговли и предыдущих взяток:
+      <ul>
+        <li>Если Король, скорее всего, у Юга — идём к Валету.</li>
+        <li>Если Король вероятнее у Севера — играем малой к ТД, импасируя Короля.</li>
+      </ul>
+    </li>
+    <li>После этого играем Тузом в надежде, что Король был вторым и выпадет.</li>
+  </ul>
+  <div class="conclusion">Выбор стороны зависит от информации из торговли и игры.</div>
+</section>
+
+<!-- ================= Слайд 9a. Т1065 против ДВ32 ================= -->
+<section class="slide">
+  <h2>Т1065 против ДВ32</h2>
+  <div class="cards">Т1065&nbsp;&nbsp;ДВ32</div>
+  <ul>
+    <li>Если на стол достаточно переходов — играем двойкой (страховка от синглетного Короля перед Тузом).</li>
+    <li>Если переходов нет — идём Дамой. Если удержит взятку — ходим Валетом.</li>
+  </ul>
+  <div class="conclusion">Больше переходов — играем двойкой. Меньше переходов — идём Дамой.</div>
+</section>
+
+<!-- ================= Слайд 9b. 965 против ТД103 ================= -->
+<section class="slide">
+  <h2>965 против ТД103</h2>
+  <div class="cards">965&nbsp;&nbsp;ТД103</div>
+  <ul>
+    <li>При достаточных переходах — идём маленькой, но не девяткой.</li>
+    <li>Если у защитника перед нашими онерами дублет КВ — получим все четыре взятки.</li>
+    <li>При ходе девяткой этого не случится: у другого защитника окажутся 8742, и восьмёрка станет старшей.</li>
+  </ul>
+  <div class="conclusion">Не тратьте 9 и 10 без нужды — они нужны как промежуточные карты.</div>
+</section>
+
+<!-- ================= Слайд 10. Выводы ================= -->
+<section class="slide">
+  <h1>4. Выводы</h1>
+  <ol>
+    <li>При двух отсутствующих онерах без информации — играем на разделённых оперов.</li>
+    <li>Избегаем ходов старшими картами; играем к онерам и к онерным секвенциям (ДВ108, КДВ9).</li>
+    <li>Отдаём фоски, а не онеров.</li>
+    <li>Чем больше дырок в масти, тем чаще ждём вскрытия масти оппонентами.</li>
+    <li>Позиция для импаса может появиться после вскрытия масти.</li>
+    <li>Синглет или дублет позволяет выбирать между импасом и экспассом.</li>
+  </ol>
+</section>
+
+<!-- ================= Слайд 11. Задача 1 ================= -->
+<section class="slide">
+  <h1>5. Задачи</h1>
+  <div class="task-title">Задача 1. Три взятки, переходов достаточно</div>
+  <div class="cards">Тхх&nbsp;&nbsp;&nbsp;ДВхх</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Сначала тузом, потом малой к ДВхх. Если дама возьмет взятку, перейти в руку и снова пойти к столу. Идея игры в том, чтобы импаса не проводить. Он ничего не дает, так как у Вас отсутствует и 10, и это легко может лишить Вас взятки, если масть легла 4-2.
+  </div>
+</section>
+
+<!-- ================= Слайд 12. Задача 2 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 2. То же, но боковых приёмов в руку нет</div>
+  <div class="cards">Тхх&nbsp;&nbsp;&nbsp;ДВхх</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Малая из-под туза. Если дама удержит взятку, туз обеспечит приход для еще одного хода к столу.
+  </div>
+</section>
+
+<!-- ================= Слайд 13. Задача 3 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 3. Разыграйте на две взятки</div>
+  <div class="cards">Дхх&nbsp;&nbsp;&nbsp;К10х</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Малая к даме. Затем импас валета.
+  </div>
+</section>
+
+<!-- ================= Слайд 14. Задача 4 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 4. Разыграйте на три взятки</div>
+  <div class="cards">Т432&nbsp;&nbsp;&nbsp;Д1098</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Играйте на разделенных онеров. Пойдите десяткой и пустите ее.
+  </div>
+</section>
+
+<!-- ================= Слайд 15. Задача 5 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 5. Разыграйте на три взятки</div>
+  <div class="cards">Т432&nbsp;&nbsp;&nbsp;Д1065</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Сначала туз, затем малая. Если ни один из онеров не появится — надо угадывать. Если нет никакой информации, лучший шанс — десятка. Оппонент перед Д10хх может иметь КВхх.
+  </div>
+</section>
+
+<!-- ================= Слайд 16. Задача 6 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 6. Одна взятка, приходы есть в любую руку</div>
+  <div class="cards">Д98&nbsp;&nbsp;&nbsp;1074</div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Пустите десятку, надеясь, что валет перед дамой. Если взятку возьмут туз или король, вернитесь в руку и снова импасируйте.
+  </div>
+</section>
+
+<!-- ================= Слайд 17. Задача 7 ================= -->
+<section class="slide">
+  <div class="task-title">Задача 7. Вы Запад, играете 5♣. Ход пикой. Как играете?</div>
+  <div class="cards"><pre>Кхх            Тхх
+–              КДВ10
+КВ9х           хх
+ТКД10хх        В9хх</pre></div>
+  <button class="toggle-answer" onclick="toggleAnswer(this)">Показать ответ</button>
+  <div class="answer">
+    Эта сдача на экспасс с убиткой. Отберите козырей, финишировав на столе, и ходите ♥К. Если его не надобьют, снесите бубну.
+  </div>
+</section>
+
+<!-- ================= Навигация ================= -->
+<div class="counter"><span id="cur">1</span> / <span id="total">17</span></div>
+<div class="nav">
+  <button onclick="prev()">← Назад</button>
+  <button onclick="next()">Вперёд →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let idx = 0;
+  const cur = document.getElementById('cur');
+  const total = document.getElementById('total');
+  total.textContent = slides.length;
+
+  function show(i) {
+    if (i < 0) i = 0;
+    if (i > slides.length - 1) i = slides.length - 1;
+    slides[idx].classList.remove('active');
+    idx = i;
+    slides[idx].classList.add('active');
+    cur.textContent = idx + 1;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function next() { show(idx + 1); }
+  function prev() { show(idx - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault(); next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault(); prev();
+    }
+  });
+
+  function toggleAnswer(btn) {
+    const answer = btn.nextElementSibling;
+    if (answer.classList.contains('open')) {
+      answer.classList.remove('open');
+      btn.textContent = 'Показать ответ';
+    } else {
+      answer.classList.add('open');
+      btn.textContent = 'Скрыть ответ';
+    }
+  }
+</script>
+</body>
+</html>

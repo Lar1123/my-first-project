@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тренажёр: розыгрыш масти</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0; padding: 0;
+        width: 100%; height: 100vh;
+        background: radial-gradient(ellipse at center, #6b7d80 0%, #3c4a4d 100%);
+        font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+        color: #fff;
+        overflow: hidden;
+        user-select: none;
+    }
+    .table { position: relative; width: 100%; height: 100%; }
+
+    .title {
+        position: absolute; top: 14px; left: 50%;
+        transform: translateX(-50%);
+        font-size: 20px; font-weight: bold;
+        color: #ffd700; letter-spacing: 0.5px;
+        text-shadow: 1px 1px 3px #000;
+        text-align: center;
+    }
+
+    .hand {
+        position: absolute;
+        display: flex;
+        gap: 12px;
+    }
+    .hand-N { top: 70px; left: 50%; transform: translateX(-50%); }
+    .hand-S { bottom: 70px; left: 50%; transform: translateX(-50%); }
+    .hand-W { left: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+    .hand-E { right: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+
+    .hand-label {
+        position: absolute;
+        font-size: 14px; font-weight: bold;
+        color: #ffe680;
+        text-shadow: 1px 1px 2px #000;
+        white-space: nowrap;
+    }
+    .hand-N .hand-label { bottom: -26px; left: 50%; transform: translateX(-50%); }
+    .hand-S .hand-label { top: -26px; left: 50%; transform: translateX(-50%); }
+    .hand-W .hand-label { right: -80px; top: 50%; transform: translateY(-50%); }
+    .hand-E .hand-label { left: -80px; top: 50%; transform: translateY(-50%); }
+
+    .card {
+        width: 86px; height: 120px;
+        background-color: #fff;
+        border: 2px solid #222;
+        border-radius: 8px;
+        position: relative;
+        box-shadow: 2px 3px 6px rgba(0,0,0,0.5);
+        flex-shrink: 0;
+        color: #111;
+        overflow: hidden;
+        transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover {
+        transform: translateY(-10px);
+        box-shadow: 3px 12px 20px rgba(0,0,0,0.65);
+    }
+    .card.disabled { cursor: default; }
+
+    .card .corner {
+        position: absolute;
+        top: 4px; left: 6px;
+        display: flex; flex-direction: column;
+        align-items: center;
+        line-height: 1;
+    }
+    .card .corner .rank { font-size: 28px; font-weight: 900; }
+    .card .corner .suit { font-size: 22px; margin-top: 1px; }
+    .card .center-suit {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 46px; opacity: 0.35;
+    }
+    .card.back {
+        background: repeating-linear-gradient(
+            45deg, #2c3e50, #2c3e50 6px, #34495e 6px, #34495e 12px
+        );
+        border-color: #141c24;
+    }
+    .card.back .corner,
+    .card.back .center-suit { display: none; }
+
+    .suit-S { color: #111; }
+    .suit-H { color: #cc0000; }
+    .suit-D { color: #cc0000; }
+    .suit-C { color: #008800; }
+
+    .trick-area {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        grid-template-columns: 110px 110px 110px;
+        grid-template-rows: 140px 140px 140px;
+        gap: 8px;
+        align-items: center;
+        justify-items: center;
+        pointer-events: none;
+    }
+
+    /* Анимация — ТОЛЬКО для самой свежей карты */
+    .trick-area .card.entering { animation: flyIn 0.3s ease-out; }
+    @keyframes flyIn {
+        from { transform: scale(1.5); opacity: 0; }
+        to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .handover-panel {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.92);
+        border: 3px solid #ffd700;
+        border-radius: 16px;
+        padding: 24px 36px;
+        text-align: center;
+        display: none;
+        z-index: 20;
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.65);
+        min-width: 360px;
+    }
+    .handover-panel.show { display: block; }
+    .handover-text {
+        font-size: 19px; font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 18px;
+        line-height: 1.4;
+    }
+    .handover-text .who { color: #fff; }
+    .handover-buttons { display: flex; gap: 22px; justify-content: center; }
+    .handover-buttons button {
+        padding: 14px 40px;
+        font-size: 20px; font-weight: 900;
+        border: 3px solid #ffd700;
+        border-radius: 10px;
+        background: #223; color: #ffd700;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+    }
+    .handover-buttons button:hover {
+        background: #ffd700; color: #223;
+        transform: scale(1.06);
+    }
+
+    .result-panel {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: rgba(0, 0, 0, 0.88);
+        border-radius: 18px;
+        padding: 32px 44px;
+        text-align: center;
+        max-width: 720px;
+        width: 80%;
+        z-index: 30;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+    .result-panel.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        pointer-events: auto;
+    }
+    .result-panel.win {
+        border: 3px solid #4caf50;
+        box-shadow: 0 0 40px rgba(76, 175, 80, 0.55);
+    }
+    .result-panel.lose {
+        border: 3px solid #ff5555;
+        box-shadow: 0 0 40px rgba(255, 85, 85, 0.55);
+    }
+    .result-title {
+        font-size: 34px; font-weight: 900;
+        margin-bottom: 16px;
+        letter-spacing: 0.5px;
+    }
+    .result-panel.win .result-title  { color: #4caf50; }
+    .result-panel.lose .result-title { color: #ff5555; }
+    .result-explanation {
+        font-size: 16px;
+        line-height: 1.55;
+        color: #eaeaea;
+        text-align: left;
+    }
+    .result-explanation b { color: #ffd700; }
+
+    .restart-btn {
+        position: absolute;
+        top: 14px; right: 14px;
+        padding: 10px 20px;
+        font-size: 15px; font-weight: bold;
+        background: #ffd700; color: #223;
+        border: none; border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        z-index: 40;
+    }
+    .restart-btn:hover { background: #ffea00; }
+</style>
+</head>
+<body>
+
+<div class="table">
+    <div class="title">Розыгрыш Т В 9 против 8 5 4</div>
+
+    <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
+    <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
+    <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
+    <div class="hand hand-E" id="handE"><div class="hand-label">Восток</div></div>
+
+    <div class="trick-area" id="trickArea"></div>
+
+    <div class="handover-panel" id="handoverPanel">
+        <div class="handover-text" id="handoverText"></div>
+        <div class="handover-buttons">
+            <button onclick="chooseLeader('N')">Север</button>
+            <button onclick="chooseLeader('S')">Юг</button>
+        </div>
+    </div>
+
+    <div class="result-panel" id="resultPanel">
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-explanation" id="resultExplanation"></div>
+    </div>
+
+    <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
+</div>
+
+<script>
+/* ============================================================
+   Константы
+   ============================================================ */
+const SUIT = 'S';
+const SUIT_SYM = '\u2660';
+const RANK_LABEL = { A:'Т', K:'К', Q:'Д', J:'В', T:'10' };
+const RANK_ORDER = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14 };
+
+/* ============================================================
+   Состояние
+   ============================================================ */
+let hands = {};
+let trick = [];
+let phase = '';
+let waiting = null;
+let correct = true;
+let trick2Order = null;
+let trick2Step = 0;
+
+/* ============================================================
+   Новая сдача
+   ============================================================ */
+function newDeal() {
+    const wHasKing = Math.random() < 0.5;
+
+    hands = {
+        N: ['8','5','4'],
+        S: ['A','J','9'],
+        W: wHasKing ? ['K','7','2'] : ['Q','7','2'],
+        E: wHasKing ? ['Q','6','3'] : ['K','6','3']
+    };
+
+    trick = [];
+    phase = 'trick1';
+    waiting = null;
+    correct = true;
+    trick2Order = null;
+    trick2Step = 0;
+
+    hideHandover();
+    hideResult();
+    render();
+    startTrick1();
+}
+
+/* ============================================================
+   Ход 1
+   ============================================================ */
+function startTrick1() {
+    setTimeout(() => {
+        playCard('N', '4');
+        setTimeout(() => {
+            playCard('E', '3');
+            setTimeout(() => {
+                waiting = { player: 'S' };
+                render();
+            }, 450);
+        }, 550);
+    }, 400);
+}
+
+/* ============================================================
+   Примитивы
+   ============================================================ */
+function playCard(player, card) {
+    hands[player] = hands[player].filter(c => c !== card);
+    trick.push({ player, card });
+    render();
+}
+
+function determineWinner(trickCards) {
+    let winner = trickCards[0].player;
+    let bestRank = RANK_ORDER[trickCards[0].card];
+    for (let i = 1; i < trickCards.length; i++) {
+        const r = RANK_ORDER[trickCards[i].card];
+        if (r > bestRank) { bestRank = r; winner = trickCards[i].player; }
+    }
+    return winner;
+}
+
+function getAutoCard(player) {
+    const cards = hands[player];
+    let low = cards[0];
+    for (const c of cards) if (RANK_ORDER[c] < RANK_ORDER[low]) low = c;
+    return low;
+}
+
+/* ============================================================
+   Логика защитника
+   ----------------------------------------------------------------
+   1) Если защитник уже сыграл в этой взятке — не кроет.
+   2) Если партнёр уже покрыл фигурой (K или Q) — не тратит фигуру,
+      кладёт самую младшую.
+   3) Иначе кроет фигурой только на импас (старшая карта декларанта
+      в этой взятке — 9 или В).
+   4) Во всех прочих случаях — самая младшая.
+   ============================================================ */
+function defenderPlay(player) {
+    // 1) уже играл
+    if (trick.some(t => t.player === player)) return getAutoCard(player);
+
+    // 2) партнёр уже покрыл фигурой
+    const partner = (player === 'W') ? 'E' : 'W';
+    const partnerCovered = trick.some(t =>
+        t.player === partner && (t.card === 'K' || t.card === 'Q')
+    );
+    if (partnerCovered) return getAutoCard(player);
+
+    // 3) что сыграл декларант (N или S) в этой взятке
+    const decCards = trick.filter(t => t.player === 'N' || t.player === 'S');
+    if (decCards.length === 0) return getAutoCard(player);
+
+    let topDec = decCards[0].card;
+    for (const t of decCards) {
+        if (RANK_ORDER[t.card] > RANK_ORDER[topDec]) topDec = t.card;
+    }
+
+    const honor = hands[player].find(c => c === 'K' || c === 'Q');
+    if (honor && (topDec === '9' || topDec === 'J')) return honor;
+    return getAutoCard(player);
+}
+
+/* ============================================================
+   Клик ученика
+   ============================================================ */
+function onCardClick(player, card) {
+    if (!waiting) return;
+    const w = waiting.player;
+    const matches = Array.isArray(w) ? w.includes(player) : w === player;
+    if (!matches) return;
+    waiting = null;
+
+    if (phase === 'trick1' && player === 'S') {
+        if (card !== '9') correct = false;
+        playCard('S', card);
+        setTimeout(() => {
+            playCard('W', defenderPlay('W'));
+            setTimeout(afterTrick1, 850);
+        }, 600);
+        return;
+    }
+
+    if (phase === 'trick2') {
+        if (player === 'S' && card !== 'J') correct = false;
+        playCard(player, card);
+        trick2Step++;
+        processTrick2();
+        return;
+    }
+}
+
+/* ============================================================
+   Конец первой взятки
+   ============================================================ */
+function afterTrick1() {
+    const winner = determineWinner(trick);
+    setTimeout(() => {
+        trick = [];
+        render();
+        showHandover(winner);
+    }, 900);
+}
+
+function showHandover(winner) {
+    phase = 'handover';
+    const names = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
+    document.getElementById('handoverText').innerHTML =
+        '<span class="who">' + names[winner] + '</span> получил взятку.<br>' +
+        'Кто разыгрывает следующий ход?';
+    document.getElementById('handoverPanel').classList.add('show');
+    render();
+}
+
+function hideHandover() {
+    document.getElementById('handoverPanel').classList.remove('show');
+}
+
+function chooseLeader(player) {
+    if (phase !== 'handover') return;
+    hideHandover();
+
+    if (player !== 'N') correct = false;
+
+    phase = 'trick2';
+    const base = ['N','E','S','W'];
+    const start = base.indexOf(player);
+    trick2Order = [];
+    for (let i = 0; i < 4; i++) trick2Order.push(base[(start + i) % 4]);
+    trick2Step = 0;
+
+    processTrick2();
+}
+
+/* ============================================================
+   Вторая взятка
+   ============================================================ */
+function processTrick2() {
+    if (trick2Step >= 4) {
+        const winner = determineWinner(trick);
+        setTimeout(() => {
+            trick = [];
+            render();
+            runTrick3(winner);
+        }, 900);
+        return;
+    }
+
+    const player = trick2Order[trick2Step];
+
+    if (player === 'N' || player === 'S') {
+        waiting = { player };
+        render();
+    } else {
+        const card = defenderPlay(player);
+        setTimeout(() => {
+            playCard(player, card);
+            trick2Step++;
+            processTrick2();
+        }, 650);
+    }
+}
+
+/* ============================================================
+   Третья взятка — авто
+   ============================================================ */
+function runTrick3(winner) {
+    phase = 'trick3';
+    const base = ['N','E','S','W'];
+    const start = base.indexOf(winner);
+    const seq = [];
+    for (let i = 0; i < 4; i++) seq.push(base[(start + i) % 4]);
+
+    seq.forEach((player, i) => {
+        setTimeout(() => {
+            const card = hands[player][0];
+            playCard(player, card);
+            if (i === 3) setTimeout(showResult, 900);
+        }, 700 * (i + 1));
+    });
+}
+
+/* ============================================================
+   Показать результат
+   ============================================================ */
+function showResult() {
+    phase = 'done';
+
+    trick = [];
+    hands = { N:[], S:[], W:[], E:[] };
+    render();
+
+    setTimeout(() => {
+        const panel = document.getElementById('resultPanel');
+        const title = document.getElementById('resultTitle');
+        const expl  = document.getElementById('resultExplanation');
+
+        panel.classList.remove('win', 'lose');
+
+        if (correct) {
+            panel.classList.add('win');
+            title.innerText = 'Ты справился!';
+            expl.innerHTML =
+                'Двойной импас: сначала играем <b>девяткой</b>. ' +
+                'Если её берут королём или дамой, после этого проводится ' +
+                'импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
+                'Порядок ходов менять нельзя: второго импаса не существует, ' +
+                'если первый не прошёл.<br><br>' +
+                'Расчёт на то, что фигуры разделены — дама в одной руке, ' +
+                'король в другой. Это игра на наилучший шанс.';
+        } else {
+            panel.classList.add('lose');
+            title.innerText = 'Упс. Попробуй ещё раз.';
+            expl.innerHTML = '';
+        }
+
+        panel.classList.add('show');
+    }, 500);
+}
+
+function hideResult() {
+    document.getElementById('resultPanel').classList.remove('show', 'win', 'lose');
+}
+
+/* ============================================================
+   Отрисовка
+   ============================================================ */
+function createCardEl(rank, faceUp) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    if (!faceUp) { el.classList.add('back'); return el; }
+    const label = RANK_LABEL[rank] || rank;
+    el.classList.add('suit-' + SUIT);
+    el.innerHTML =
+        '<div class="corner">' +
+            '<div class="rank">' + label + '</div>' +
+            '<div class="suit">' + SUIT_SYM + '</div>' +
+        '</div>' +
+        '<div class="center-suit">' + SUIT_SYM + '</div>';
+    return el;
+}
+
+function render() {
+    renderHand('N', 'handN', true);
+    renderHand('S', 'handS', true);
+    renderHand('W', 'handW', false);
+    renderHand('E', 'handE', false);
+    renderTrick();
+}
+
+function renderHand(player, containerId, faceUp) {
+    const container = document.getElementById(containerId);
+    const label = container.querySelector('.hand-label');
+    container.innerHTML = '';
+    if (label) container.appendChild(label);
+
+    const isWaiting = waiting && waiting.player === player;
+
+    hands[player].forEach(card => {
+        const el = createCardEl(card, faceUp);
+        if (isWaiting) {
+            el.classList.add('clickable');
+            el.onclick = () => onCardClick(player, card);
+        } else {
+            el.classList.add('disabled');
+        }
+        container.appendChild(el);
+    });
+}
+
+function renderTrick() {
+    const area = document.getElementById('trickArea');
+    area.innerHTML = '';
+    const positions = {
+        N: { row: 1, col: 2 },
+        W: { row: 2, col: 1 },
+        E: { row: 2, col: 3 },
+        S: { row: 3, col: 2 }
+    };
+    const lastIdx = trick.length - 1;
+    trick.forEach(({ player, card }, idx) => {
+        const pos = positions[player];
+        const el = createCardEl(card, true);
+        el.classList.add('played');
+        if (idx === lastIdx) el.classList.add('entering');   // анимируем только свежую
+        el.style.gridRow = pos.row;
+        el.style.gridColumn = pos.col;
+        area.appendChild(el);
+    });
+}
+
+/* ============================================================
+   Старт
+   ============================================================ */
+newDeal();
+</script>
+
+</body>
+</html>
