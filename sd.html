@@ -5,303 +5,87 @@
 <title>Тренажёр по розыгрышу масти</title>
 <style>
     * { box-sizing: border-box; }
-    html, body {
-        margin: 0; padding: 0;
-        width: 100%; min-height: 100vh;
-        background: radial-gradient(ellipse at center, #6b7d80 0%, #3c4a4d 100%);
-        font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-        color: #fff;
-        user-select: none;
-    }
-
-    /* ============ МЕНЮ ============ */
-    .menu-screen {
-        min-height: 100vh;
-        padding: 40px 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+    html, body { margin: 0; padding: 0; width: 100%; min-height: 100vh; background: radial-gradient(ellipse at center, #6b7d80 0%, #3c4a4d 100%); font-family: "Segoe UI", Tahoma, Arial, sans-serif; color: #fff; user-select: none; }
+    .menu-screen { min-height: 100vh; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
     .menu-screen.hidden { display: none; }
-    .menu-title {
-        font-size: 32px; font-weight: bold;
-        color: #ffd700;
-        text-shadow: 2px 2px 6px #000;
-        margin: 0 0 12px 0;
-        text-align: center;
-    }
-    .menu-subtitle {
-        color: #d1e7dd;
-        margin-bottom: 40px;
-        font-size: 16px;
-    }
-    .task-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-        max-width: 1100px;
-        width: 100%;
-    }
-    .task-card {
-        background: rgba(0, 0, 0, 0.55);
-        border: 2px solid #ffd700;
-        border-radius: 14px;
-        padding: 22px 24px;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: left;
-        position: relative;
-    }
-    .task-card:hover {
-        background: rgba(255, 215, 0, 0.15);
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(255, 215, 0, 0.35);
-    }
-    .task-card .num {
-        font-size: 13px; color: #ffd700; font-weight: bold;
-        letter-spacing: 1.5px; text-transform: uppercase;
-        opacity: 0.85;
-    }
-    .task-card .name {
-        font-size: 20px; font-weight: bold; color: #fff;
-        margin-top: 8px; line-height: 1.35;
-        padding-right: 30px;
-    }
-    .task-card .arrow {
-        position: absolute;
-        top: 22px; right: 22px;
-        font-size: 22px; color: #ffd700;
-    }
-
-    /* ============ ЭКРАН ЗАДАЧИ ============ */
-    .task-screen {
-        position: fixed;
-        inset: 0;
-        width: 100%; height: 100vh;
-        overflow: hidden;
-    }
+    .menu-title { font-size: 32px; font-weight: bold; color: #ffd700; text-shadow: 2px 2px 6px #000; margin: 0 0 12px 0; text-align: center; }
+    .menu-subtitle { color: #d1e7dd; margin-bottom: 40px; font-size: 16px; }
+    .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; width: 100%; }
+    .task-card { background: rgba(0, 0, 0, 0.55); border: 2px solid #ffd700; border-radius: 14px; padding: 22px 24px; cursor: pointer; transition: all 0.2s; text-align: left; position: relative; }
+    .task-card:hover { background: rgba(255, 215, 0, 0.15); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(255, 215, 0, 0.35); }
+    .task-card .num { font-size: 13px; color: #ffd700; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.85; }
+    .task-card .name { font-size: 20px; font-weight: bold; color: #fff; margin-top: 8px; line-height: 1.35; padding-right: 30px; }
+    .task-card .arrow { position: absolute; top: 22px; right: 22px; font-size: 22px; color: #ffd700; }
+    .task-screen { position: fixed; inset: 0; width: 100%; height: 100vh; overflow: hidden; }
     .task-screen.hidden { display: none; }
-
     .table { position: relative; width: 100%; height: 100%; }
-
-    .title {
-        position: absolute; top: 14px; left: 50%;
-        transform: translateX(-50%);
-        font-size: 20px; font-weight: bold;
-        color: #ffd700; letter-spacing: 0.5px;
-        text-shadow: 1px 1px 3px #000;
-        text-align: center;
-    }
-
-    .hand {
-        position: absolute;
-        display: flex;
-        gap: 12px;
-    }
+    .title { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; color: #ffd700; letter-spacing: 0.5px; text-shadow: 1px 1px 3px #000; text-align: center; }
+    .hand { position: absolute; display: flex; gap: 12px; }
     .hand-N { top: 70px; left: 50%; transform: translateX(-50%); }
     .hand-S { bottom: 70px; left: 50%; transform: translateX(-50%); }
     .hand-W { left: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
     .hand-E { right: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
-
-    .hand-label {
-        position: absolute;
-        font-size: 14px; font-weight: bold;
-        color: #ffe680;
-        text-shadow: 1px 1px 2px #000;
-        white-space: nowrap;
-    }
+    .hand-label { position: absolute; font-size: 14px; font-weight: bold; color: #ffe680; text-shadow: 1px 1px 2px #000; white-space: nowrap; }
     .hand-N .hand-label { bottom: -26px; left: 50%; transform: translateX(-50%); }
     .hand-S .hand-label { top: -26px; left: 50%; transform: translateX(-50%); }
     .hand-W .hand-label { right: -80px; top: 50%; transform: translateY(-50%); }
     .hand-E .hand-label { left: -80px; top: 50%; transform: translateY(-50%); }
-
-    .card {
-        width: 86px; height: 120px;
-        background-color: #fff;
-        border: 2px solid #222;
-        border-radius: 8px;
-        position: relative;
-        box-shadow: 2px 3px 6px rgba(0,0,0,0.5);
-        flex-shrink: 0;
-        color: #111;
-        overflow: hidden;
-        transition: transform 0.15s, box-shadow 0.2s;
-    }
+    .card { width: 86px; height: 120px; background-color: #fff; border: 2px solid #222; border-radius: 8px; position: relative; box-shadow: 2px 3px 6px rgba(0,0,0,0.5); flex-shrink: 0; color: #111; overflow: hidden; transition: transform 0.15s, box-shadow 0.2s; }
     .card.clickable { cursor: pointer; }
-    .card.clickable:hover {
-        transform: translateY(-10px);
-        box-shadow: 3px 12px 20px rgba(0,0,0,0.65);
-    }
+    .card.clickable:hover { transform: translateY(-10px); box-shadow: 3px 12px 20px rgba(0,0,0,0.65); }
     .card.disabled { cursor: default; }
-
-    .card .corner {
-        position: absolute;
-        top: 4px; left: 6px;
-        display: flex; flex-direction: column;
-        align-items: center; line-height: 1;
-    }
+    .card .corner { position: absolute; top: 4px; left: 6px; display: flex; flex-direction: column; align-items: center; line-height: 1; }
     .card .corner .rank { font-size: 28px; font-weight: 900; }
     .card .corner .suit { font-size: 22px; margin-top: 1px; }
-    .card .center-suit {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 46px; opacity: 0.35;
-    }
-    .card.back {
-        background: repeating-linear-gradient(
-            45deg, #2c3e50, #2c3e50 6px, #34495e 6px, #34495e 12px
-        );
-        border-color: #141c24;
-    }
-    .card.back .corner,
-    .card.back .center-suit { display: none; }
-
+    .card .center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 46px; opacity: 0.35; }
+    .card.back { background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 6px, #34495e 6px, #34495e 12px); border-color: #141c24; }
+    .card.back .corner, .card.back .center-suit { display: none; }
+    .card.discard { background: linear-gradient(135deg, #553366 0%, #2c1f3e 100%); color: #fff; border-color: #1a1028; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2; padding: 6px; }
     .suit-S { color: #111; }
-    .suit-H { color: #cc0000; }
-    .suit-D { color: #cc0000; }
-    .suit-C { color: #008800; }
-
-    .trick-area {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        display: grid;
-        grid-template-columns: 110px 110px 110px;
-        grid-template-rows: 140px 140px 140px;
-        gap: 8px;
-        align-items: center;
-        justify-items: center;
-        pointer-events: none;
-    }
+    .trick-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; grid-template-columns: 110px 110px 110px; grid-template-rows: 140px 140px 140px; gap: 8px; align-items: center; justify-items: center; pointer-events: none; }
     .trick-area .card.entering { animation: flyIn 0.3s ease-out; }
-    @keyframes flyIn {
-        from { transform: scale(1.5); opacity: 0; }
-        to   { transform: scale(1);   opacity: 1; }
-    }
-
-    .handover-panel {
-        position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.92);
-        border: 3px solid #ffd700;
-        border-radius: 16px;
-        padding: 24px 36px;
-        text-align: center;
-        display: none;
-        z-index: 20;
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.65);
-        min-width: 360px;
-    }
+    @keyframes flyIn { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .handover-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.92); border: 3px solid #ffd700; border-radius: 16px; padding: 24px 36px; text-align: center; display: none; z-index: 20; box-shadow: 0 0 40px rgba(255, 215, 0, 0.65); min-width: 400px; }
     .handover-panel.show { display: block; }
-    .handover-text {
-        font-size: 19px; font-weight: bold;
-        color: #ffd700; margin-bottom: 18px; line-height: 1.4;
-    }
+    .handover-text { font-size: 18px; font-weight: bold; color: #ffd700; margin-bottom: 18px; line-height: 1.4; }
     .handover-text .who { color: #fff; }
     .handover-buttons { display: flex; gap: 22px; justify-content: center; }
-    .handover-buttons button {
-        padding: 14px 40px;
-        font-size: 20px; font-weight: 900;
-        border: 3px solid #ffd700;
-        border-radius: 10px;
-        background: #223; color: #ffd700;
-        cursor: pointer;
-        transition: all 0.15s;
-        font-family: inherit;
-    }
-    .handover-buttons button:hover {
-        background: #ffd700; color: #223;
-        transform: scale(1.06);
-    }
-
-    .result-panel {
-        position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%) scale(0.9);
-        background: rgba(0, 0, 0, 0.88);
-        border-radius: 18px;
-        padding: 32px 44px;
-        text-align: center;
-        max-width: 720px; width: 80%;
-        z-index: 30;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-        opacity: 0; pointer-events: none;
-        transition: opacity 0.4s, transform 0.4s;
-    }
-    .result-panel.show {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-        pointer-events: auto;
-    }
-    .result-panel.win {
-        border: 3px solid #4caf50;
-        box-shadow: 0 0 40px rgba(76, 175, 80, 0.55);
-    }
-    .result-panel.lose {
-        border: 3px solid #ff5555;
-        box-shadow: 0 0 40px rgba(255, 85, 85, 0.55);
-    }
-    .result-title {
-        font-size: 34px; font-weight: 900;
-        margin-bottom: 16px; letter-spacing: 0.5px;
-    }
+    .handover-buttons button { padding: 14px 40px; font-size: 20px; font-weight: 900; border: 3px solid #ffd700; border-radius: 10px; background: #223; color: #ffd700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .handover-buttons button:hover { background: #ffd700; color: #223; transform: scale(1.06); }
+    .result-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(0, 0, 0, 0.88); border-radius: 18px; padding: 32px 44px; text-align: center; max-width: 720px; width: 80%; z-index: 30; box-shadow: 0 8px 40px rgba(0,0,0,0.7); opacity: 0; pointer-events: none; transition: opacity 0.4s, transform 0.4s; }
+    .result-panel.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+    .result-panel.win { border: 3px solid #4caf50; box-shadow: 0 0 40px rgba(76, 175, 80, 0.55); }
+    .result-panel.lose { border: 3px solid #ff5555; box-shadow: 0 0 40px rgba(255, 85, 85, 0.55); }
+    .result-title { font-size: 34px; font-weight: 900; margin-bottom: 16px; letter-spacing: 0.5px; }
     .result-panel.win .result-title  { color: #4caf50; }
     .result-panel.lose .result-title { color: #ff5555; }
-    .result-explanation {
-        font-size: 16px; line-height: 1.55;
-        color: #eaeaea; text-align: left;
-    }
+    .result-explanation { font-size: 16px; line-height: 1.55; color: #eaeaea; text-align: left; }
     .result-explanation b { color: #ffd700; }
-
-    .restart-btn, .back-btn {
-        position: absolute;
-        top: 14px;
-        padding: 10px 20px;
-        font-size: 15px; font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 40;
-        font-family: inherit;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-    }
-    .restart-btn {
-        right: 14px;
-        background: #ffd700; color: #223;
-        border: none;
-    }
+    .restart-btn, .back-btn { position: absolute; top: 14px; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; z-index: 40; font-family: inherit; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+    .restart-btn { right: 14px; background: #ffd700; color: #223; border: none; }
     .restart-btn:hover { background: #ffea00; }
-    .back-btn {
-        left: 14px;
-        background: #223; color: #ffd700;
-        border: 2px solid #ffd700;
-    }
+    .back-btn { left: 14px; background: #223; color: #ffd700; border: 2px solid #ffd700; }
     .back-btn:hover { background: #ffd700; color: #223; }
 </style>
 </head>
 <body>
 
-<!-- ==================== МЕНЮ ==================== -->
 <div class="menu-screen" id="menuScreen">
     <h1 class="menu-title">Тренажёр по розыгрышу масти</h1>
     <div class="menu-subtitle">Выберите задачу</div>
     <div class="task-grid" id="taskGrid"></div>
 </div>
 
-<!-- ==================== ЭКРАН ЗАДАЧИ ==================== -->
 <div class="task-screen hidden" id="taskScreen">
     <div class="table">
         <div class="title" id="taskTitle"></div>
-
         <button class="back-btn" onclick="showMenu()">← К задачам</button>
         <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
-
         <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
         <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
         <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
         <div class="hand hand-E" id="handE"><div class="hand-label">Восток</div></div>
-
         <div class="trick-area" id="trickArea"></div>
-
         <div class="handover-panel" id="handoverPanel">
             <div class="handover-text" id="handoverText"></div>
             <div class="handover-buttons">
@@ -309,7 +93,6 @@
                 <button onclick="chooseLeader('S')">Юг</button>
             </div>
         </div>
-
         <div class="result-panel" id="resultPanel">
             <div class="result-title" id="resultTitle"></div>
             <div class="result-explanation" id="resultExplanation"></div>
@@ -318,17 +101,11 @@
 </div>
 
 <script>
-/* ============================================================
-   Константы
-   ============================================================ */
 const SUIT = 'S';
 const SUIT_SYM = '\u2660';
 const RANK_LABEL = { A:'Т', K:'К', Q:'Д', J:'В', T:'10' };
 const RANK_ORDER = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14 };
 
-/* ============================================================
-   Состояние
-   ============================================================ */
 let hands = {};
 let trick = [];
 let phase = '';
@@ -337,101 +114,70 @@ let correct = true;
 let trick2Order = null;
 let trick2Step = 0;
 let currentTask = null;
+let pendingLeaderCorrect = null;
+let pendingLeaderCallback = null;
+const timers = new Set();
 
-/* ============================================================
-   Универсальные помощники
-   ============================================================ */
+function schedule(fn, ms) {
+    const id = setTimeout(() => { timers.delete(id); fn(); }, ms);
+    timers.add(id);
+    return id;
+}
+function clearTimers() {
+    timers.forEach(id => clearTimeout(id));
+    timers.clear();
+}
+
 function playCard(player, card) {
     hands[player] = hands[player].filter(c => c !== card);
     trick.push({ player, card });
     render();
 }
-
 function determineWinner(trickCards) {
-    let winner = trickCards[0].player;
-    let bestRank = RANK_ORDER[trickCards[0].card];
-    for (let i = 1; i < trickCards.length; i++) {
-        const r = RANK_ORDER[trickCards[i].card];
-        if (r > bestRank) { bestRank = r; winner = trickCards[i].player; }
+    const real = trickCards.filter(t => t.card !== '??');
+    if (real.length === 0) return trickCards[0].player;
+    let winner = real[0].player;
+    let bestRank = RANK_ORDER[real[0].card];
+    for (let i = 1; i < real.length; i++) {
+        const r = RANK_ORDER[real[i].card];
+        if (r > bestRank) { bestRank = r; winner = real[i].player; }
     }
     return winner;
 }
-
 function getAutoCard(player) {
-    const cards = hands[player];
+    const cards = hands[player].filter(c => c !== '??');
+    if (cards.length === 0) return '??';
     let low = cards[0];
     for (const c of cards) if (RANK_ORDER[c] < RANK_ORDER[low]) low = c;
     return low;
 }
 
-/* ============================================================
-   ИИ защитника для задачи 1 (сохраняет импас-логику)
-   ============================================================ */
 function defenderTask1(player) {
     if (trick.some(t => t.player === player)) return getAutoCard(player);
-
     const partner = (player === 'W') ? 'E' : 'W';
-    const partnerCovered = trick.some(t =>
-        t.player === partner && (t.card === 'K' || t.card === 'Q')
-    );
-    if (partnerCovered) return getAutoCard(player);
-
+    if (trick.some(t => t.player === partner && (t.card === 'K' || t.card === 'Q'))) return getAutoCard(player);
     const decCards = trick.filter(t => t.player === 'N' || t.player === 'S');
     if (decCards.length === 0) return getAutoCard(player);
-
     let topDec = decCards[0].card;
-    for (const t of decCards) {
-        if (RANK_ORDER[t.card] > RANK_ORDER[topDec]) topDec = t.card;
-    }
-
+    for (const t of decCards) if (RANK_ORDER[t.card] > RANK_ORDER[topDec]) topDec = t.card;
     const honor = hands[player].find(c => c === 'K' || c === 'Q');
     if (honor && (topDec === '9' || topDec === 'J')) return honor;
     return getAutoCard(player);
 }
-
-/* ============================================================
-   ИИ защитника для задачи 2 (2-я рука малой, 3/4 берут)
-   ============================================================ */
 function defenderTask2(player) {
     if (trick.some(t => t.player === player)) return getAutoCard(player);
-
     const position = trick.length;
-
     let currentBest = null;
-    for (const t of trick) {
-        if (!currentBest || RANK_ORDER[t.card] > RANK_ORDER[currentBest.card]) {
-            currentBest = t;
-        }
-    }
+    for (const t of trick) if (!currentBest || RANK_ORDER[t.card] > RANK_ORDER[currentBest.card]) currentBest = t;
     if (!currentBest) return getAutoCard(player);
-
     const partner = (player === 'W') ? 'E' : 'W';
     if (currentBest.player === partner) return getAutoCard(player);
     if (position === 1) return getAutoCard(player);
-
-    const sorted = [...hands[player]].sort((a, b) => RANK_ORDER[a] - RANK_ORDER[b]);
-    for (const c of sorted) {
-        if (RANK_ORDER[c] > RANK_ORDER[currentBest.card]) return c;
-    }
+    const sorted = [...hands[player]].filter(c => c !== '??').sort((a, b) => RANK_ORDER[a] - RANK_ORDER[b]);
+    for (const c of sorted) if (RANK_ORDER[c] > RANK_ORDER[currentBest.card]) return c;
     return getAutoCard(player);
 }
 
-/* ============================================================
-   СПИСОК ЗАДАЧ
-   ----------------------------------------------------------------
-   Чтобы добавить новую задачу — просто допишите ещё один объект
-   в этот массив. Структура задачи:
-     id              — уникальный номер
-     shortTitle      — короткое название для карточки в меню
-     fullTitle       — заголовок на экране задачи
-     deal()          — функция, возвращает { N:[...], S:[...], W:[...], E:[...] }
-     prePlay         — массив авто-ходов перед действием ученика в 1-й взятке
-     expectedSouth1  — какую карту должен сыграть Юг в 1-й взятке
-     correctLeader   — с какой руки нужно ходить после 1-й взятки ('N' или 'S')
-     expectedTrick2  — { 'N': '9', 'S': 'J' } — какие карты ждём от людей
-     defenderPlay    — функция ИИ защитника
-     explanation     — HTML-текст, показываемый при победе
-   ============================================================ */
 const TASKS = [
     {
         id: 1,
@@ -440,54 +186,366 @@ const TASKS = [
         deal: () => {
             const wHasKing = Math.random() < 0.5;
             return {
-                N: ['8','5','4'],
-                S: ['A','J','9'],
+                N: ['8','5','4'], S: ['A','J','9'],
                 W: wHasKing ? ['K','7','2'] : ['Q','7','2'],
                 E: wHasKing ? ['Q','6','3'] : ['K','6','3']
             };
         },
         prePlay: [['N','4'], ['E','3']],
-        expectedSouth1: '9',
-        correctLeader: 'N',
+        expectedSouth1: '9', correctLeader: 'N',
         expectedTrick2: { 'S': 'J' },
         defenderPlay: defenderTask1,
         explanation:
             'Двойной импас: сначала играем <b>девяткой</b>. ' +
-            'Если её берут королём или дамой, после этого проводится ' +
-            'импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
-            'Порядок ходов менять нельзя: второго импаса не существует, ' +
-            'если первый не прошёл.<br><br>' +
-            'Расчёт на то, что фигуры разделены — дама в одной руке, ' +
-            'король в другой. Это игра на наилучший шанс.'
+            'Если её берут королём или дамой, после этого проводится импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
+            'Порядок ходов менять нельзя: второго импаса не существует, если первый не прошёл.'
     },
     {
         id: 2,
         shortTitle: 'В 9 2 против Д 4 3',
         fullTitle: 'Задача 2: Розыгрыш В 9 2 против Д 4 3',
-        deal: () => ({
-            N: ['J','9','2'],
-            S: ['Q','4','3'],
-            W: ['K','T','5'],
-            E: ['A','8','6']
-        }),
+        deal: () => ({ N: ['J','9','2'], S: ['Q','4','3'], W: ['K','T','5'], E: ['A','8','6'] }),
         prePlay: [['N','2'], ['E','6']],
-        expectedSouth1: 'Q',
-        correctLeader: 'S',
+        expectedSouth1: 'Q', correctLeader: 'S',
         expectedTrick2: { 'S': '3', 'N': '9' },
         defenderPlay: defenderTask2,
         explanation:
             'Вы разыграли масть правильно!<br><br>' +
-            '<b>1. Сначала ход к Даме.</b> Её забирает старшая фигура (Король).<br><br>' +
-            '<b>2. Затем ход от Юга к 9ке Севера</b> — импас десятки. ' +
-            'Запад на второй руке кладёт малую, Восток бьёт Тузом.<br><br>' +
-            '<b>3. Валет Севера</b> остаётся старшим и забирает десятку Запада.<br><br>' +
-            'Порядок ходов менять нельзя: второго импаса не существует, ' +
-            'если первый не прошёл.'
+            '<b>1. Ход к Даме.</b> Её забирает Король.<br>' +
+            '<b>2. Ход от Юга к 9-ке Севера</b> — импас десятки.<br>' +
+            '<b>3. Валет Севера</b> остаётся старшим и берёт десятку Запада.'
+    },
+    {
+        id: 3,
+        shortTitle: 'К Д 5 2 против В 8 7',
+        fullTitle: 'Задача 3: Розыгрыш К Д 5 2 против В 8 7',
+        custom: true,
+        sp: {
+            N: ['K','Q','5','2'], S: ['J','8','7'], missing: ['A','T','9','6','4','3'],
+            key: 'A', planRounds: 2,
+            // Дважды ход малой от Юга к К Д
+            planLeader: (l) => l === 'S',
+            planCard: (p, c, x) => {
+                if (x.step === 0) return c !== 'J';
+                if (p === 'N' && x.leader === 'S') return x.second === 'A' ? isSmall(c, 'KQ') : 'KQ'.includes(c);
+                return true;
+            }
+        },
+        explanation:
+            '<b>Ходим малой к КДхх.</b> Если туз не появляется и король получает взятку, процесс повторяется.<br><br>' +
+            'Распределение масти 3-3 игнорируем: тогда всё равно, как играть. Стремимся к тому, чтобы избежать потери двух взяток ' +
+            'в случае <b>более вероятного</b> распределения 4-2. При шести отсутствующих картах вероятность, что они разделились 4-2, ' +
+            'равна 48%, а распределение 3-3 имеет вероятность только 36%.<br><br>' +
+            'Может быть, у игрока, сидящего перед двумя онерами, <b>второй</b> туз. Дайте ему возможность использовать его на фоску.<br><br>' +
+            'Игра к валету такого же эффекта не даст: если он удержит взятку, разыгрывающий всё равно может отдать короля ' +
+            'на второго туза, и в масти будет две отдачи – на туза и 10-ку. Следовательно, играем к двум онерам.'
+    },
+    {
+        id: 4,
+        shortTitle: 'К 4 3 2 против Д 7 6 5',
+        fullTitle: 'Задача 4: Розыгрыш К 4 3 2 против Д 7 6 5',
+        custom: true,
+        sp: {
+            N: ['K','4','3','2'], S: ['Q','7','6','5'], missing: ['A','J','T','9','8'],
+            key: 'A', planRounds: 2,
+            hint: (lay) => 'По торговле туз, скорее всего, у <span class="who">' + spHolderName(lay, 'A') + 'а</span>.',
+            // Туз должен оказаться слева от ходящего; затем малыми с обеих рук
+            planLeader: (l, x) => x.round > 0 || l === (spHolder(x.layout, 'A') === 'W' ? 'S' : 'N'),
+            planCard: (p, c, x) => {
+                if (x.round === 1) return isSmall(c, 'KQ');
+                if (x.step === 0) return isSmall(c, 'KQ');
+                if (x.step === 2) return x.second === 'A' ? isSmall(c, 'KQ') : 'KQ'.includes(c);
+                return true;
+            }
+        },
+        explanation:
+            'Единственная надежда получить три взятки состоит в том, что туз <b>второй</b>.<br><br>' +
+            'Далее нужно определить, у кого он, и играть так, чтобы туз был <b>слева от ходящего</b>.<br><br>' +
+            'Если угадаем и король (или дама) выиграет, играем <b>малыми с обеих рук</b> в следующую взятку ' +
+            'и надеемся, что выпадет туз.<br><br>' +
+            'Распределение, которое нам нужно: Север – К 4 3 2, Запад – Т 9, Восток – В 10 8, Юг – Д 7 6 5.'
+    },
+    {
+        id: 5,
+        shortTitle: 'В 5 3 против Т Д 4 2',
+        fullTitle: 'Задача 5: Розыгрыш В 5 3 против Т Д 4 2',
+        custom: true,
+        sp: {
+            N: ['J','5','3'], S: ['A','Q','4','2'], missing: ['K','T','9','8','7','6'],
+            key: 'K', planRounds: 2,
+            hint: (lay) => 'По торговле король, скорее всего, у <span class="who">' + spHolderName(lay, 'K') + 'а</span>.',
+            // Король у Востока — малой к Т Д; король у Запада — к валету; затем туз
+            planLeader: (l, x) => x.round > 0 || l === (spHolder(x.layout, 'K') === 'E' ? 'N' : 'S'),
+            planCard: (p, c, x) => {
+                if (x.round === 1) return p !== 'S' || c === 'A';
+                if (x.step === 0) return isSmall(c, 'AQJ');
+                if (x.step === 2) {
+                    if (x.second === 'K') return isSmall(c, 'AQJ') || c === 'A';
+                    return c === (p === 'S' ? 'Q' : 'J');
+                }
+                return true;
+            }
+        },
+        explanation:
+            'Если масть лежит 3-3, без проблем возьмём три взятки. Рассмотрим расклад 4-2.<br><br>' +
+            'Если торговля или игра в предыдущих взятках предрасполагает к тому, что король у <b>Запада</b>, пойдём <b>к валету</b>.<br><br>' +
+            'Если более вероятно, что король у <b>Востока</b>, играем <b>малой к Т Д</b>, импасируя короля. ' +
+            'Далее играем <b>тузом</b> в надежде, что король был вторым и выпадет на туза.'
+    },
+    {
+        id: 6,
+        shortTitle: 'Т 10 6 5 против Д В 3 2, переходы на стол есть',
+        fullTitle: 'Задача 6: Т 10 6 5 против Д В 3 2 (переходов на стол достаточно)',
+        custom: true,
+        sp: {
+            N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
+            key: 'K', planRounds: 2,
+            // Сначала двойкой к тузу (на синглетного короля), затем импас со стола
+            planLeader: (l) => l === 'N',
+            planCard: (p, c, x) => {
+                if (x.round === 0) return p === 'N' ? isSmall(c, 'QJ') : c === 'A';
+                return p !== 'N' || 'QJ'.includes(c);
+            }
+        },
+        explanation: ''
+    },
+    {
+        id: 7,
+        shortTitle: 'Т 10 6 5 против Д В 3 2, переходов на стол нет',
+        fullTitle: 'Задача 7: Т 10 6 5 против Д В 3 2 (вы на столе, других переходов нет)',
+        custom: true,
+        sp: {
+            N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
+            key: 'K', planRounds: 2, noEntries: true, firstLeader: 'N',
+            // Дамой, и если удержали взятку — валетом
+            planLeader: () => true,
+            planCard: (p, c, x) => {
+                if (p === 'N') return 'QJ'.includes(c);
+                return x.played.some(t => t.card === 'K') ? c === 'A' : c !== 'A';
+            }
+        },
+        explanation: ''
     }
 ];
 
+const FINESSE_TEXT =
+    'Применяем тот же принцип к обычному импасу.<br><br>' +
+    'Если на стол достаточно переходов, играем <b>двойкой</b> на тот случай, если синглетный король перед тузом.<br><br>' +
+    'Если на столе нет других переходов, то не можем позволить себе страховаться. Мы должны пойти <b>дамой</b> ' +
+    'и, если удерживаем взятку, ходим <b>валетом</b>.';
+TASKS[5].explanation = FINESSE_TEXT;
+TASKS[6].explanation = FINESSE_TEXT;
+
 /* ============================================================
-   МЕНЮ
+   Задачи 3–7: случайная раздача отсутствующих карт между Западом
+   и Востоком; засчитывается план из теории, а после него — игра
+   без явных потерь. Защита играет без ошибок.
+   ============================================================ */
+const SP = { trickNum: 0, step: 0, order: [], nsTricks: 0, keySeen: false, layout: null,
+             planOn: false, leader: null, playedCards: new Set(), showedOut: { W: false, E: false } };
+const SP_NAMES = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
+const spMemo = new Map();
+
+function isSmall(c, honors) { return c !== '??' && !honors.includes(c); }
+function spCfg() { return currentTask.sp; }
+function spSpades(h, p) { return h[p].filter(c => c !== '??'); }
+function spHolder(lay, card) { return lay.W.includes(card) ? 'W' : 'E'; }
+function spHolderName(lay, card) { return SP_NAMES[spHolder(lay, card)]; }
+function spSortHand(h) { return h.sort((a, b) => (RANK_ORDER[b] || 0) - (RANK_ORDER[a] || 0)); }
+function spPad(h) { while (h.length < 4) h.push('??'); return spSortHand(h); }
+function spRemove(arr, card) { const r = arr.slice(); const i = r.indexOf(card); if (i >= 0) r.splice(i, 1); return r; }
+function spBuildOrder(leader) {
+    const seq = ['N','E','S','W'];
+    const i = seq.indexOf(leader);
+    return seq.slice(i).concat(seq.slice(0, i));
+}
+
+function spDeal(missing) {
+    // У Запада и Востока по 13 мест: отсутствующие карты масти и карты других мастей
+    const pool = missing.concat(Array(26 - missing.length).fill('x'));
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return { W: pool.slice(0, 13).filter(c => c !== 'x'), E: pool.slice(13).filter(c => c !== 'x') };
+}
+
+/* Кто может начать следующую взятку */
+function spLeaders(h, lastWinner) {
+    const has = p => spSpades(h, p).length > 0;
+    const ns = ['N','S'].filter(has);
+    if (ns.length === 0 || !spCfg().noEntries) return ns;
+    if (lastWinner === 'N' || lastWinner === 'S') return has(lastWinner) ? [lastWinner] : ns;
+    return has('S') ? ['S'] : ns;   // защита уходит в другую масть, ход приходит в руку
+}
+
+function spTrickWinner(played) {
+    let best = null;
+    for (const t of played) if (t.card !== '??' && (!best || RANK_ORDER[t.card] > RANK_ORDER[best.card])) best = t;
+    return best ? best.player : played[0].player;
+}
+
+/* Полный перебор: сколько взяток возьмут Север и Юг при лучшей игре обеих сторон */
+function spValue(h, order, pos, played) {
+    if (pos === 4) {
+        const w = spTrickWinner(played);
+        return ((w === 'N' || w === 'S') ? 1 : 0) + spBetween(h, w);
+    }
+    const p = order[pos];
+    const options = spSpades(h, p);
+    if (options.length === 0) options.push('??');
+    const maximize = (p === 'N' || p === 'S');
+    let result = maximize ? -1 : 99;
+    for (const c of options) {
+        const nh = Object.assign({}, h);
+        nh[p] = spRemove(h[p], c);
+        const v = spValue(nh, order, pos + 1, played.concat([{ player: p, card: c }]));
+        result = maximize ? Math.max(result, v) : Math.min(result, v);
+    }
+    return result;
+}
+
+function spBetween(h, lastWinner) {
+    const leaders = spLeaders(h, lastWinner);
+    if (leaders.length === 0) return 0;
+    const key = currentTask.id + ':' + (spCfg().noEntries ? lastWinner : '') + ':' +
+        ['N','E','S','W'].map(p => spSpades(h, p).join('')).join('|');
+    if (spMemo.has(key)) return spMemo.get(key);
+    let best = 0;
+    for (const l of leaders) best = Math.max(best, spValue(h, spBuildOrder(l), 0, []));
+    spMemo.set(key, best);
+    return best;
+}
+
+function spCardValue(h, p, card) {
+    const nh = Object.assign({}, h);
+    nh[p] = spRemove(h[p], card);
+    return spValue(nh, SP.order, SP.step + 1, trick.concat([{ player: p, card }]));
+}
+
+/* Своя старшая карта уже берёт взятку, а ученик кладёт на неё фигуру, имея мелкую */
+function spWastesHonor(p, card) {
+    const isHonor = c => RANK_ORDER[c] >= RANK_ORDER['J'];
+    const partner = trick.find(t => t.player === (p === 'N' ? 'S' : 'N'));
+    if (!partner || !isHonor(partner.card) || spTrickWinner(trick) !== partner.player) return false;
+    return isHonor(card) && spSpades(hands, p).some(c => !isHonor(c));
+}
+
+function spContext() {
+    const second = trick.length > 1 ? trick[1].card : null;
+    return { round: SP.trickNum, step: SP.step, leader: SP.leader, second, played: trick, layout: SP.layout };
+}
+
+function spStart() {
+    const cfg = spCfg();
+    const d = spDeal(cfg.missing);
+    hands = { N: spPad(cfg.N.slice()), S: spPad(cfg.S.slice()), W: spPad(d.W.slice()), E: spPad(d.E.slice()) };
+    SP.layout = { W: spSortHand(d.W.slice()), E: spSortHand(d.E.slice()) };
+    trick = [];
+    correct = true;
+    SP.trickNum = 0;
+    SP.step = 0;
+    SP.order = [];
+    SP.nsTricks = 0;
+    SP.keySeen = false;
+    SP.planOn = false;
+    SP.playedCards = new Set();
+    SP.showedOut = { W: false, E: false };
+    spMemo.clear();
+    render();
+    if (cfg.firstLeader) { spBeginTrick(cfg.firstLeader, false); return; }
+    const hint = cfg.hint ? cfg.hint(SP.layout) + '<br>' : '';
+    showLeaderPanel(hint + 'С какой руки начать розыгрыш?', null, l => spBeginTrick(l, true));
+}
+
+function spBeginTrick(leader, chosen) {
+    const cfg = spCfg();
+    SP.planOn = SP.trickNum < cfg.planRounds && !SP.keySeen;
+    if (chosen && SP.planOn && !cfg.planLeader(leader, spContext())) correct = false;
+    // Когда ключевая карта уже вышла, гадать не о чем: ход не должен терять взятку
+    if (chosen && SP.keySeen) {
+        const value = l => spValue(hands, spBuildOrder(l), 0, []);
+        if (value(leader) < Math.max(...spLeaders(hands, null).map(value))) correct = false;
+    }
+    SP.leader = leader;
+    SP.order = spBuildOrder(leader);
+    SP.step = 0;
+    spNext();
+}
+
+function spPlay(p, card) {
+    if (card === '??') SP.showedOut[p] = true;
+    else SP.playedCards.add(card);
+    playCard(p, card);
+    SP.step++;
+}
+
+function spNext() {
+    if (SP.step >= 4) { spResolve(); return; }
+    const p = SP.order[SP.step];
+    if (spSpades(hands, p).length === 0) {
+        schedule(() => { spPlay(p, '??'); spNext(); }, 550);
+        return;
+    }
+    if (p === 'N' || p === 'S') {
+        waiting = { player: p, expected: null };
+        render();
+    } else {
+        schedule(() => { spPlay(p, spDefenseCard(p)); spNext(); }, 550);
+    }
+}
+
+/* Защита играет без ошибок; из равноценных карт кладёт младшую */
+function spDefenseCard(p) {
+    const spades = spSpades(hands, p).sort((a, b) => RANK_ORDER[a] - RANK_ORDER[b]);
+    let bestCard = spades[0], bestValue = 99;
+    for (const c of spades) {
+        const v = spCardValue(hands, p, c);
+        if (v < bestValue) { bestValue = v; bestCard = c; }
+    }
+    return bestCard;
+}
+
+function spOnClick(player, card) {
+    if (!waiting || waiting.player !== player) return;
+    if (SP.planOn && !spCfg().planCard(player, card, spContext())) correct = false;
+    if (spWastesHonor(player, card)) correct = false;
+    if (SP.keySeen) {
+        const best = Math.max(...spSpades(hands, player).map(c => spCardValue(hands, player, c)));
+        if (spCardValue(hands, player, card) < best) correct = false;
+    }
+    waiting = null;
+    spPlay(player, card);
+    spNext();
+}
+
+function spResolve() {
+    const winner = spTrickWinner(trick);
+    if (trick.some(t => t.card === spCfg().key)) SP.keySeen = true;
+    if (winner === 'N' || winner === 'S') SP.nsTricks++;
+    schedule(() => {
+        trick = [];
+        SP.trickNum++;
+        render();
+        const leaders = spLeaders(hands, winner);
+        if (leaders.length === 0) { showResult(); return; }
+        if (leaders.length === 1) { spBeginTrick(leaders[0], false); return; }
+        const defenderWon = (winner === 'W' || winner === 'E');
+        const text = '<span class="who">' + SP_NAMES[winner] + '</span> ' +
+            (defenderWon ? 'взял взятку и сменил масть.' : 'получил взятку.') +
+            '<br>С какой руки продолжить?';
+        showLeaderPanel(text, null, l => spBeginTrick(l, true));
+    }, 900);
+}
+
+function spSummary() {
+    const fmt = cards => cards.length ? cards.map(c => RANK_LABEL[c] || c).join(' ') : 'пусто';
+    return '<br><br><b>Расклад:</b> Запад – ' + fmt(SP.layout.W) + ', Восток – ' + fmt(SP.layout.E) + '.<br>' +
+        '<b>Взято взяток:</b> ' + SP.nsTricks + '.';
+}
+
+/* ============================================================
+   Меню
    ============================================================ */
 function renderMenu() {
     const grid = document.getElementById('taskGrid');
@@ -503,12 +561,15 @@ function renderMenu() {
         grid.appendChild(card);
     });
 }
-
 function showMenu() {
+    clearTimers();
+    waiting = null;
+    pendingLeaderCallback = null;
+    hideHandover();
+    hideResult();
     document.getElementById('menuScreen').classList.remove('hidden');
     document.getElementById('taskScreen').classList.add('hidden');
 }
-
 function loadTask(taskId) {
     currentTask = TASKS.find(t => t.id === taskId);
     if (!currentTask) return;
@@ -518,215 +579,192 @@ function loadTask(taskId) {
     newDeal();
 }
 
-/* ============================================================
-   Новая сдача
-   ============================================================ */
 function newDeal() {
     if (!currentTask) return;
-    hands = currentTask.deal();
+    clearTimers();
     trick = [];
-    phase = 'trick1';
-    waiting = null;
     correct = true;
+    waiting = null;
     trick2Order = null;
     trick2Step = 0;
-
+    pendingLeaderCorrect = null;
+    pendingLeaderCallback = null;
     hideHandover();
     hideResult();
+
+    if (currentTask.custom) { spStart(); return; }
+
+    hands = currentTask.deal();
+    phase = 'trick1';
     render();
     startTrick1();
 }
 
-/* ============================================================
-   Ход 1
-   ============================================================ */
 function startTrick1() {
     const prePlay = currentTask.prePlay;
+    if (!prePlay || prePlay.length === 0) { waiting = { player: 'S' }; render(); return; }
     let delay = 400;
     prePlay.forEach(([player, card], idx) => {
-        setTimeout(() => {
+        schedule(() => {
             playCard(player, card);
             if (idx === prePlay.length - 1) {
-                setTimeout(() => {
-                    waiting = { player: 'S' };
-                    render();
-                }, 450);
+                schedule(() => { waiting = { player: 'S' }; render(); }, 450);
             }
         }, delay);
         delay += 550;
     });
 }
 
-/* ============================================================
-   Клик ученика
-   ============================================================ */
 function onCardClick(player, card) {
-    if (!waiting) return;
+    if (currentTask && currentTask.custom) {
+        spOnClick(player, card);
+        return;
+    }
+    if (!waiting || phase === 'done') return;
     if (waiting.player !== player) return;
-    waiting = null;
 
+    waiting = null;
     if (phase === 'trick1' && player === 'S') {
         if (card !== currentTask.expectedSouth1) correct = false;
         playCard('S', card);
-        setTimeout(() => {
+        schedule(() => {
             playCard('W', currentTask.defenderPlay('W'));
-            setTimeout(afterTrick1, 850);
+            schedule(afterTrick1, 850);
         }, 600);
         return;
     }
-
     if (phase === 'trick2') {
         const expected = currentTask.expectedTrick2[player];
         if (expected && card !== expected) correct = false;
         playCard(player, card);
         trick2Step++;
         processTrick2();
-        return;
     }
 }
 
-/* ============================================================
-   Конец первой взятки
-   ============================================================ */
 function afterTrick1() {
     const winner = determineWinner(trick);
-    setTimeout(() => {
+    schedule(() => {
         trick = [];
         render();
-        showHandover(winner);
+        const names = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
+        showLeaderPanel(
+            '<span class="who">' + names[winner] + '</span> получил взятку.<br>' +
+            'С какой руки хотите сделать следующий ход?',
+            currentTask.correctLeader,
+            (chosen) => {
+                phase = 'trick2';
+                const base = ['N','E','S','W'];
+                const start = base.indexOf(chosen);
+                trick2Order = [];
+                for (let i = 0; i < 4; i++) trick2Order.push(base[(start + i) % 4]);
+                trick2Step = 0;
+                processTrick2();
+            }
+        );
     }, 900);
 }
 
-function showHandover(winner) {
-    phase = 'handover';
-    const names = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
-    document.getElementById('handoverText').innerHTML =
-        '<span class="who">' + names[winner] + '</span> получил взятку.<br>' +
-        'С какой руки хотите сделать следующий ход?';
+function showLeaderPanel(text, correctLeader, callback) {
+    pendingLeaderCorrect = correctLeader;
+    pendingLeaderCallback = callback;
+    document.getElementById('handoverText').innerHTML = text;
     document.getElementById('handoverPanel').classList.add('show');
     render();
 }
-
-function hideHandover() {
-    document.getElementById('handoverPanel').classList.remove('show');
-}
-
+function hideHandover() { document.getElementById('handoverPanel').classList.remove('show'); }
 function chooseLeader(player) {
-    if (phase !== 'handover') return;
+    if (!pendingLeaderCallback) return;
     hideHandover();
-
-    if (player !== currentTask.correctLeader) correct = false;
-
-    phase = 'trick2';
-    const base = ['N','E','S','W'];
-    const start = base.indexOf(player);
-    trick2Order = [];
-    for (let i = 0; i < 4; i++) trick2Order.push(base[(start + i) % 4]);
-    trick2Step = 0;
-
-    processTrick2();
+    if (pendingLeaderCorrect && player !== pendingLeaderCorrect) correct = false;
+    const cb = pendingLeaderCallback;
+    pendingLeaderCallback = null;
+    pendingLeaderCorrect = null;
+    cb(player);
 }
 
-/* ============================================================
-   Вторая взятка
-   ============================================================ */
 function processTrick2() {
     if (trick2Step >= 4) {
         const winner = determineWinner(trick);
-        setTimeout(() => {
+        schedule(() => {
             trick = [];
             render();
             runTrick3(winner);
         }, 900);
         return;
     }
-
     const player = trick2Order[trick2Step];
-
     if (player === 'N' || player === 'S') {
         waiting = { player };
         render();
     } else {
         const card = currentTask.defenderPlay(player);
-        setTimeout(() => {
+        schedule(() => {
             playCard(player, card);
             trick2Step++;
             processTrick2();
         }, 650);
     }
 }
-
-/* ============================================================
-   Третья взятка — авто
-   ============================================================ */
 function runTrick3(winner) {
     phase = 'trick3';
     const base = ['N','E','S','W'];
     const start = base.indexOf(winner);
     const seq = [];
     for (let i = 0; i < 4; i++) seq.push(base[(start + i) % 4]);
-
     seq.forEach((player, i) => {
-        setTimeout(() => {
+        schedule(() => {
             const card = hands[player][0];
             playCard(player, card);
-            if (i === 3) setTimeout(showResult, 900);
+            if (i === 3) schedule(showResult, 900);
         }, 700 * (i + 1));
     });
 }
 
-/* ============================================================
-   Результат
-   ============================================================ */
 function showResult() {
     phase = 'done';
     trick = [];
     hands = { N:[], S:[], W:[], E:[] };
     render();
-
-    setTimeout(() => {
+    schedule(() => {
         const panel = document.getElementById('resultPanel');
         const title = document.getElementById('resultTitle');
         const expl  = document.getElementById('resultExplanation');
-
         panel.classList.remove('win', 'lose');
-
         if (correct) {
             panel.classList.add('win');
             title.innerText = 'Ты справился!';
-            expl.innerHTML = currentTask.explanation;
+            expl.innerHTML = currentTask.explanation + (currentTask.custom ? spSummary() : '');
         } else {
             panel.classList.add('lose');
             title.innerText = 'Упс. Попробуй ещё раз.';
-            expl.innerHTML = 'Нажми «Новая попытка» и внимательно следи за порядком ходов.';
+            expl.innerHTML = 'Нажми «Новая попытка» и внимательно выбери карту.' + (currentTask.custom ? spSummary() : '');
         }
-
         panel.classList.add('show');
     }, 500);
 }
+function hideResult() { document.getElementById('resultPanel').classList.remove('show', 'win', 'lose'); }
 
-function hideResult() {
-    document.getElementById('resultPanel').classList.remove('show', 'win', 'lose');
-}
-
-/* ============================================================
-   Отрисовка
-   ============================================================ */
-function createCardEl(rank, faceUp) {
+function createCardEl(card, faceUp) {
     const el = document.createElement('div');
     el.className = 'card';
+    if (card === '??') {
+        if (faceUp) {
+            el.classList.add('discard');
+            el.innerHTML = 'другая<br>масть';
+        } else {
+            el.classList.add('back');
+        }
+        return el;
+    }
     if (!faceUp) { el.classList.add('back'); return el; }
-    const label = RANK_LABEL[rank] || rank;
+    const label = RANK_LABEL[card[0]] || card[0];
     el.classList.add('suit-' + SUIT);
     el.innerHTML =
-        '<div class="corner">' +
-            '<div class="rank">' + label + '</div>' +
-            '<div class="suit">' + SUIT_SYM + '</div>' +
-        '</div>' +
+        '<div class="corner"><div class="rank">' + label + '</div><div class="suit">' + SUIT_SYM + '</div></div>' +
         '<div class="center-suit">' + SUIT_SYM + '</div>';
     return el;
 }
-
 function render() {
     renderHand('N', 'handN', true);
     renderHand('S', 'handS', true);
@@ -734,18 +772,16 @@ function render() {
     renderHand('E', 'handE', false);
     renderTrick();
 }
-
 function renderHand(player, containerId, faceUp) {
     const container = document.getElementById(containerId);
     const label = container.querySelector('.hand-label');
     container.innerHTML = '';
     if (label) container.appendChild(label);
-
     const isWaiting = waiting && waiting.player === player;
-
     hands[player].forEach(card => {
-        const el = createCardEl(card, faceUp);
-        if (isWaiting) {
+        const isDiscard = card === '??';
+        const el = createCardEl(card, isDiscard ? false : faceUp);
+        if (isWaiting && !isDiscard) {
             el.classList.add('clickable');
             el.onclick = () => onCardClick(player, card);
         } else {
@@ -754,16 +790,10 @@ function renderHand(player, containerId, faceUp) {
         container.appendChild(el);
     });
 }
-
 function renderTrick() {
     const area = document.getElementById('trickArea');
     area.innerHTML = '';
-    const positions = {
-        N: { row: 1, col: 2 },
-        W: { row: 2, col: 1 },
-        E: { row: 2, col: 3 },
-        S: { row: 3, col: 2 }
-    };
+    const positions = { N:{row:1,col:2}, W:{row:2,col:1}, E:{row:2,col:3}, S:{row:3,col:2} };
     const lastIdx = trick.length - 1;
     trick.forEach(({ player, card }, idx) => {
         const pos = positions[player];
@@ -776,12 +806,8 @@ function renderTrick() {
     });
 }
 
-/* ============================================================
-   Старт
-   ============================================================ */
 renderMenu();
 showMenu();
 </script>
-
 </body>
 </html>
