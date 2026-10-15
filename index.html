@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажёр по розыгрышу масти</title>
+    <title>Бриджевый практикум</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +14,7 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 0 16px;
+            padding: 24px 16px;
             box-sizing: border-box;
             text-align: center;
         }
@@ -24,9 +24,11 @@
         }
         .btn {
             display: block;
-            width: 250px;
+            width: 320px;
             max-width: 100%;
             padding: 15px;
+            margin-bottom: 14px;
+            box-sizing: border-box;
             text-align: center;
             background-color: #4CAF50;
             color: white;
@@ -38,14 +40,46 @@
         .btn:hover {
             background-color: #45a049;
         }
+        .btn small {
+            display: block;
+            font-size: 13px;
+            opacity: 0.85;
+            margin-bottom: 2px;
+        }
+        h2 {
+            color: #2f6f3f;
+            font-size: 20px;
+            margin: 18px 0 10px;
+        }
+        .btn.all {
+            background-color: #2f6f9f;
+            margin-top: 16px;
+        }
+        .btn.all:hover {
+            background-color: #285f88;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Тренажёр по розыгрышу масти</h1>
+    <h1>Бриджевый практикум</h1>
 
-    <!-- Кнопка ведёт на файл тренажёра sd.html -->
-    <a href="sd.html" class="btn">Открыть тренажёр</a>
+    <!-- Кнопки ведут на тренажёр sd.html; ?razdel=N открывает только раздел N.
+         Новый раздел — новая кнопка с его номером. -->
+    <h2>Вист</h2>
+    <a href="sd.html?razdel=2" class="btn"><small>Раздел 2</small>Первый ход</a>
+    <a href="sd.html?razdel=4" class="btn"><small>Раздел 4</small>Защита взяток на висте</a>
+    <a href="sd.html?razdel=6" class="btn"><small>Раздел 6</small>Вист на второй руке</a>
+    <a href="sd.html?razdel=7" class="btn"><small>Раздел 7</small>Вист на второй руке: тренировка</a>
+
+    <h2>Торговля</h2>
+    <a href="sd.html?razdel=5" class="btn"><small>Раздел 5</small>Торговля</a>
+
+    <h2>Розыгрыш</h2>
+    <a href="sd.html?razdel=1" class="btn"><small>Раздел 1</small>Розыгрыш онерных секвенций</a>
+    <a href="sd.html?razdel=3" class="btn"><small>Раздел 3</small>Экспасс с убиткой</a>
+
+    <a href="sd.html" class="btn all">Все разделы</a>
 
 </body>
 </html>
