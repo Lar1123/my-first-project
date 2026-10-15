@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бриджевый практикум — урок 16.10</title>
+<style>
+    /* ===== Палитра практикума: все основные цвета здесь ===== */
+    :root {
+        --felt: #17634d;          /* сукно — центр */
+        --felt2: #104b3b;         /* сукно — края */
+        --gold: #f4d36b;          /* акцент: заголовки, рамки, кнопки */
+        --gold-light: #f8e3a0;    /* подписи мест за столом */
+        --gold-hover: #f8df8c;
+        --btn: #0f3a2e;           /* тёмная кнопка с золотой рамкой */
+        --panel: #fffdf7;         /* светлые панели и итоговые окна */
+        --panel-text: #1d2a30;
+        --accent-dark: #17634d;   /* выделение на светлых панелях */
+        --red-on-light: #d52d32;  /* красные масти на светлом */
+        --red-on-felt: #ffb3ad;   /* красные масти на сукне */
+        --club: #2e7d32;          /* трефы на картах — зелёные, чтобы не сливались с пиками */
+        --win: #2e7d32; --lose: #c62828; --partial: #b8860b;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; min-height: 100vh; background: radial-gradient(ellipse at center, var(--felt) 0%, var(--felt2) 100%); font-family: "Segoe UI", Tahoma, Arial, sans-serif; color: #fff; user-select: none; }
+    .menu-screen { min-height: 100vh; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+    .menu-screen.hidden { display: none; }
+    .menu-title { font-size: 32px; font-weight: bold; color: var(--gold); text-shadow: 2px 2px 6px #000; margin: 0 0 12px 0; text-align: center; }
+    .menu-subtitle { color: #d1e7dd; margin-bottom: 40px; font-size: 16px; }
+    .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; width: 100%; }
+    .task-card { background: rgba(0, 0, 0, 0.55); border: 2px solid var(--gold); border-radius: 14px; padding: 22px 24px; cursor: pointer; transition: all 0.2s; text-align: left; position: relative; }
+    .task-card:hover { background: rgba(244, 211, 107, 0.15); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(244, 211, 107, 0.35); }
+    .task-card .num { font-size: 13px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.85; }
+    .task-card .name { font-size: 20px; font-weight: bold; color: #fff; margin-top: 8px; line-height: 1.35; padding-right: 30px; }
+    .task-card .arrow { position: absolute; top: 22px; right: 22px; font-size: 22px; color: var(--gold); }
+    .task-card .red { color: #ff8a80; }
+    .folder-card { border-width: 3px; padding: 30px 28px; }
+    .folder-card .name { font-size: 24px; }
+    .folder-back { margin: -24px 0 24px 0; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: inherit; background: var(--btn); color: var(--gold); border: 2px solid var(--gold); }
+    .folder-back:hover { background: var(--gold); color: var(--btn); }
+    .folder-back.hidden { display: none; }
+    .empty-folder { grid-column: 1 / -1; text-align: center; font-size: 18px; color: #d1e7dd; padding: 40px 0; }
+    .cover-nav { display: flex; justify-content: center; gap: 14px; padding: 6px 16px 22px; flex-wrap: wrap; }
+    .cover-nav.hidden { display: none; }
+    .back-btn.hidden { visibility: hidden; }
+    .cover-nav button { padding: 10px 20px; font-size: 16px; font-weight: bold; font-family: inherit; border-radius: 8px; cursor: pointer; background: var(--btn); color: var(--gold); border: 2px solid var(--gold); }
+    .cover-nav button:hover:not(:disabled) { background: var(--gold); color: var(--btn); }
+    .cover-nav button:disabled { opacity: 0.35; cursor: default; }
+    .cover-screen.intro .cover-board, .cover-screen.intro .cover-nav, .cover-screen.intro .lead-title { visibility: hidden; }
+    .result-panel.rule { border: 3px solid var(--gold); box-shadow: 0 0 34px rgba(244, 211, 107, 0.55); }
+    .result-panel.rule .result-title { color: var(--accent-dark); }
+    .result-panel.rule .result-explanation { font-size: 19px; text-align: center; }
+    .menu-group { grid-column: 1 / -1; font-size: 22px; font-weight: bold; color: var(--gold); text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); margin: 10px 0 -6px; border-bottom: 1px solid rgba(244, 211, 107, 0.4); padding-bottom: 6px; }
+    .menu-group:first-child { margin-top: 0; }
+    .auc-screen { display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 90px; }
+    .auc-screen.hidden { display: none; }
+    .auc-table { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px) minmax(0, 1fr); gap: 16px; align-items: start; max-width: 1150px; width: 100%; margin: 16px auto 0; padding: 0 16px; }
+    .auc-hand { background: var(--panel); color: var(--panel-text); border-radius: 12px; padding: 14px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); border: 3px solid transparent; }
+    .auc-hand.active { border-color: var(--gold); }
+    .auc-seat { font-size: 17px; font-weight: bold; color: var(--accent-dark); margin-bottom: 8px; }
+    .auc-row { font-size: 21px; font-weight: bold; line-height: 1.7; white-space: nowrap; }
+    .auc-sym { display: inline-block; width: 28px; font-size: 23px; text-align: center; }
+    .s-S { color: #161c20; } .s-H, .s-D { color: var(--red-on-light); } .s-C { color: var(--club); }
+    .auc-box { background: var(--panel); color: var(--panel-text); border-radius: 12px; padding: 14px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+    .auc-turn { font-weight: bold; color: var(--accent-dark); margin-bottom: 10px; min-height: 22px; }
+    .auc-calls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 12px; }
+    .auc-cell { min-height: 38px; background: #e5e9e7; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
+    .auc-cell.head { background: #34495e; color: #fff; font-size: 13px; min-height: 30px; }
+    .auc-bids { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+    .auc-bid { height: 38px; font-size: 16px; font-weight: bold; font-family: inherit; background: #e8ece9; color: #18232c; border: 1px solid #c8d0cc; border-radius: 6px; cursor: pointer; }
+    .auc-bid:hover:not(:disabled) { background: var(--gold-light); }
+    .auc-bid:disabled { opacity: 0.35; cursor: default; }
+    .auc-bid.pass { grid-column: 1 / -1; background: var(--accent-dark); color: #fff; }
+    .auc-actions { display: flex; justify-content: space-between; max-width: 1150px; width: 100%; margin: 16px auto 0; padding: 0 16px; gap: 12px; }
+    .auc-action { padding: 10px 18px; font-size: 15px; font-weight: bold; font-family: inherit; border-radius: 8px; cursor: pointer; background: var(--btn); color: var(--gold); border: 2px solid var(--gold); }
+    .auc-action:hover { background: var(--gold); color: var(--btn); }
+    .auc-next { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(24px); opacity: 0; pointer-events: none; transition: opacity 0.35s, transform 0.35s; padding: 15px 28px; background: var(--gold); color: #26312d; font-size: 17px; font-weight: bold; font-family: inherit; border: none; border-radius: 10px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); cursor: pointer; z-index: 50; }
+    .auc-next.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+    @media (max-width: 900px) {
+        .auc-table { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+        .auc-box { grid-column: 1 / -1; grid-row: 2; }
+    }
+    @media (max-width: 520px) {
+        .auc-row { font-size: 16px; }
+        .auc-sym { font-size: 19px; width: 22px; }
+        .auc-hand { padding: 10px; }
+        .auc-bids { gap: 3px; }
+        .auc-bid { font-size: 14px; height: 34px; }
+        .auc-action { font-size: 13px; padding: 8px 10px; }
+    }
+    .cover-screen { display: flex; flex-direction: column; overflow-y: auto; }
+    .cover-screen.hidden { display: none; }
+    .cover-board { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 16px 28px; }
+    .cover-question { font-size: 22px; font-weight: bold; }
+    .cover-question b { color: var(--gold); }
+    .cover-table { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 760px; }
+    .cover-middle { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+    .cover-side { min-width: 150px; }
+    .cover-side.you .seat-label { color: var(--gold); font-size: 17px; }
+    .cover-hand { display: flex; justify-content: center; gap: 4px; }
+    .cover-hand .card { width: 54px; height: 76px; }
+    .cover-hand .card .corner .rank { font-size: 19px; }
+    .cover-hand .card .corner .suit { font-size: 15px; }
+    .cover-hand .card .center-suit { font-size: 28px; }
+    .cover-side.you .cover-hand .card { box-shadow: 0 0 0 2px var(--gold), 2px 3px 6px rgba(0,0,0,0.5); }
+    .cover-hidden { font-size: 13px; color: #d1e7dd; text-align: center; opacity: 0.8; padding: 20px 0; }
+    .result-title:empty, .result-explanation:empty { display: none; }
+    @media (max-width: 640px) {
+        .cover-side { min-width: 0; }
+        .cover-hand { gap: 2px; }
+        .cover-hand .card { width: 32px; height: 48px; }
+        .cover-middle { gap: 4px; }
+        .cover-hidden { display: none; }
+        .cover-board .deal-trick { grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 52px); gap: 2px; }
+        .cover-board .deal-trick .card { width: 34px; height: 50px; }
+        .cover-board .deal-trick .card .corner .rank { font-size: 14px; }
+        .cover-board .deal-trick .card .corner .suit { font-size: 11px; }
+        .cover-board .deal-trick .card .center-suit { display: none; }
+        .cover-hand .card .corner { left: 2px; }
+        .cover-hand .card .corner .rank { font-size: 14px; letter-spacing: -1px; }
+        .cover-hand .card .corner .suit { font-size: 11px; }
+        .cover-hand .card .center-suit { display: none; }
+        .cover-question { font-size: 18px; }
+    }
+    .deal-screen { display: flex; flex-direction: column; overflow-y: auto; }
+    .deal-screen.hidden { display: none; }
+    .deal-info { max-width: 640px; margin: 12px auto 0; padding: 10px 16px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(244, 211, 107, 0.5); border-radius: 10px; font-size: 15px; line-height: 1.5; text-align: center; }
+    .deal-info b { color: var(--gold); }
+    .deal-table { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 16px 8px; }
+    .deal-seat { display: flex; flex-direction: column; align-items: center; }
+    .seat-label { font-size: 14px; font-weight: bold; color: var(--gold-light); text-shadow: 1px 1px 2px #000; margin: 4px 0; }
+    .deal-middle { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 760px; gap: 8px; }
+    .mini-hand { min-width: 90px; text-align: center; }
+    .mini-backs { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 120px; }
+    .mini-backs span { width: 14px; height: 20px; border-radius: 2px; border: 1px solid #141c24; background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 3px, #34495e 3px, #34495e 6px); }
+    .mini-count { font-size: 12px; color: #d1e7dd; margin-top: 4px; }
+    .mini-hand.revealed { font-size: 16px; font-weight: bold; line-height: 1.5; text-align: left; background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 6px 10px; }
+    .mini-hand .red { color: #ff8a80; }
+    .deal-trick { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 94px); gap: 4px; align-items: center; justify-items: center; }
+    .deal-trick .card { width: 64px; height: 90px; }
+    .deal-trick .card .corner .rank { font-size: 20px; }
+    .deal-trick .card .corner .suit { font-size: 16px; }
+    .deal-trick .card .center-suit { font-size: 32px; }
+    .deal-trick .card.entering { animation: flyIn 0.3s ease-out; }
+    .deal-status { text-align: center; font-size: 15px; color: #fff; padding: 8px 16px 0; min-height: 30px; }
+    .deal-status b { color: var(--gold); }
+    .deal-status .red { color: #ff8a80; }
+    .your-turn { color: var(--gold); font-weight: 900; font-size: 17px; }
+    .tally { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 30px; flex-wrap: wrap; }
+    .tally-row { display: flex; align-items: center; gap: 3px; }
+    .tally-row span { display: block; border-radius: 3px; border: 1px solid #141c24; background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 3px, #34495e 3px, #34495e 6px); box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); }
+    .tally-row .t-ns { width: 22px; height: 32px; border-color: var(--gold); }
+    .tally-row .t-ew { width: 32px; height: 22px; }
+    .tally-text { font-size: 17px; color: #fff; white-space: nowrap; }
+    @media (max-width: 640px) {
+        .tally-row { gap: 2px; }
+        .tally-row .t-ns { width: 16px; height: 24px; }
+        .tally-row .t-ew { width: 24px; height: 16px; }
+        .tally-text { font-size: 15px; }
+    }
+    .tally-text b { color: var(--gold); }
+    .last-btn { margin-left: 6px; padding: 4px 10px; font-size: 13px; font-weight: bold; border: 1px solid var(--gold); border-radius: 6px; background: var(--btn); color: var(--gold); cursor: pointer; font-family: inherit; }
+    .last-btn:hover { background: var(--gold); color: var(--btn); }
+    .result-panel.partial { border: 3px solid var(--gold); box-shadow: 0 0 40px rgba(244, 211, 107, 0.55); }
+    .result-panel.partial .result-title { color: var(--gold); }
+    @media (max-width: 640px) {
+        .deal-trick { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 74px); }
+        .deal-trick .card { width: 50px; height: 70px; }
+        .deal-trick .card .corner { left: 3px; }
+        .deal-trick .card .corner .rank { font-size: 16px; }
+        .deal-trick .card .corner .suit { font-size: 13px; }
+        .deal-trick .card .center-suit { font-size: 24px; }
+        .mini-hand { min-width: 64px; }
+        .mini-backs { max-width: 64px; }
+        .mini-hand.revealed { font-size: 13px; padding: 4px 6px; }
+        .deal-info { font-size: 14px; margin: 10px 16px 0; }
+    }
+    .lead-screen { display: flex; flex-direction: column; overflow-y: auto; }
+    .lead-screen.hidden { display: none; }
+    .lead-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 14px 16px 0; }
+    .lead-head .back-btn { position: static; justify-self: start; }
+    .lead-title { font-size: 20px; font-weight: bold; color: var(--gold); text-shadow: 1px 1px 3px #000; text-align: center; }
+    .lead-board { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 16px 32px; }
+    .auction { background: rgba(0, 0, 0, 0.55); border: 2px solid var(--gold); border-radius: 14px; padding: 18px 28px; text-align: center; max-width: 520px; width: 100%; }
+    .auction-label { font-size: 13px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px; }
+    .bids { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .bid { background: #fff; color: #111; border-radius: 8px; padding: 8px 18px; font-size: 28px; font-weight: 900; box-shadow: 2px 3px 6px rgba(0,0,0,0.5); }
+    .bid .red { color: #c62828; }
+    .bid-sep { color: var(--gold); font-size: 26px; font-weight: bold; }
+    .info-line { font-size: 22px; font-weight: bold; line-height: 1.5; }
+    .info-line .red { color: #ff8a80; }
+    .lead-spot { height: 130px; display: flex; align-items: center; justify-content: center; }
+    .lead-bottom { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+    .lead-prompt { font-size: 28px; font-weight: 900; color: var(--gold); text-shadow: 2px 2px 6px #000; }
+    .lead-prompt.gone { visibility: hidden; }
+    .lead-label { font-size: 14px; font-weight: bold; color: var(--gold-light); text-shadow: 1px 1px 2px #000; }
+    .lead-hand { --cw: 86px; --step: min(46px, calc((100vw - 56px - var(--cw)) / 12)); display: flex; justify-content: center; padding-top: 12px; }
+    .lead-hand .card + .card { margin-left: calc(var(--step) - var(--cw)); }
+    .lead-hand .card.suit-gap { margin-left: calc(var(--step) - var(--cw) + 8px); }
+    .card.red { color: #c62828; }
+    .card.club { color: var(--club); }
+    .lead-buttons { margin-top: 24px; flex-wrap: wrap; }
+    .result-explanation .centered { text-align: center; font-size: 20px; }
+    @media (max-width: 640px) {
+        .lead-head { grid-template-columns: 1fr; justify-items: center; }
+        .lead-head .back-btn { justify-self: center; }
+        .lead-title { font-size: 17px; }
+        .lead-hand { --cw: 64px; }
+        .lead-hand .card { width: 64px; height: 90px; }
+        .lead-hand .card .corner { left: 3px; }
+        .lead-hand .card .corner .rank { font-size: 19px; letter-spacing: -1px; }
+        .lead-hand .card .corner .suit { font-size: 16px; }
+        .lead-hand .card .center-suit { font-size: 32px; }
+        .result-panel { padding: 24px 20px; width: 92%; }
+        .result-title { font-size: 26px; }
+        .handover-buttons button { padding: 12px 26px; font-size: 18px; }
+    }
+    .task-screen { position: fixed; inset: 0; width: 100%; height: 100vh; overflow: hidden; }
+    .task-screen.hidden { display: none; }
+    .table { position: relative; width: 100%; height: 100%; }
+    .title { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; color: var(--gold); letter-spacing: 0.5px; text-shadow: 1px 1px 3px #000; text-align: center; }
+    .goal { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); font-size: 15px; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; }
+    .goal b { color: var(--gold); }
+    .goal.hidden { display: none; }
+    .hand { position: absolute; display: flex; gap: 12px; }
+    .hand-N { top: 70px; left: 50%; transform: translateX(-50%); }
+    .hand-S { bottom: 70px; left: 50%; transform: translateX(-50%); }
+    .hand-W { left: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+    .hand-E { right: 40px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+    .hand-label { position: absolute; font-size: 14px; font-weight: bold; color: var(--gold-light); text-shadow: 1px 1px 2px #000; white-space: nowrap; }
+    .hand-N .hand-label { bottom: -26px; left: 50%; transform: translateX(-50%); }
+    .hand-S .hand-label { top: -26px; left: 50%; transform: translateX(-50%); }
+    .hand-W .hand-label { right: -80px; top: 50%; transform: translateY(-50%); }
+    .hand-E .hand-label { left: -80px; top: 50%; transform: translateY(-50%); }
+    .card { width: 86px; height: 120px; background-color: #fff; border: 2px solid #222; border-radius: 8px; position: relative; box-shadow: 2px 3px 6px rgba(0,0,0,0.5); flex-shrink: 0; color: #111; overflow: hidden; transition: transform 0.15s, box-shadow 0.2s; }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { transform: translateY(-10px); box-shadow: 3px 12px 20px rgba(0,0,0,0.65); }
+    .card.disabled { cursor: default; }
+    .card .corner { position: absolute; top: 4px; left: 6px; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+    .card .corner .rank { font-size: 28px; font-weight: 900; }
+    .card .corner .suit { font-size: 22px; margin-top: 1px; }
+    .card .center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 46px; opacity: 0.35; }
+    .card.back { background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 6px, #34495e 6px, #34495e 12px); border-color: #141c24; }
+    .card.back .corner, .card.back .center-suit { display: none; }
+    .card.discard { background: linear-gradient(135deg, #553366 0%, #2c1f3e 100%); color: #fff; border-color: #1a1028; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2; padding: 6px; }
+    .suit-S { color: #111; }
+    .trick-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; grid-template-columns: 110px 110px 110px; grid-template-rows: 140px 140px 140px; gap: 8px; align-items: center; justify-items: center; pointer-events: none; }
+    .trick-area .card.entering { animation: flyIn 0.3s ease-out; }
+    @keyframes flyIn { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .handover-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.92); border: 3px solid var(--gold); border-radius: 16px; padding: 24px 36px; text-align: center; display: none; z-index: 20; box-shadow: 0 0 40px rgba(244, 211, 107, 0.65); min-width: 400px; }
+    .handover-panel.show { display: block; }
+    .handover-text { font-size: 18px; font-weight: bold; color: var(--gold); margin-bottom: 18px; line-height: 1.4; }
+    .handover-text .who { color: #fff; }
+    .handover-buttons { display: flex; gap: 22px; justify-content: center; }
+    .handover-buttons button { padding: 14px 40px; font-size: 20px; font-weight: 900; border: 3px solid var(--gold); border-radius: 10px; background: var(--btn); color: var(--gold); cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .handover-buttons button:hover { background: var(--gold); color: var(--btn); transform: scale(1.06); }
+    .result-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(0, 0, 0, 0.88); border-radius: 18px; padding: 32px 44px; text-align: center; max-width: 720px; width: 80%; z-index: 30; box-shadow: 0 8px 40px rgba(0,0,0,0.7); opacity: 0; pointer-events: none; transition: opacity 0.4s, transform 0.4s; }
+    .result-panel { max-height: 90vh; overflow-y: auto; }
+    .result-panel.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+    .result-panel.win { border: 3px solid #4caf50; box-shadow: 0 0 40px rgba(76, 175, 80, 0.55); }
+    .result-panel.lose { border: 3px solid #ff5555; box-shadow: 0 0 40px rgba(255, 85, 85, 0.55); }
+    .result-title { font-size: 34px; font-weight: 900; margin-bottom: 16px; letter-spacing: 0.5px; }
+    .result-panel.win .result-title  { color: #4caf50; }
+    .result-panel.lose .result-title { color: #ff5555; }
+    .result-explanation { font-size: 16px; line-height: 1.55; color: #eaeaea; text-align: left; }
+    .result-explanation b { color: var(--gold); }
+    .solution { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+    .solution-btn { padding: 10px 22px; font-size: 16px; font-weight: bold; border: 2px solid var(--gold); border-radius: 8px; background: var(--btn); color: var(--gold); cursor: pointer; font-family: inherit; }
+    .solution-btn:hover { background: var(--gold); color: var(--btn); }
+    .restart-btn, .back-btn { position: absolute; top: 14px; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; z-index: 40; font-family: inherit; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+    .restart-btn { right: 14px; background: var(--gold); color: var(--btn); border: none; }
+    .restart-btn:hover { background: var(--gold-hover); }
+    .back-btn { left: 14px; background: var(--btn); color: var(--gold); border: 2px solid var(--gold); }
+    .back-btn:hover { background: var(--gold); color: var(--btn); }
+
+    /* ===== Светлые панели на сукне (как руки в «Тренажёре по торговле») ===== */
+    .task-card, .auction, .deal-info, .handover-panel, .result-panel, .mini-hand.revealed {
+        background: var(--panel); color: var(--panel-text); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+    .task-card { border: 2px solid transparent; }
+    .task-card:hover { background: #ffffff; border-color: var(--gold); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+    .task-card .num, .task-card .arrow { color: var(--accent-dark); }
+    .task-card .name { color: var(--panel-text); }
+    .task-card .red, .info-line .red, .mini-hand .red, .auction .red, .deal-info .red,
+    .result-panel .red, .handover-panel .red { color: var(--red-on-light); }
+    .folder-card { border-color: var(--gold); }
+    .auction { border: 2px solid var(--gold); }
+    .auction-label { color: var(--accent-dark); }
+    .auction b, .deal-info b, .cover-question b, .result-explanation b, .handover-text .who { color: var(--accent-dark); }
+    .bid { border: 1px solid #d6dcd9; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); }
+    .bid-sep { color: var(--accent-dark); }
+    .deal-info { border: 1px solid var(--gold); }
+    .handover-panel { border: 3px solid var(--gold); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); }
+    .handover-text { color: var(--panel-text); }
+    .result-panel { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55); }
+    .result-panel.win { border: 3px solid var(--win); box-shadow: 0 0 34px rgba(46, 125, 50, 0.5); }
+    .result-panel.lose { border: 3px solid var(--lose); box-shadow: 0 0 34px rgba(198, 40, 40, 0.45); }
+    .result-panel.partial { border: 3px solid var(--gold); box-shadow: 0 0 34px rgba(244, 211, 107, 0.55); }
+    .result-panel.win .result-title { color: var(--win); }
+    .result-panel.lose .result-title { color: var(--lose); }
+    .result-panel.partial .result-title { color: var(--partial); }
+    .result-explanation { color: var(--panel-text); }
+    .solution { border-top: 1px solid rgba(0, 0, 0, 0.12); }
+    .deal-status .red, .tally-text .red { color: var(--red-on-felt); }
+    .menu-subtitle, .mini-count, .cover-hidden, .empty-folder { color: #cfe6dc; }
+</style>
+</head>
+<body>
+
+<div class="menu-screen" id="menuScreen">
+    <h1 class="menu-title">Бриджевый практикум</h1>
+    <div class="menu-subtitle" id="menuSubtitle">Выберите раздел</div>
+    <button class="folder-back hidden" id="folderBackBtn" onclick="showFolders()">← К разделам</button>
+    <div class="task-grid" id="taskGrid"></div>
+</div>
+
+<div class="task-screen auc-screen hidden" id="aucScreen">
+    <div class="lead-head">
+        <button class="back-btn" onclick="showMenu()">← К задачам</button>
+        <div class="lead-title">Торговля · <span id="aucCounter"></span></div>
+    </div>
+    <div class="auc-table">
+        <div class="auc-hand" id="aucBoxW"><div class="auc-seat">Запад</div><div id="aucW"></div></div>
+        <section class="auc-box">
+            <div class="auc-turn" id="aucTurn"></div>
+            <div class="auc-calls" id="aucCalls"></div>
+            <div class="auc-bids" id="aucBids"></div>
+        </section>
+        <div class="auc-hand" id="aucBoxE"><div class="auc-seat">Восток</div><div id="aucE"></div></div>
+    </div>
+    <div class="auc-actions">
+        <button class="auc-action" onclick="aucUndo()">↶ Отменить ход</button>
+        <button class="auc-action" onclick="aucNext()">Пропустить сдачу ⏭</button>
+    </div>
+    <button class="auc-next" id="aucNextBtn" onclick="aucNext()">Следующая сдача</button>
+</div>
+
+<div class="task-screen cover-screen hidden" id="coverScreen">
+    <div class="lead-head">
+        <button class="back-btn" id="coverBack" onclick="showMenu()">← К задачам</button>
+        <div class="lead-title" id="coverTitle"></div>
+    </div>
+    <div class="cover-board">
+        <div class="auction cover-question" id="coverQuestion"></div>
+        <div class="cover-table">
+            <div class="deal-seat">
+                <div class="seat-label">Стол (Север)</div>
+                <div class="cover-hand" id="coverN"></div>
+            </div>
+            <div class="cover-middle">
+                <div class="deal-seat cover-side" id="coverSeatW"><div class="seat-label" id="coverLabelW">Запад</div><div class="cover-hand" id="coverW"></div></div>
+                <div class="deal-trick" id="coverTrick"></div>
+                <div class="deal-seat cover-side" id="coverSeatE"><div class="seat-label" id="coverLabelE">Восток</div><div class="cover-hand" id="coverE"></div></div>
+            </div>
+            <div class="seat-label">Разыгрывающий (Юг)</div>
+        </div>
+    </div>
+    <!-- Навигация по задачам темы (сборник «Вист на второй руке») -->
+    <div class="cover-nav hidden" id="coverNav">
+        <button id="coverPrev" onclick="gvThemeGo(gvt.idx - 1)">← Предыдущая</button>
+        <button onclick="gvThemesMenu()">Темы</button>
+        <button id="coverNext" onclick="gvThemeGo(gvt.idx + 1)">Следующая →</button>
+    </div>
+    <div class="result-panel" id="coverResult">
+        <div class="result-title" id="coverResultTitle"></div>
+        <div class="result-explanation" id="coverResultText"></div>
+        <div class="handover-buttons lead-buttons" id="coverResultButtons"></div>
+    </div>
+</div>
+
+<div class="task-screen deal-screen hidden" id="dealScreen">
+    <div class="lead-head">
+        <button class="back-btn" id="dealBack" onclick="showMenu()">← К задачам</button>
+        <div class="lead-title" id="dealTitle"></div>
+    </div>
+    <div class="deal-info" id="dealInfo"></div>
+    <div class="deal-status" id="dealStatus"></div>
+    <div class="deal-table">
+        <div class="deal-seat">
+            <div class="seat-label">Стол (Север)</div>
+            <div class="lead-hand deal-hand" id="dealN"></div>
+        </div>
+        <div class="deal-middle">
+            <div class="deal-seat"><div class="seat-label">Запад</div><div class="mini-hand" id="dealW"></div></div>
+            <div class="deal-trick" id="dealTrick"></div>
+            <div class="deal-seat"><div class="seat-label">Восток</div><div class="mini-hand" id="dealE"></div></div>
+        </div>
+        <!-- Счётчик взяток, как за столом: наша взятка — карта вертикально, взятка противников — горизонтально -->
+        <div class="tally" id="dealTally"></div>
+        <div class="deal-seat">
+            <div class="lead-hand deal-hand" id="dealS"></div>
+            <div class="seat-label">Вы (Юг)</div>
+        </div>
+    </div>
+    <!-- Навигация по задачам раздела -->
+    <div class="cover-nav" id="dealNav">
+        <button id="dealPrev" onclick="dealGo(-1)">← Предыдущая</button>
+        <button id="dealNextBtn" onclick="dealGo(1)">Следующая →</button>
+    </div>
+    <div class="result-panel" id="dealResult">
+        <div class="result-title" id="dealResultTitle"></div>
+        <div class="result-explanation" id="dealResultText"></div>
+        <div class="handover-buttons lead-buttons" id="dealResultButtons"></div>
+    </div>
+</div>
+
+<div class="task-screen lead-screen hidden" id="leadScreen">
+    <div class="lead-head">
+        <button class="back-btn" onclick="showMenu()">← К задачам</button>
+        <div class="lead-title" id="leadTitle"></div>
+    </div>
+    <div class="lead-board">
+        <div class="auction" id="leadAuction"></div>
+        <div class="lead-spot" id="leadSpot"></div>
+        <div class="lead-bottom">
+            <div class="lead-prompt" id="leadPrompt">Выбери атаку</div>
+            <div class="lead-hand" id="leadHand"></div>
+            <div class="lead-label">Ваша рука</div>
+        </div>
+    </div>
+    <div class="result-panel" id="leadResult">
+        <div class="result-title" id="leadResultTitle"></div>
+        <div class="result-explanation" id="leadResultText"></div>
+        <div class="handover-buttons lead-buttons" id="leadResultButtons"></div>
+    </div>
+</div>
+
+<div class="task-screen hidden" id="taskScreen">
+    <div class="table">
+        <div class="title" id="taskTitle"></div>
+        <div class="goal hidden" id="taskGoal"></div>
+        <button class="back-btn" onclick="showMenu()">← К задачам</button>
+        <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
+        <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
+        <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
+        <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
+        <div class="hand hand-E" id="handE"><div class="hand-label">Восток</div></div>
+        <div class="trick-area" id="trickArea"></div>
+        <div class="handover-panel" id="handoverPanel">
+            <div class="handover-text" id="handoverText"></div>
+            <div class="handover-buttons">
+                <button onclick="chooseLeader('N')">Север</button>
+                <button onclick="chooseLeader('S')">Юг</button>
+            </div>
+        </div>
+        <div class="result-panel" id="resultPanel">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-explanation" id="resultExplanation"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const SUIT = 'S';
+const SUIT_SYM = '\u2660';
+const RANK_LABEL = { A:'Т', K:'К', Q:'Д', J:'В', T:'10' };
+const RANK_ORDER = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14 };
+
+let hands = {};
+let trick = [];
+let phase = '';
+let waiting = null;
+let correct = true;
+let currentTask = null;
+let pendingLeaderCorrect = null;
+let pendingLeaderCallback = null;
+const timers = new Set();
+
+function schedule(fn, ms) {
+    const id = setTimeout(() => { timers.delete(id); fn(); }, ms);
+    timers.add(id);
+    return id;
+}
+function clearTimers() {
+    timers.forEach(id => clearTimeout(id));
+    timers.clear();
+}
+
+function playCard(player, card) {
+    hands[player] = hands[player].filter(c => c !== card);
+    trick.push({ player, card });
+    render();
+}
+const TASKS = [
+    {
+        id: 1,
+        shortTitle: 'Т В 9 против 8 5 4',
+        fullTitle: 'Задача 1: Розыгрыш Т В 9 против 8 5 4',
+        custom: true,
+        sp: {
+            N: ['8','5','4'], S: ['A','J','9'], missing: ['K','Q','T','7','3','2'],
+            planRounds: 2,
+            // Десятка у Востока: тогда ход к валету теряет вторую взятку
+            layouts: [['К72', 'Д103'], ['Д72', 'К103']],
+            // Дважды ход со стола: сначала девяткой, затем валетом; тузом — только на фигуру Востока
+            planLeader: (l) => l === 'N',
+            planCard: (p, c, x) => {
+                if (p === 'N') return true;
+                if (x.played.some(t => t.player === 'E' && 'KQ'.includes(t.card))) return c === 'A';
+                return c === (x.round === 0 ? '9' : 'J');
+            }
+        },
+        explanation:
+            'Двойной импас: сначала играем <b>девяткой</b>. ' +
+            'Если её берут королём или дамой, после этого проводится импас оставшейся фигуры — <b>валетом</b>.<br><br>' +
+            'Порядок ходов менять нельзя: второго импаса не существует, если первый не прошёл.'
+    },
+    {
+        id: 2,
+        shortTitle: 'В 9 2 против Д 4 3',
+        fullTitle: 'Задача 2: Розыгрыш В 9 2 против Д 4 3',
+        custom: true,
+        sp: {
+            N: ['J','9','2'], S: ['Q','4','3'], missing: ['A','K','T','8','6','5'],
+            planRounds: 2,
+            layouts: [
+                { W: 'К105', E: 'Т86',
+                  note: 'даму забрал король Запада. Сработал запасной парашют — импас десятки: ' +
+                        'на девятку Восток отдал туза, и валет стал старшим.' },
+                // Онеры всегда разделены: иначе взятка приходит и при неоптимальной игре
+                { W: 'К108', E: 'Т65',
+                  note: 'даму забрал король Запада. Сработал запасной парашют — импас десятки: ' +
+                        'на девятку Восток отдал туза, и валет стал старшим.' },
+                { W: 'Т105', E: 'К86',
+                  note: 'даму забрал туз Запада. Сработал запасной парашют — импас десятки: ' +
+                        'на девятку Восток отдал короля, и валет стал старшим.' },
+                { W: 'Т865', E: 'К10',
+                  note: 'даму забрал туз Запада. Запасной парашют — импас десятки: на девятку Восток ' +
+                        'отдал короля, и валет стал старшим.' },
+                { W: 'К865', E: 'Т10',
+                  note: 'даму забрал король Запада. Запасной парашют — импас десятки: на девятку Восток ' +
+                        'отдал туза, и валет стал старшим.' },
+                { W: 'Т10865', E: 'К',
+                  note: '<b>бланковый король</b> у Востока выпал на двойку. Мы сохранили даму, и она взяла взятку.' },
+                { W: 'К10865', E: 'Т',
+                  note: '<b>бланковый туз</b> у Востока выпал на двойку. Мы сохранили даму, и она взяла взятку.' },
+                { W: 'К105', E: 'Т86', blunder: { player: 'W', card: '5' },
+                  note: '<b>Запад ошибся</b>: не взял даму королём, и дама взяла взятку. ' +
+                        'Вот зачем первым ходом играть к даме — дать защите шанс ошибиться.' }
+            ],
+            // Если под двойку Восток кладёт фигуру — дальше играем по обстановке
+            planEnds: (t, round) => round === 0 && t.some(x => x.player === 'E' && 'AK'.includes(x.card)),
+            // Двойкой со стола к даме, затем от Юга к девятке (импас десятки)
+            planLeader: (l, x) => l === (x.round === 0 ? 'N' : 'S'),
+            planCard: (p, c, x) => {
+                if (x.round === 0) {
+                    if (p === 'N') return c === '2';
+                    // Фигура Востока уже выпала — дама остаётся, кладём мелкую
+                    return x.played.some(t => t.player === 'E' && 'AK'.includes(t.card)) ? c !== 'Q' : c === 'Q';
+                }
+                if (p === 'S') return true;
+                return x.played.some(t => t.card === 'T') ? c === 'J' : c === '9';
+            }
+        },
+        explanation:
+            '<b>1. Ход к даме</b> — двойкой со стола. Иногда дама сразу берёт взятку: ' +
+            'бланковая фигура у Востока или ошибка вистующего. Если Восток кладёт фигуру — даму сохраняем.<br>' +
+            '<b>2. Если даму забрали — запасной парашют:</b> ход от Юга к девятке, импас десятки.<br>' +
+            '<b>3. Валет</b> становится старшим.'
+    },
+    {
+        id: 3,
+        shortTitle: 'К Д 5 2 против В 8 7',
+        fullTitle: 'Задача 3: Розыгрыш К Д 5 2 против В 8 7',
+        custom: true,
+        sp: {
+            N: ['K','Q','5','2'], S: ['J','8','7'], missing: ['A','T','9','6','4','3'],
+            key: 'A', planRounds: 2,
+            // Туз второй перед онерами: здесь ход к К Д выигрывает, а ход к валету теряет взятку.
+            // Туз четвёртый перед онерами: по плану берём 2 взятки. Третье число — цель, если
+            // игра с открытыми картами позволяет взять больше, чем даёт правильный план.
+            layouts: [['Т10', '9643'], ['Т9', '10643'], ['Т6', '10943'], ['Т4', '10963'], ['Т3', '10964'],
+                      ['Т1064', '93'], ['Т1063', '94'], ['Т1096', '43'], ['Т1094', '63', 2], ['Т643', '109', 2]],
+            noThreeThree: true,
+            // Дважды ход малой от Юга к К Д
+            planLeader: (l) => l === 'S',
+            planCard: (p, c, x) => {
+                if (x.step === 0) return c !== 'J';
+                if (p === 'N' && x.leader === 'S') return x.second === 'A' ? isSmall(c, 'KQ') : 'KQ'.includes(c);
+                return true;
+            }
+        },
+        explanation:
+            '<b>Ходим малой к КДхх.</b> Если туз не появляется и король получает взятку, процесс повторяется.<br><br>' +
+            'Распределение масти 3-3 игнорируем: тогда всё равно, как играть. Стремимся к тому, чтобы избежать потери двух взяток ' +
+            'в случае <b>более вероятного</b> распределения 4-2. При шести отсутствующих картах вероятность, что они разделились 4-2, ' +
+            'равна 48%, а распределение 3-3 имеет вероятность только 36%.<br><br>' +
+            'Может быть, у игрока, сидящего перед двумя онерами, <b>второй</b> туз. Дайте ему возможность использовать его на фоску.<br><br>' +
+            'Игра к валету такого же эффекта не даст: если он удержит взятку, разыгрывающий всё равно может отдать короля ' +
+            'на второго туза, и в масти будет две отдачи – на туза и 10-ку. Следовательно, играем к двум онерам.'
+    },
+    {
+        id: 4,
+        shortTitle: 'К 4 3 2 против Д 7 6 5',
+        fullTitle: 'Задача 4: Розыгрыш К 4 3 2 против Д 7 6 5',
+        custom: true,
+        sp: {
+            N: ['K','4','3','2'], S: ['Q','7','6','5'], missing: ['A','J','T','9','8'],
+            key: 'A', planRounds: 2,
+            // Туз второй — у Запада или у Востока
+            layouts: [['ТВ', '1098'], ['Т10', 'В98'], ['Т9', 'В108'], ['Т8', 'В109'],
+                      ['1098', 'ТВ'], ['В98', 'Т10'], ['В108', 'Т9'], ['В109', 'Т8']],
+            hint: (lay) => 'По торговле туз, скорее всего, у <span class="who">' + spHolderName(lay, 'A') + 'а</span>.',
+            // Туз должен оказаться слева от ходящего; затем малыми с обеих рук
+            planLeader: (l, x) => x.round > 0 || l === (spHolder(x.layout, 'A') === 'W' ? 'S' : 'N'),
+            planCard: (p, c, x) => {
+                if (x.round === 1) return isSmall(c, 'KQ');
+                if (x.step === 0) return isSmall(c, 'KQ');
+                if (x.step === 2) return x.second === 'A' ? isSmall(c, 'KQ') : 'KQ'.includes(c);
+                return true;
+            }
+        },
+        explanation:
+            'Единственная надежда получить три взятки состоит в том, что туз <b>второй</b>.<br><br>' +
+            'Далее нужно определить, у кого он, и играть так, чтобы туз был <b>слева от ходящего</b>.<br><br>' +
+            'Если угадаем и король (или дама) выиграет, играем <b>малыми с обеих рук</b> в следующую взятку ' +
+            'и надеемся, что выпадет туз.<br><br>' +
+            'Распределение, которое нам нужно: Север – К 4 3 2, Запад – Т 9, Восток – В 10 8, Юг – Д 7 6 5.'
+    },
+    {
+        id: 5,
+        shortTitle: 'В 5 3 против Т Д 4 2',
+        fullTitle: 'Задача 5: Розыгрыш В 5 3 против Т Д 4 2',
+        custom: true,
+        sp: {
+            N: ['J','5','3'], S: ['A','Q','4','2'], missing: ['K','T','9','8','7','6'],
+            key: 'K', planRounds: 2,
+            // Король второй — у Востока (импас дамы, затем туз) или у Запада (ход к валету)
+            // Король всегда второй у Востока — перед Т Д: импас дамы, затем туз
+            layouts: [['10987', 'К6'], ['10976', 'К8'], ['9876', 'К10'], ['10986', 'К7'], ['10876', 'К9']],
+            noThreeThree: true,
+            hint: (lay) => 'По торговле король, скорее всего, у <span class="who">' + spHolderName(lay, 'K') + 'а</span>.',
+            // Король у Востока — малой к Т Д; король у Запада — к валету; затем туз
+            planLeader: (l, x) => x.round > 0 || l === (spHolder(x.layout, 'K') === 'E' ? 'N' : 'S'),
+            planCard: (p, c, x) => {
+                // Во втором круге — туз с руки Юга, со стола мелкая (не валет)
+                if (x.round === 1) return p === 'S' ? c === 'A' : isSmall(c, 'AQJ');
+                if (x.step === 0) return isSmall(c, 'AQJ');
+                if (x.step === 2) {
+                    if (x.second === 'K') return isSmall(c, 'AQJ') || c === 'A';
+                    return c === (p === 'S' ? 'Q' : 'J');
+                }
+                return true;
+            }
+        },
+        explanation:
+            'Если масть лежит 3-3, без проблем возьмём три взятки. Рассмотрим расклад 4-2.<br><br>' +
+            'Если торговля или игра в предыдущих взятках предрасполагает к тому, что король у <b>Запада</b>, пойдём <b>к валету</b>.<br><br>' +
+            'Если более вероятно, что король у <b>Востока</b>, играем <b>малой к Т Д</b>, импасируя короля. ' +
+            'Далее играем <b>тузом</b> в надежде, что король был вторым и выпадет на туза.'
+    },
+    {
+        id: 6,
+        shortTitle: 'Т 10 6 5 против Д В 3 2, переходы на стол есть',
+        fullTitle: 'Задача 6: Т 10 6 5 против Д В 3 2 (переходов на стол достаточно)',
+        custom: true,
+        sp: {
+            N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
+            key: 'K', planRounds: 2,
+            // Бланковый король у Востока (ради него страховка) и обычный импас
+            layouts: [['9874', 'К'], ['9874', 'К'], ['98', 'К74'], ['87', 'К94'], ['74', 'К98']],
+            // Сначала двойкой к десятке (страховка от бланкового короля перед тузом), затем импас со стола
+            planLeader: (l) => l === 'N',
+            planCard: (p, c, x) => {
+                if (x.round === 0) {
+                    if (p === 'N') return isSmall(c, 'QJ');
+                    return x.played.some(t => t.card === 'K') ? c === 'A' : c === 'T';
+                }
+                return p !== 'N' || 'QJ'.includes(c);
+            }
+        },
+        explanation: ''
+    },
+    {
+        id: 7,
+        shortTitle: 'Т 10 6 5 против Д В 3 2, переходов на стол нет',
+        fullTitle: 'Задача 7: Т 10 6 5 против Д В 3 2 (вы на столе, других переходов нет)',
+        custom: true,
+        sp: {
+            N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
+            key: 'K', planRounds: 2, noEntries: true, firstLeader: 'N',
+            // Король у Востока: импас дамой, затем валетом
+            layouts: [['98', 'К74'], ['87', 'К94'], ['987', 'К4'], ['984', 'К7']],
+            // Дамой, и если удержали взятку — валетом; Юг кладёт мелкую, тузом — только на короля
+            planLeader: () => true,
+            planCard: (p, c, x) => {
+                if (p === 'N') return 'QJ'.includes(c);
+                return x.played.some(t => t.card === 'K') ? c === 'A' : isSmall(c, 'AT');
+            }
+        },
+        explanation: ''
+    }
+];
+
+const FINESSE_TEXT =
+    'Применяем тот же принцип к обычному импасу.<br><br>' +
+    'Если на стол достаточно переходов, играем <b>двойкой к десятке</b> на тот случай, если синглетный король перед тузом.<br><br>' +
+    'Если на столе нет других переходов, то не можем позволить себе страховаться. Мы должны пойти <b>дамой</b> ' +
+    'и, если удерживаем взятку, ходим <b>валетом</b>.';
+TASKS[5].explanation = FINESSE_TEXT;
+TASKS[6].explanation = FINESSE_TEXT;
+
+/* Задачи 8–13 (из «Задачи1.pptx»): розыгрыш на заданное число взяток.
+   target — сколько взяток надо взять, goal — формулировка под заголовком. */
+const playedBy = (x, who, cards) => x.played.some(t => t.player === who && cards.includes(t.card));
+TASKS.push(
+    {
+        id: 21,
+        shortTitle: 'Т 5 3 против Д В 4 2, переходы в руку есть',
+        fullTitle: 'Задача 8: Т 5 3 против Д В 4 2 (переходов в руку достаточно)',
+        custom: true,
+        sp: {
+            N: ['Q','J','4','2'], S: ['A','5','3'], missing: ['K','T','9','8','7','6'],
+            key: 'K', planRounds: 3, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
+            // Бланковый король у Востока: импас его не поймает, а туз — снимет
+            layouts: [['109876', 'К'], ['109876', 'К'], ['1098', 'К76'], ['К97', '1086'], ['К1076', '98'], ['987', 'К106']],
+            // Сначала туз, затем малой от Юга к ДВ — без импаса; если дама взяла, снова из руки к столу
+            planLeader: (l, x) => x.round === 0 || l === 'S',
+            planCard: (p, c, x) => {
+                if (x.round === 0) return p === 'S' ? c === 'A' : isSmall(c, 'QJ');
+                if (p === 'S') return true;
+                return playedBy(x, 'W', 'K') ? isSmall(c, 'QJ') : 'QJ'.includes(c);
+            }
+        },
+        explanation:
+            '<b>Сначала тузом, потом малой к ДВхх.</b> Если дама возьмёт взятку, перейдите в руку и снова пойдите к столу.<br><br>' +
+            'Идея игры в том, чтобы <b>импаса не проводить</b>. Он ничего не даёт, так как у вас нет десятки, ' +
+            'и легко может лишить вас взятки, если масть легла 4-2 или король у Востока бланк.'
+    },
+    {
+        id: 22,
+        shortTitle: 'Т 5 3 против Д В 4 2, переходов в руку нет',
+        fullTitle: 'Задача 9: Т 5 3 против Д В 4 2 (вы в руке, боковых переходов в руку нет)',
+        custom: true,
+        sp: {
+            N: ['Q','J','4','2'], S: ['A','5','3'], missing: ['K','T','9','8','7','6'],
+            key: 'K', planRounds: 3, target: 3, noEntries: true, firstLeader: 'S',
+            goal: 'Разыграйте на <b>три взятки</b>.',
+            layouts: [['1098', 'К76'], ['К97', '1086'], ['К1076', '98'], ['987', 'К106'], ['К1098', '76']],
+            // Малой из-под туза к ДВ; если дама удержала — туз становится переходом в руку для второго хода к столу
+            planLeader: () => true,
+            planCard: (p, c, x) => {
+                if (x.round === 1) return p === 'N' ? isSmall(c, 'QJ') : c === 'A';
+                if (p === 'S') return c !== 'A';
+                return playedBy(x, 'W', 'K') ? isSmall(c, 'QJ') : 'QJ'.includes(c);
+            }
+        },
+        explanation:
+            '<b>Малая из-под туза.</b> Если дама удержит взятку, туз обеспечит приход в руку ' +
+            'для ещё одного хода к столу.'
+    },
+    {
+        id: 23,
+        shortTitle: 'Д 5 3 против К 10 4',
+        fullTitle: 'Задача 10: Д 5 3 против К 10 4',
+        custom: true,
+        sp: {
+            N: ['K','T','4'], S: ['Q','5','3'], missing: ['A','J','9','8','7','6','2'],
+            planRounds: 2, target: 2, goal: 'Разыграйте на <b>две взятки</b>.',
+            layouts: [['ТВ8', '9762'], ['В97', 'Т862'], ['ТВ96', '872'], ['В986', 'Т72'], ['98762', 'ТВ']],
+            // Малой со стола к даме; затем от Юга к К 10 — импас валета
+            planLeader: (l, x) => l === (x.round === 0 ? 'N' : 'S'),
+            planCard: (p, c, x) => {
+                if (x.round === 0) return p === 'N' ? c === '4' : (playedBy(x, 'E', 'A') ? c !== 'Q' : c === 'Q');
+                if (p === 'S') return true;
+                return playedBy(x, 'W', 'J') ? c === 'K' : c === 'T';
+            }
+        },
+        explanation: '<b>Малая к даме.</b> Затем <b>импас валета</b>: малой от Юга к К 10, и если Запад кладёт мелкую — десятку.'
+    },
+    {
+        id: 24,
+        shortTitle: 'Т 4 3 2 против Д 10 9 8',
+        fullTitle: 'Задача 11: Т 4 3 2 против Д 10 9 8',
+        custom: true,
+        sp: {
+            N: ['Q','T','9','8'], S: ['A','4','3','2'], missing: ['K','J','7','6','5'],
+            planRounds: 2, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
+            layouts: [['К7', 'В65'], ['В76', 'К5'], ['К65', 'В7'], ['В5', 'К76'], ['76', 'КВ5']],
+            // Десяткой (девяткой) со стола и пустить; если Восток покрыл фигурой — туз
+            planLeader: (l) => l === 'N',
+            planCard: (p, c, x) => {
+                if (p === 'N') return 'T98'.includes(c);
+                return playedBy(x, 'E', 'KJ') ? c === 'A' : c !== 'A';
+            }
+        },
+        explanation:
+            'Играйте на <b>разделённых онеров</b>. Пойдите <b>десяткой</b> и пустите её. ' +
+            'Если взятку возьмут, повторите импас девяткой.'
+    },
+    {
+        id: 25,
+        shortTitle: 'Т 4 3 2 против Д 10 6 5',
+        fullTitle: 'Задача 12: Т 4 3 2 против Д 10 6 5',
+        custom: true,
+        sp: {
+            N: ['Q','T','6','5'], S: ['A','4','3','2'], missing: ['K','J','9','8','7'],
+            planRounds: 2, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
+            planEnds: (t) => t.some(x => 'KJ'.includes(x.card)),
+            // КВхх у Запада — десятка выигрывает, дама проигрывает
+            layouts: [['КВ98', '7'], ['КВ97', '8'], ['КВ87', '9'], ['В98', 'К7'], ['В87', 'К9'], ['КВ', '987'], ['987', 'КВ']],
+            // Сначала туз, затем малой от Юга; если онеры не появились — десятка
+            planLeader: (l, x) => x.round === 0 || l === 'S',
+            planCard: (p, c, x) => {
+                if (x.round === 0) return p === 'S' ? c === 'A' : isSmall(c, 'QT');
+                if (p === 'S') return true;
+                return playedBy(x, 'W', 'KJ') ? true : c === 'T';
+            }
+        },
+        explanation:
+            '<b>Сначала туз, затем малая.</b> Если ни один из онеров не появится — надо угадывать.<br><br>' +
+            'Если нет никакой информации, лучший шанс — <b>десятка</b>: оппонент перед Д10хх может иметь КВхх.'
+    },
+    {
+        id: 26,
+        shortTitle: 'Д 9 8 против 10 7 4',
+        fullTitle: 'Задача 13: Д 9 8 против 10 7 4 (переходы есть в любую руку)',
+        custom: true,
+        sp: {
+            N: ['T','7','4'], S: ['Q','9','8'], missing: ['A','K','J','6','5','3','2'],
+            planRounds: 2, target: 1, goal: 'Разыграйте на <b>одну взятку</b>.',
+            layouts: [['Т65', 'КВ32'], ['К53', 'ТВ62'], ['ТК6', 'В532'], ['Т32', 'КВ65'], ['К62', 'ТВ53']],
+            // Пустить десятку (валет перед дамой); если взяли — вернуться на стол и снова импасировать
+            planLeader: (l) => l === 'N',
+            planCard: (p, c, x) => {
+                if (p === 'N') return x.round === 0 ? c === 'T' : c !== 'T';
+                return playedBy(x, 'E', 'J') ? c === 'Q' : c !== 'Q';
+            }
+        },
+        explanation:
+            '<b>Пустите десятку</b>, надеясь, что валет перед дамой. ' +
+            'Если взятку возьмут туз или король, вернитесь на стол и снова импасируйте.'
+    }
+);
+
+/* ============================================================
+   Раздел «Первый ход»: торговля + рука ученика, выбор карты атаки.
+   Масти: S ♠, H ♥, D ♦, C ♣; карты — русскими буквами (Т К Д В 10 9 … 2).
+   ============================================================ */
+TASKS.push(
+    {
+        id: 8, folder: 2, type: 'lead',
+        shortTitle: '2♥ – 4♥',
+        fullTitle: 'Первый ход: торговля 2♥ – 4♥',
+        bidding: ['2♥', '4♥'],
+        hand: { S: 'Т6', H: '785', D: 'КДВ7', C: '8762' },
+        answer: { suit: 'D', rank: 'К' },
+        explanation: 'Ходим из плотности — <b>♦К</b>.'
+    },
+    {
+        id: 9, folder: 2, type: 'lead',
+        shortTitle: '2♠ – 4♠',
+        fullTitle: 'Первый ход: торговля 2♠ – 4♠',
+        bidding: ['2♠', '4♠'],
+        hand: { S: '875', H: '762', D: 'Д97642', C: '4' },
+        answer: { suit: 'C', rank: '4' },
+        explanation: 'Ходим синглетом — <b>♣4</b>.'
+    },
+    {
+        id: 10, folder: 2, type: 'lead',
+        shortTitle: '1♥ – 2♥',
+        fullTitle: 'Первый ход: торговля 1♥ – 2♥',
+        bidding: ['1♥', '2♥'],
+        hand: { S: 'ТК75', H: '98', D: '9863', C: 'Д43' },
+        answer: { suit: 'S', rank: 'Т' },
+        explanation: 'Ходим <b>♠Т</b>.'
+    },
+    {
+        id: 11, folder: 2, type: 'lead',
+        shortTitle: 'Контракт 4♠, партнёр входил червой',
+        fullTitle: 'Первый ход: контракт 4♠, партнёр входил червой',
+        info: ['Контракт 4♠', 'Партнёр входил червой'],
+        hand: { S: '785', H: 'К5', D: 'Д752', C: 'КВ87' },
+        answer: { suit: 'H', rank: 'К' },
+        explanation: 'Ходим <b>♥К</b>.'
+    },
+    {
+        id: 13, folder: 2, type: 'lead',
+        shortTitle: 'Контракт 4♥, партнёр входил пикой',
+        fullTitle: 'Первый ход: контракт 4♥, партнёр входил пикой',
+        info: ['Контракт 4♥', 'Партнёр входил пикой'],
+        hand: { S: '963', H: '983', D: 'Т97', C: '10987' },
+        answers: [{ suit: 'S', rank: '6' }, { suit: 'S', rank: '3' }],
+        explanation:
+            'Ходим <b>в масть партнёра</b> — пикой.<br><br>' +
+            'Какой картой — зависит от <b>партнёрских договорённостей</b>. Если масть не сфитована, ' +
+            'из триплета ходят либо <b>мелкой</b> (♠3), либо <b>второй сверху</b> (♠6). ' +
+            'Договоритесь с партнёром заранее!'
+    },
+    {
+        id: 12, folder: 2, type: 'lead',
+        shortTitle: 'Контракт 3♦, партнёр входил трефой',
+        fullTitle: 'Первый ход: контракт 3♦, партнёр входил трефой',
+        info: ['Контракт 3♦', 'Партнёр входил трефой'],
+        hand: { S: '65', H: 'В9876', D: '543', C: 'ТД3' },
+        answer: { suit: 'C', rank: 'Т' },
+        explanation: 'Ходим <b>♣Т</b>.'
+    }
+);
+
+const LEAD_RANKS = ['Т','К','Д','В','10','9','8','7','6','5','4','3','2'];
+const LEAD_SUIT_ORDER = ['S','H','C','D'];   // чередуем цвета: ♠ ♥ ♣ ♦
+const LEAD_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
+let leadDone = false;
+
+function leadParse(holding) {
+    return (holding.match(/10|[ТКДВ2-9]/g) || [])
+        .sort((a, b) => LEAD_RANKS.indexOf(a) - LEAD_RANKS.indexOf(b));
+}
+function leadSuitText(text) { return text.replace(/[♥♦]/g, m => '<span class="red">' + m + '</span>'); }
+
+function leadCardEl(suit, rank) {
+    const el = document.createElement('div');
+    // Трефы — зелёные, чтобы не сливались с пиками
+    el.className = 'card' + ((suit === 'H' || suit === 'D') ? ' red' : suit === 'C' ? ' club' : '');
+    el.innerHTML =
+        '<div class="corner"><div class="rank">' + rank + '</div><div class="suit">' + LEAD_SYM[suit] + '</div></div>' +
+        '<div class="center-suit">' + LEAD_SYM[suit] + '</div>';
+    return el;
+}
+
+function leadStart() {
+    clearTimers();
+    leadDone = false;
+    const t = currentTask;
+    const panel = document.getElementById('leadResult');
+    panel.classList.remove('show', 'win', 'lose');
+
+    const auction = document.getElementById('leadAuction');
+    if (t.bidding) {
+        auction.innerHTML = '<div class="auction-label">Торговля оппонентов</div><div class="bids">' +
+            t.bidding.map(b => '<div class="bid">' + leadSuitText(b) + '</div>').join('<div class="bid-sep">–</div>') +
+            '</div>';
+    } else {
+        auction.innerHTML = '<div class="auction-label">Информация о торговле</div>' +
+            t.info.map(line => '<div class="info-line">' + leadSuitText(line) + '</div>').join('');
+    }
+
+    document.getElementById('leadSpot').innerHTML = '';
+    document.getElementById('leadPrompt').classList.remove('gone');
+
+    const hand = document.getElementById('leadHand');
+    hand.innerHTML = '';
+    LEAD_SUIT_ORDER.forEach(suit => {
+        leadParse(t.hand[suit] || '').forEach((rank, i) => {
+            const el = leadCardEl(suit, rank);
+            el.classList.add('clickable');
+            if (i === 0 && hand.children.length > 0) el.classList.add('suit-gap');
+            el.onclick = () => leadPick(suit, rank, el);
+            hand.appendChild(el);
+        });
+    });
+}
+
+function leadPick(suit, rank, el) {
+    if (leadDone) return;
+    leadDone = true;
+    el.remove();
+    document.querySelectorAll('#leadHand .card').forEach(c => { c.classList.remove('clickable'); c.classList.add('disabled'); });
+    document.getElementById('leadPrompt').classList.add('gone');
+    const played = leadCardEl(suit, rank);
+    played.classList.add('entering');
+    document.getElementById('leadSpot').appendChild(played);
+    const answers = currentTask.answers || [currentTask.answer];
+    const ok = answers.some(a => a.suit === suit && a.rank === rank);
+    schedule(() => leadShowResult(ok), RESULT_PAUSE);
+}
+
+function leadShowResult(ok) {
+    const panel = document.getElementById('leadResult');
+    const title = document.getElementById('leadResultTitle');
+    const text = document.getElementById('leadResultText');
+    const buttons = document.getElementById('leadResultButtons');
+    buttons.innerHTML = '';
+    const addButton = (label, fn) => {
+        const b = document.createElement('button');
+        b.innerText = label;
+        b.onclick = fn;
+        buttons.appendChild(b);
+    };
+    panel.classList.remove('win', 'lose');
+    if (ok) {
+        panel.classList.add('win');
+        title.innerText = 'Отличная атака!';
+        text.innerHTML = currentTask.explanation;
+        const list = folderTasks(currentTask.folder);
+        const next = list[list.indexOf(currentTask) + 1];
+        if (next) addButton('Следующая задача', () => loadTask(next.id));
+        addButton('К задачам', showMenu);
+    } else {
+        panel.classList.add('lose');
+        title.innerText = 'Есть атака лучше.';
+        text.innerHTML = '<div class="centered">Попробуешь ещё?</div>';
+        addButton('Да', leadStart);
+        addButton('Нет', showMenu);
+    }
+    panel.classList.add('show');
+}
+
+/* ============================================================
+   Раздел «Торговля»: 18 сдач на темы для разбора с тренером.
+   Ученик торгует за Запад и Восток, Север и Юг пасуют. Проверки и пояснений нет.
+   Сдачи при каждой загрузке новые: колода раздаётся заново, пока руки
+   Запада и Востока не подойдут под условия темы (названия тем ученику не показываются).
+   ============================================================ */
+TASKS.push({ id: 51, folder: 5, type: 'auction', shortTitle: '18 сдач на торговлю', fullTitle: 'Торговля' });
+
+const AU_RANKS = ['Т', 'К', 'Д', 'В', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+const AU_HCP = { 'Т': 4, 'К': 3, 'Д': 2, 'В': 1 };
+const AU_SUITS = ['S', 'H', 'D', 'C'];
+const AU_SEATS = ['W', 'N', 'E', 'S'];
+const AU_DEALS = 18;
+
+const auHcp = h => h.reduce((s, c) => s + (AU_HCP[c.r] || 0), 0);
+const auLen = (h, s) => h.filter(c => c.s === s).length;
+const auTops = (h, s) => h.filter(c => c.s === s && ['Т', 'К', 'Д'].includes(c.r)).length;
+function auBalanced(h) {
+    const shape = AU_SUITS.map(s => auLen(h, s)).sort((a, b) => b - a).join('');
+    return ['4333', '4432', '5332'].includes(shape);
+}
+/* Открытие 1♥/1♠: 5+ карт в мажоре, 11–17 (ровные 15–17 открываются 1БК); при 5–5 — пики */
+function auMajorOpening(h, lo, hi) {
+    const p = auHcp(h);
+    if (p < lo || p > hi || (auBalanced(h) && p >= 15)) return null;
+    const s = auLen(h, 'S'), hh = auLen(h, 'H');
+    if (s >= 5 && s >= hh) return 'S';
+    if (hh >= 5) return 'H';
+    return null;
+}
+/* Открытие 1♣/1♦ с ровной 12–14 без пятикарточного мажора: 3–3 — трефа, 4–4 — бубна, иначе длиннее */
+function auMinorBalanced(h) {
+    const p = auHcp(h);
+    if (p < 12 || p > 14 || !auBalanced(h) || auLen(h, 'S') >= 5 || auLen(h, 'H') >= 5) return null;
+    const d = auLen(h, 'D'), c = auLen(h, 'C');
+    return d > c || (d === 4 && c === 4) ? 'D' : 'C';
+}
+/* Ответ мажором на 1 минора: длиннее; 4–4 — черва, 5–5 — пика */
+function auResponseMajor(h) {
+    const s = auLen(h, 'S'), hh = auLen(h, 'H');
+    if (s < 4 && hh < 4) return null;
+    if (s >= 5 && s >= hh) return 'S';
+    return hh >= 4 && hh >= s ? 'H' : 'S';
+}
+
+/* Темы: test(W, E) — подходят ли руки. Открывает Запад (в Друри — Восток в третьей руке) */
+const AU_THEMES = [
+    { name: '1М–1БК', test: (W, E) => {
+        const M = auMajorOpening(W, 11, 17); if (!M) return false;
+        const p = auHcp(E);
+        return p >= 6 && p <= 11 && auLen(E, M) <= 2 && !(M === 'H' && auLen(E, 'S') >= 4);
+    } },
+    { name: '1М–2БК', test: (W, E) => {
+        const M = auMajorOpening(W, 11, 17); if (!M) return false;
+        const p = auHcp(E);
+        // Чистый инвит с фитом: без шестикарточной боковой масти
+        return p >= 11 && p <= 12 && auLen(E, M) === 4 && AU_SUITS.every(s => s === M || auLen(E, s) <= 5);
+    } },
+    { name: '1М–3М', test: (W, E) => {
+        const M = auMajorOpening(W, 11, 17); if (!M) return false;
+        const p = auHcp(E);
+        return p >= 2 && p <= 6 && auLen(E, M) >= 4;
+    } },
+    { name: '1М–3 минора', test: (W, E) => {
+        const M = auMajorOpening(W, 11, 17); if (!M) return false;
+        const p = auHcp(E);
+        // На 1♥ с четырьмя и более пиками Восток ответил бы 1♠
+        if (p < 10 || p > 12 || auLen(E, M) > 2 || (M === 'H' && auLen(E, 'S') >= 4)) return false;
+        return ['C', 'D'].some(m => auLen(E, m) >= 6 && auTops(E, m) >= 2);
+    } },
+    { name: 'Друри', test: (W, E) => {
+        const M = auMajorOpening(E, 11, 15); if (!M) return false;
+        const p = auHcp(W);
+        return p >= 9 && p <= 11 && auLen(W, M) >= 3 && Math.max(...AU_SUITS.map(s => auLen(W, s))) <= 5;
+    } },
+    { name: '1м–1М–1БК', test: (W, E) => {
+        const m = auMinorBalanced(W); if (!m) return false;
+        const M = auResponseMajor(E); if (!M) return false;
+        const p = auHcp(E);
+        return p >= 6 && p <= 9 && auLen(W, M) < 4 && !(M === 'H' && auLen(W, 'S') >= 4);
+    } },
+    { name: 'Двойной чек-бэк', test: (W, E) => {
+        const m = auMinorBalanced(W); if (!m) return false;
+        const M = auResponseMajor(E); if (!M) return false;
+        const p = auHcp(E);
+        // Инвит (10–12) с пятикарточным мажором или любая геймовая рука (13–15)
+        return p >= 10 && p <= 15 && auLen(W, M) < 4 && !(M === 'H' && auLen(W, 'S') >= 4) &&
+            (auLen(E, M) >= 5 || p >= 13);
+    } }
+];
+
+function auShuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+}
+/* Раздаём колоду, пока руки не подойдут под тему */
+function auMakeDeal(theme) {
+    const deck = [];
+    AU_SUITS.forEach(s => AU_RANKS.forEach(r => deck.push({ s, r })));
+    for (let i = 0; i < 200000; i++) {
+        auShuffle(deck);
+        const W = deck.slice(0, 13), E = deck.slice(13, 26);
+        if (theme.test(W, E)) return { W: W.slice(), E: E.slice(), theme: theme.name };
+    }
+    return null;
+}
+/* 18 сдач: темы по кругу (поровну, насколько делится), в случайном порядке */
+function auMakeSet() {
+    const themes = [];
+    while (themes.length < AU_DEALS) themes.push(...auShuffle(AU_THEMES.slice()));
+    return auShuffle(themes.slice(0, AU_DEALS)).map(auMakeDeal).filter(Boolean);
+}
+
+const auc = { deals: [], idx: 0, calls: [], over: false };
+let aucAutoTimer = null;
+
+function aucStart() {
+    clearTimers();
+    auc.deals = auMakeSet();
+    auc.idx = 0;
+    aucNewDeal();
+}
+function aucNewDeal() {
+    clearTimers();
+    if (auc.idx >= auc.deals.length) { auc.deals = auMakeSet(); auc.idx = 0; }
+    const d = auc.deals[auc.idx];
+    document.getElementById('aucCounter').innerText = 'Сдача ' + (auc.idx + 1) + ' из ' + auc.deals.length;
+    aucRenderHand('W', d.W);
+    aucRenderHand('E', d.E);
+    auc.calls = [];
+    auc.over = false;
+    document.getElementById('aucNextBtn').classList.remove('show');
+    aucBuildBids();
+    aucRender();
+}
+function aucNext() { auc.idx++; aucNewDeal(); }
+
+function aucRenderHand(seat, hand) {
+    const sym = { S: '♠', H: '♥', D: '♦', C: '♣' };
+    document.getElementById('auc' + seat).innerHTML = AU_SUITS.map(s => {
+        const cards = hand.filter(c => c.s === s).sort((a, b) => AU_RANKS.indexOf(a.r) - AU_RANKS.indexOf(b.r)).map(c => c.r);
+        return '<div class="auc-row"><span class="auc-sym s-' + s + '">' + sym[s] + '</span>' +
+            (cards.length ? cards.join(' ') : '—') + '</div>';
+    }).join('');
+}
+
+/* Состояние торговли по списку заявок */
+function aucState() {
+    let level = -1, passes = 0;
+    auc.calls.forEach(c => {
+        if (c.type === 'bid') { level = c.value; passes = 0; } else passes++;
+    });
+    const turn = AU_SEATS[auc.calls.length % 4];
+    const ended = level >= 0 ? passes >= 3 : passes >= 4;
+    return { level, turn, ended };
+}
+const AU_STRAINS = ['C', 'D', 'H', 'S', 'N'];
+function aucCallLabel(c) {
+    if (c.type === 'pass') return 'Пас';
+    const lvl = Math.floor(c.value / 5) + 1, st = AU_STRAINS[c.value % 5];
+    if (st === 'N') return lvl + 'БК';
+    const sym = { S: '♠', H: '♥', D: '♦', C: '♣' }[st];
+    return lvl + '<span class="s-' + st + '">' + sym + '</span>';
+}
+function aucBuildBids() {
+    const box = document.getElementById('aucBids');
+    box.innerHTML = '';
+    const pass = document.createElement('button');
+    pass.className = 'auc-bid pass';
+    pass.innerText = 'Пас';
+    pass.onclick = () => aucCall({ type: 'pass' });
+    box.appendChild(pass);
+    for (let v = 0; v < 35; v++) {
+        const b = document.createElement('button');
+        b.className = 'auc-bid';
+        b.dataset.value = v;
+        b.innerHTML = aucCallLabel({ type: 'bid', value: v });
+        b.onclick = () => aucCall({ type: 'bid', value: v });
+        box.appendChild(b);
+    }
+}
+function aucCall(call, auto) {
+    const st = aucState();
+    if (st.ended) return;
+    if (!auto && (st.turn === 'N' || st.turn === 'S')) return;
+    if (call.type === 'bid' && call.value <= st.level) return;
+    auc.calls.push(Object.assign({ seat: st.turn }, call));
+    aucRender();
+}
+function aucUndo() {
+    clearTimers();
+    // Убираем автопасы Севера и Юга и последнюю заявку ученика
+    while (auc.calls.length && ['N', 'S'].includes(auc.calls[auc.calls.length - 1].seat)) auc.calls.pop();
+    auc.calls.pop();
+    document.getElementById('aucNextBtn').classList.remove('show');
+    aucRender();
+}
+function aucRender() {
+    const st = aucState();
+    const grid = document.getElementById('aucCalls');
+    const names = { W: 'Запад', N: 'Север', E: 'Восток', S: 'Юг' };
+    let html = AU_SEATS.map(s => '<div class="auc-cell head">' + names[s] + '</div>').join('');
+    const rows = Math.max(1, Math.ceil((auc.calls.length + (st.ended ? 0 : 1)) / 4));
+    for (let i = 0; i < rows * 4; i++) {
+        const c = auc.calls[i];
+        html += '<div class="auc-cell">' + (c ? aucCallLabel(c) : (i === auc.calls.length && !st.ended ? '?' : '')) + '</div>';
+    }
+    grid.innerHTML = html;
+    const auto = !st.ended && (st.turn === 'N' || st.turn === 'S');
+    document.getElementById('aucTurn').innerText = st.ended ? 'Торговля завершена'
+        : auto ? 'Пасует ' + names[st.turn] + '…' : 'Заявка: ' + names[st.turn];
+    document.querySelectorAll('#aucBids .auc-bid').forEach(b => {
+        b.disabled = st.ended || auto || (b.dataset.value !== undefined && Number(b.dataset.value) <= st.level);
+    });
+    ['W', 'E'].forEach(s => document.getElementById('aucBox' + s).classList.toggle('active', !st.ended && st.turn === s));
+    // Автопас Севера/Юга; проверка длины — чтобы при повторной отрисовке не спасовать дважды
+    const n = auc.calls.length;
+    if (auto) schedule(() => { if (auc.calls.length === n) aucCall({ type: 'pass' }, true); }, 700);
+    if (st.ended) schedule(() => document.getElementById('aucNextBtn').classList.add('show'), 1200);
+}
+
+/* ============================================================
+   Раздел «Защита взяток на висте»: ставить фигуру на фигуру или нет.
+   dummy — масть стола, you — ваша масть, seat — где вы сидите (E — после стола,
+   W — перед столом), leader — кто ходит (N — стол, S — разыгрывающий), led — карта хода.
+   correct — карты, которые засчитываются (ученик кладёт карту из своей руки).
+   ============================================================ */
+TASKS.push(
+    {
+        id: 41, folder: 4, type: 'cover',
+        shortTitle: 'Д В 9 8 — у вас К 10',
+        dummy: 'ДВ98', you: 'К10', seat: 'E', leader: 'N', led: 'Д',
+        question: 'Со стола ходят <b>дамой</b>. Надобьёте?',
+        correct: ['К'],
+        explanation: '<b>Надбиваем.</b> Вы можете получить взятку, если разыгрывающий будет импасировать десятку ' +
+            'на следующем круге. Если не надбить, на взятку нельзя даже надеяться.'
+    },
+    {
+        id: 42, folder: 4, type: 'cover',
+        shortTitle: 'Д В 9 8 — у вас К 10 5',
+        dummy: 'ДВ98', you: 'К105', seat: 'E', leader: 'N',
+        question: 'Со стола ходят <b>дамой</b>. Надобьёте?',
+        // Два круга: на даму — малая; дама взяла взятку, со стола идёт валет — теперь надбиваем
+        steps: [
+            { led: 'Д', correct: ['5'], rest: { S: '2', W: '3' } },
+            { led: 'В', correct: ['К'], question: 'Дама взяла взятку. Теперь со стола ходят <b>валетом</b>. Надобьёте?' }
+        ],
+        explanation: '<b>Надбиваем во второй раз.</b> На даму — малая, а когда разыгрывающий пошёл валетом, кладём короля. ' +
+            'Если надбить даму, у стола останутся В 9 8 — все старше нашей десятки. А когда ушли и дама, и валет, ' +
+            'наша десятка старше девятки и восьмёрки стола.'
+    },
+    {
+        id: 43, folder: 4, type: 'cover',
+        shortTitle: 'Д В 4 2 — у вас К 5',
+        dummy: 'ДВ42', you: 'К5', seat: 'E', leader: 'N', led: 'Д',
+        question: 'Со стола ходят <b>дамой</b>. Надобьёте?',
+        correct: ['К'],
+        explanation: '<b>Надбиваем.</b> Так можно что-нибудь выработать партнёру. Если не надбить, возможно, ' +
+            'придётся класть короля на двойку на следующем круге.'
+    },
+    {
+        id: 44, folder: 4, type: 'cover',
+        shortTitle: 'Т 6 5 3 — у вас Д 9 2',
+        dummy: 'Т653', you: 'Д92', seat: 'W', leader: 'S', led: 'В',
+        question: 'Юг ходит <b>валетом</b>. Надобьёте?',
+        correct: ['2'],
+        explanation: '<b>Не надбиваем.</b> Надбивание помогло бы только в одном случае: если у разыгрывающего ' +
+            'КВх, а десятка у нашего партнёра. Такая игра слишком маловероятна.'
+    },
+    {
+        id: 45, folder: 4, type: 'cover',
+        shortTitle: 'Т В 6 — у вас К 10 8 2',
+        dummy: 'ТВ6', you: 'К1082', seat: 'W', leader: 'S', led: 'Д',
+        question: 'Юг ходит <b>дамой</b>. Надобьёте?',
+        correct: ['К'],
+        explanation: '<b>Надбиваем.</b> Надбивание ограничит разыгрывающего двумя взятками, пропускание позволит ему получить три.'
+    },
+    {
+        id: 46, folder: 4, type: 'cover',
+        shortTitle: 'В 10 2 — у вас Д 9 4',
+        dummy: 'В102', you: 'Д94', seat: 'E', leader: 'N', led: 'В',
+        question: 'Со стола ходят <b>валетом</b>. Надобьёте?',
+        correct: ['4'],
+        explanation: '<b>Не надбиваем в первый раз.</b> Сыграв малой, вы сохраните вилку за десяткой. ' +
+            'Где бы ни были король и туз, надбивание в первый раз ничего не даёт.'
+    },
+    {
+        id: 47, folder: 4, type: 'cover',
+        shortTitle: 'Т К 10 9 3 — у вас Д В 5 2',
+        dummy: 'ТК1093', you: 'ДВ52', seat: 'W', leader: 'S', led: '4',
+        question: 'Юг ходит <b>четвёркой</b>. Какой картой сыграете?',
+        correct: ['5', '2'],
+        explanation: '<b>Играем малой.</b> Если разыгрывающий собирается проводить двойной импас, вы этому помешать не можете. ' +
+            'Но если он не знает распределения, он может положить короля. Не помогайте ему локализовать карты: ' +
+            'вырабатывать здесь нечего.'
+    }
+);
+
+/* ============================================================
+   Раздел «Вист на второй руке»: сборник с пояснениями (задачи постоянные).
+   По материалам «Игра на второй руке» и презентации «Вист на 2-й руке».
+   Онеры на висте — Т К Д В 10 и 9; «фоска» — 8 и ниже.
+   ============================================================ */
+const GV_N = { N: 'Со стола ходят', S: 'Разыгрывающий ходит с руки' };
+function gvTask(id, short, dummy, you, leader, led, correct, explanation, question) {
+    const seat = leader === 'N' ? 'E' : 'W';
+    const names = { 'Т': 'тузом', 'К': 'королём', 'Д': 'дамой', 'В': 'валетом', '10': 'десяткой', '9': 'девяткой',
+        '8': 'восьмёркой', '7': 'семёркой', '6': 'шестёркой', '5': 'пятёркой', '4': 'четвёркой', '3': 'тройкой', '2': 'двойкой' };
+    return { id, folder: 6, type: 'cover', shortTitle: short, dummy, you, seat, leader, led, correct, explanation,
+        question: question || (GV_N[leader] + ' <b>' + names[led] + '</b>. Какой картой сыграете?') };
+}
+TASKS.push(
+    // Карты задач изменены по сравнению с разборами (смысл и ответы те же), чтобы задачи были менее узнаваемыми
+    gvTask(61, 'В 7 2 — у вас Д 9 5', 'В72', 'Д95', 'S', '4', ['5'],
+        '<b>Играем младшей — ♥5.</b> Не прыгайте онером на второй руке без веской причины. Разыгрывающий не видит ' +
+        'ваших карт и может поставить со стола валета — тогда у нас будет лишняя взятка. Сыграв ♥Д или ♥9, ' +
+        'вы избавите его от угадывания.'),
+    // Туз стола уже сыгран — на столе осталась только двойка
+    gvTask(62, 'Т 2 — у вас Д 8 4', '2', 'Д84', 'N', '2', ['8', '4'],
+        '<b>Играем фоской.</b> Дама возьмёт взятку, только если у партнёра король, причём не бланковый. ' +
+        'А тогда даму ставить не нужно: она всё равно возьмёт своё. На ход со стола фоской на второй руке играем фоской.',
+        'На ♥Т со стола вы положили ♥3. Теперь со стола ходят <b>двойкой</b>. Какой картой сыграете?'),
+    gvTask(63, 'К Д 6 — у вас Т 8 3', 'КД6', 'Т83', 'N', 'К', ['8', '3'],
+        '<b>Играем фоской.</b> На столе смежные онеры — король и дама. Если надбить короля тузом, дама станет старшей. ' +
+        'Если не надбивать, туз своё возьмёт, а разыгрывающему придётся угадывать. ' +
+        'На ход со стола смежным онером на второй руке играем фоской.'),
+    gvTask(64, '10 7 4 — у вас В 6 2', '1074', 'В62', 'N', '10', ['В'],
+        '<b>Надбиваем — ♥В.</b> Десятка на столе несмежная: на столе нет ни валета, ни девятки. Надбив, мы вырабатываем ' +
+        'младшие карты у себя или у партнёра — например, его девятку. Ход со стола несмежным онером на второй руке надо надбивать.'),
+    gvTask(65, '10 9 8 6 — у вас К В 2', '10986', 'КВ2', 'N', '10', ['К'],
+        '<b>Играем королём.</b> Если со стола пошли онером, а у вас на второй руке два несмежных онера старше — играйте старшим онером. ' +
+        'Иначе разыгрывающий отработает в масти лишнюю взятку.'),
+    gvTask(66, 'В 2 — у вас К 8 6 3', 'В2', 'К863', 'N', 'В', ['8', '6', '3'],
+        '<b>Играем фоской.</b> Обычно несмежный онер надбивают, но на столе всего две карты. Если у разыгрывающего ' +
+        'ТД109, король на валета даст ему четыре взятки. А если короля не ставить, валет удержит взятку, ' +
+        'разыгрывающий повторит импас десяткой — и третий раз импасировать ему уже нечем: наш король защищён.'),
+    gvTask(67, '10 5 3 — у вас Д 9 2', '1053', 'Д92', 'N', '10', ['Д'],
+        '<b>Ставим даму.</b> Десятка — онер, и она несмежная: на столе нет ни валета, ни девятки. ' +
+        'Даму не ставят, только если у партнёра в этой масти может быть синглет или ренонс. ' +
+        'Решите это заранее, до хода со стола, и сыграйте в обычном темпе, чтобы не выдать расположение фигур.'),
+    gvTask(68, 'К В 5 — у вас Д 10 6', 'КВ5', 'Д106', 'S', '9', ['Д'],
+        '<b>Играем дамой.</b> Стол сидит после вас, и на нашей линии в этой масти взяток нет. ' +
+        'Но дама на первом круге маскирует расположение фигур. Если же положить десятку, со стола сыграют валета, ' +
+        'а найти даму следующим ходом будет несложно.'),
+    gvTask(69, 'Т 10 7 4 — у вас К В 3', 'Т1074', 'КВ3', 'S', '9', ['В'],
+        '<b>Играем валетом.</b> Пошли девяткой, и король ставить не нужно: валет гарантирует нам взятку на короля. ' +
+        'Из двух своих онеров ставим младший.'),
+    gvTask(70, 'Т В 10 7 — у вас К 4 3', 'ТВ107', 'К43', 'S', '9', ['К'],
+        '<b>Надбиваем королём.</b> С руки пошли онером, у вас только один онер старше. Надбиваем, если на столе ' +
+        'есть карта, смежная с картой хода, и играем фоской, если её нет. Здесь пошли девяткой, а на столе десятка — ставим короля.'),
+    gvTask(71, 'К 10 8 5 — у вас Т 7 2', 'К1085', 'Т72', 'S', 'Д', ['Т'],
+        '<b>Ставим туза.</b> На столе есть смежная с дамой карта — король. Если сыграть фоской, на нашей линии ' +
+        'останется меньше взяток. Номинал карты хода — онер или фоска — принципиально влияет на игру на второй руке.'),
+    gvTask(72, 'Т 7 5 3 — у вас К 8 4', 'Т753', 'К84', 'S', 'Д', ['8', '4'],
+        '<b>Играем фоской.</b> С руки пошли дамой, а на столе нет смежных с ней карт. Если дама удержит взятку ' +
+        'и дальше пойдёт валет, тогда надбиваем королём, чтобы выработать десятку партнёра.'),
+    gvTask(73, '8 6 5 — у вас Д 10 9 3', '865', 'Д1093', 'N', '8', ['9'],
+        '<b>Играем девяткой.</b> Из смежных онеров играем младшим.'),
+    gvTask(74, 'В 6 2 — у вас К Д 7', 'В62', 'КД7', 'N', 'В', ['Д'],
+        '<b>Играем дамой.</b> Из смежных онеров играем младшим.'),
+    gvTask(75, '5 — у вас Т 8 3 2', '5', 'Т832', 'N', '5', ['8', '3', '2'],
+        '<b>Играем фоской.</b> Со стола пошли синглетной фоской. Не надо напрыгивать тузом, если только контракт ' +
+        'не козырный и взятка на туза его не посадит. Заставьте разыгрывающего угадывать.'),
+    gvTask(76, '10 — у вас Д 4', '10', 'Д4', 'N', '10', ['Д'],
+        '<b>Надбиваем дамой.</b> Со стола пошли синглетным онером, а у вас в масти ровно две карты и онер старше. ' +
+        'Надбив, вы поможете отработать партнёру одну-две взятки.'),
+    gvTask(77, '10 — у вас Д 7 3', '10', 'Д73', 'N', '10', ['7', '3'],
+        '<b>Играем фоской.</b> Со стола пошли синглетным онером, а у вас в масти три карты. У разыгрывающего нет ' +
+        'на столе карт, чтобы повторить импас, — зачем же ему помогать?'),
+    gvTask(78, 'Тест 1: Д 7 3 — у вас Т 10 5', 'Д73', 'Т105', 'S', '4', ['5'],
+        '<b>Играем пятёркой.</b> На малую — малой. Расклад: партнёр — К 9 2, разыгрывающий — В 8 6 4. ' +
+        'Сыграв ♥5, мы отдаём в масти только одну взятку; ♥Т или ♥10 дарят разыгрывающему вторую.'),
+    gvTask(79, 'Тест 2: Д 6 3 — у вас К 10', 'Д63', 'К10', 'S', '4', ['10'],
+        '<b>Играем десяткой.</b> Малой карты у нас нет, поэтому кладём младшую — десятку, а короля не трогаем. ' +
+        'Расклад: партнёр — Т 9 5 2, разыгрывающий — В 8 7 4.'),
+    gvTask(80, 'Тест 3: В 5 4 3 — у вас Д 10 2', 'В543', 'Д102', 'N', '3', ['2'],
+        '<b>Играем двойкой.</b> На ход со стола фоской — фоска. Расклад: партнёр — 8 7, разыгрывающий — Т К 9 6.'),
+    gvTask(81, 'Тест 4: 10 5 4 — у вас Д 7 2', '1054', 'Д72', 'N', '10', ['Д'],
+        '<b>Надбиваем дамой.</b> Десятка у стола несмежная: девятки на столе нет. Расклад: партнёр — К 9 6, ' +
+        'разыгрывающий — Т В 8 3. Если пропустить, разыгрывающий возьмёт в масти три взятки, а после дамы — только две.'),
+    gvTask(82, 'Тест 5: В 3 — у вас К 8 6 4', 'В3', 'К864', 'N', 'В', ['8', '6', '4'],
+        '<b>Играем фоской.</b> На столе всего две карты — короля на валета не ставим, повторить импас разыгрывающему нечем. ' +
+        'Расклад: партнёр — 9 7 2, разыгрывающий — Т Д 10 5.'),
+    gvTask(83, 'Тест 6: Т 8 2 — у вас К Д 7 3', 'Т82', 'КД73', 'S', '9', ['Д'],
+        '<b>Играем дамой.</b> Из своей плотности ставим младший онер.'),
+    gvTask(84, 'Тест 7: Т Д 3 — у вас К В 7', 'ТД3', 'КВ7', 'S', '10', ['К'],
+        '<b>Играем королём.</b> Взяток на нашей линии нет, но король маскирует расположение фигур, ' +
+        'а валета разыгрывающий легко «прочитает». Расклад: партнёр — 5 4 2, разыгрывающий — 10 9 8 6.'),
+    gvTask(85, 'Тест 8: Т К 6 4 2 — у вас Д В 7 3', 'ТК642', 'ДВ73', 'S', '9', ['В'],
+        '<b>Играем валетом</b> — младшим из плотности. Расклад: партнёр — 5, разыгрывающий — 10 9 8. ' +
+        'Если сыграть семёркой, разыгрывающий возьмёт в масти лишнюю взятку.'),
+    gvTask(86, 'Тест 9: Т 8 4 2 — у вас К Д 7 3', 'Т842', 'КД73', 'S', 'В', ['Д'],
+        '<b>Играем дамой</b> — младшим из плотности.')
+);
+
+TASKS.push(
+    gvTask(87, 'Д В 4 — у вас К 7 3', 'ДВ4', 'К73', 'N', 'Д', ['7', '3'],
+        '<b>Играем фоской.</b> На столе смежные онеры — дама и валет. Если надбить даму, разыгрывающий возьмёт тузом, ' +
+        'и валет станет старшим. Король ставим на второй ход — когда со стола пойдут валетом.'),
+    gvTask(88, '10 9 5 — у вас В 6 2', '1095', 'В62', 'N', '10', ['6', '2'],
+        '<b>Играем фоской.</b> На столе смежные онеры — десятка и девятка. Валет ставим не на первый, а на второй ход, ' +
+        'когда со стола пойдут девяткой. Так разыгрывающему не удастся повторить импас.')
+);
+
+/* Темы сборника «Вист на второй руке»: в начале темы — правило, затем задачи по порядку.
+   hidden: true — тема пока скрыта из меню */
+const GV_THEMES = [
+    { name: 'Младшая на младшую', tasks: [61, 62, 78, 79, 80],
+      rule: 'Если со стола или с руки пошли <b>фоской</b>, на второй руке играем <b>фоской</b>.' },
+    { name: 'Старшая на старшую', tasks: [64, 67, 81],
+      rule: 'Если на столе <b>онер с фосками</b> и этим онером ходят — <b>надбиваем</b>. ' +
+            'Так мы выработаем младшие карты у себя в руке или у партнёра. На висте онеры — это Т, К, Д, В, 10 и 9.' },
+    { name: 'Смежные онеры на столе', tasks: [63, 87, 88],
+      rule: 'Если со стола пошли онером из <b>смежных</b> — ДВ, В10, 109, — а у вас один онер с фосками, ' +
+            'в первый раз его <b>не ставим</b>. Надбиваем во второй раз.' },
+    { name: 'Два онера старше', hidden: true, tasks: [65, 68, 69, 84],
+      rule: 'Если у вас <b>два несмежных онера старше</b> карты хода: на ход со стола играем <b>старшим</b> онером. ' +
+            'На ход с руки обычно ставим <b>младший</b> из двух, а иногда старший — чтобы скрыть расположение фигур.' },
+    { name: 'С руки пошли онером', hidden: true, tasks: [70, 71, 72],
+      rule: 'Разыгрывающий пошёл онером с руки, у вас <b>только один онер старше</b>. <b>Надбиваем</b>, если на столе есть карта, ' +
+            'смежная с картой хода, и играем <b>фоской</b>, если такой карты нет.' },
+    { name: 'Плотность у нас', tasks: [73, 74, 83, 85, 86],
+      rule: 'Из своей плотности ставим <b>младший</b> онер.' },
+    { name: 'Синглет со стола', hidden: true, tasks: [75, 76, 77],
+      rule: 'Со стола пошли <b>синглетной фоской</b> — не прыгайте тузом. Со стола пошли <b>синглетным онером</b>: ' +
+            'если у вас в масти ровно две карты, надбиваем; если три и больше — играем фоской.' },
+    { name: 'Исключения', hidden: true, tasks: [66, 82],
+      rule: 'В бридже почти нет правил без исключений. Если на столе <b>всего две карты</b>, несмежный онер обычно не надбиваем: ' +
+            'повторить импас разыгрывающему нечем. Не надбиваем и тогда, когда у партнёра в масти может быть синглет или ренонс.' }
+];
+const gvt = { active: false, theme: 0, idx: 0 };
+
+function gvThemeOpen(i) {
+    clearTimers();
+    gvt.active = true;
+    gvt.theme = i;
+    gvt.idx = 0;
+    const th = GV_THEMES[i];
+    document.getElementById('menuScreen').classList.add('hidden');
+    document.getElementById('coverScreen').classList.remove('hidden');
+    setBackButton('coverBack');
+    gvThemeGo(0);
+    // Правило темы — перед первой задачей
+    const panel = document.getElementById('coverResult');
+    panel.classList.remove('win', 'lose');
+    panel.classList.add('rule', 'show');
+    document.getElementById('coverResultTitle').innerText = th.name;
+    document.getElementById('coverResultText').innerHTML = th.rule;
+    const buttons = document.getElementById('coverResultButtons');
+    buttons.innerHTML = '';
+    const b = document.createElement('button');
+    b.innerText = 'К задачам темы';
+    b.onclick = () => {
+        panel.classList.remove('show', 'rule');
+        document.getElementById('coverScreen').classList.remove('intro');
+    };
+    buttons.appendChild(b);
+    // Пока открыто правило, задачу под ним не показываем
+    document.getElementById('coverScreen').classList.add('intro');
+}
+function gvThemeGo(k) {
+    const th = GV_THEMES[gvt.theme];
+    if (k < 0 || k >= th.tasks.length) return;
+    clearTimers();
+    gvt.idx = k;
+    currentTask = TASKS.find(t => t.id === th.tasks[k]);
+    document.getElementById('coverTitle').innerText = th.name + ' · задача ' + (k + 1) + ' из ' + th.tasks.length;
+    document.getElementById('coverResult').classList.remove('rule');
+    coverStart();
+    document.getElementById('coverNav').classList.remove('hidden');
+    document.getElementById('coverPrev').disabled = k === 0;
+    document.getElementById('coverNext').disabled = k === th.tasks.length - 1;
+}
+function gvThemesMenu() {
+    gvt.active = false;
+    currentFolder = FOLDERS.find(f => f.id === 6);
+    showMenu();
+}
+
+/* ============================================================
+   Раздел «Вист на второй руке: тренировка» — задачи генерируются заново, без пояснений.
+   Типы задач (ответ — по правилам теории):
+   — small-N, small-S: со стола или с руки пошли фоской; у вас онер (10 и выше) и фоски — играем фоской;
+   — high-N: со стола пошли онером с фосками (других онеров на столе нет); у вас онер старше и фоски — надбиваем;
+   — adj-N: со стола пошли старшим из смежных онеров; у вас король или дама и фоски — играем фоской;
+   — dens-N, dens-S: со стола или с руки пошли онером; у вас два смежных онера старше — играем младшим из них.
+   Туза у вистующего не бывает: с тузом ответы спорные.
+   ============================================================ */
+const GV_COUNT = 20;
+TASKS.push({ id: 91, folder: 7, type: 'cover-gen', shortTitle: 'Тренировка: ' + GV_COUNT + ' задач без пояснений' });
+const GV_R = ['Т', 'К', 'Д', 'В', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+const gvVal = r => 14 - GV_R.indexOf(r);
+const gvHonor = r => GV_R.indexOf(r) <= 5;
+const gvPick = a => a[Math.floor(Math.random() * a.length)];
+const gvAdj = (a, b) => Math.abs(GV_R.indexOf(a) - GV_R.indexOf(b)) === 1;
+const GV_CATS = ['small-N', 'small-S', 'high-N', 'adj-N', 'dens-N', 'dens-S'];
+/* Задача заданного типа (cat): раздаём масть, пока не получится нужная ситуация */
+function gvGenerate(fixedCat) {
+    for (let tries = 0; tries < 50000; tries++) {
+        const cat = fixedCat || gvPick(GV_CATS);
+        const hands = { N: [], E: [], S: [], W: [] };
+        GV_R.forEach(r => hands[gvPick(['N', 'E', 'S', 'W'])].push(r));
+        const leader = cat.endsWith('-S') ? 'S' : 'N';
+        const seat = leader === 'N' ? 'E' : 'W';
+        const N = hands.N, L = hands[leader], you = hands[seat];
+        // У вистующего 2–3 карты, у Севера и Юга — 2–4
+        if (you.length < 2 || you.length > 3 || hands.S.length < 2 || hands.S.length > 4 || N.length < 2 || N.length > 4) continue;
+        if (you.includes('Т')) continue;
+        const hon = you.filter(gvHonor), smalls = you.filter(r => !gvHonor(r));
+        // Второй король под ходом фоской или смежным онером упадёт под туза — король у вистующего только третий
+        if (['small-N', 'small-S', 'adj-N'].includes(cat) && hon[0] === 'К' && you.length < 3) continue;
+        let led = null, correct = null;
+        if (cat === 'small-N' || cat === 'small-S') {
+            if (hon.length !== 1 || hon[0] === '9' || !smalls.length) continue;
+            const low = L.filter(r => !gvHonor(r));
+            if (!low.length) continue;
+            led = gvPick(low);
+            correct = smalls;
+        } else if (cat === 'high-N' || cat === 'adj-N') {
+            if (N.length < 3 || hon.length !== 1 || !smalls.length) continue;
+            const nh = N.filter(gvHonor);
+            if (cat === 'high-N') {
+                // На столе один онер, с фосками, и им пошли
+                if (nh.length !== 1 || nh[0] === 'Т') continue;
+                led = nh[0];
+                if (N.some(r => r !== led && gvAdj(r, led))) continue;   // 9 8 — уже смежные карты
+                if (gvVal(hon[0]) <= gvVal(led)) continue;
+                correct = [hon[0]];
+            } else {
+                // Пошли старшим из смежных онеров стола; у вас король или дама
+                const tops = nh.filter(r => r !== 'Т' && nh.some(x => gvVal(x) === gvVal(r) - 1) && !N.some(x => gvVal(x) === gvVal(r) + 1));
+                if (!tops.length) continue;
+                led = gvPick(tops);
+                if (!['К', 'Д'].includes(hon[0]) || gvVal(hon[0]) <= gvVal(led)) continue;
+                correct = smalls;
+            }
+        } else {
+            // Плотность у нас: два смежных онера старше карты хода, других онеров нет
+            if (hon.length !== 2 || !gvAdj(hon[0], hon[1])) continue;
+            const cand = L.filter(r => gvHonor(r) && gvVal(r) < gvVal(hon[1]));
+            if (!cand.length) continue;
+            led = gvPick(cand);
+            if (leader === 'N' && N.some(r => r !== led && gvAdj(r, led))) continue;   // смежные на столе — другая тема
+            correct = [hon[1]];
+        }
+        // Надбивать имеет смысл, только если есть что выработать: онер ниже нашей фигуры,
+        // который не лежит на столе и не является картой хода (он у нас или может быть у партнёра)
+        const cover = correct.length === 1 && gvHonor(correct[0]) && gvVal(correct[0]) > gvVal(led);
+        if (cover && !GV_R.some(r => gvHonor(r) && gvVal(r) < gvVal(correct[0]) && r !== led && !N.includes(r))) continue;
+        const sort = a => a.slice().sort((x, y) => GV_R.indexOf(x) - GV_R.indexOf(y));
+        return gvTask(0, '', sort(N).join(''), sort(you).join(''), leader, led, correct, '');
+    }
+    return null;
+}
+
+const gv = { list: [], idx: 0, right: 0 };
+function gvStart() {
+    // Типы ситуаций — по кругу (поровну), порядок случайный
+    const cats = [];
+    while (cats.length < GV_COUNT) cats.push(...GV_CATS);
+    const order = cats.slice(0, GV_COUNT).sort(() => Math.random() - 0.5);
+    gv.list = [];
+    for (const c of order) { const t = gvGenerate(c); if (t) gv.list.push(t); }
+    gv.idx = 0;
+    gv.right = 0;
+    gvShow();
+}
+function gvShow() {
+    if (gv.idx >= gv.list.length) { gvStart(); return; }
+    currentTask = Object.assign(gv.list[gv.idx], { generated: true, folder: 7 });
+    document.getElementById('coverTitle').innerText = 'Тренировка · задача ' + (gv.idx + 1) + ' из ' + gv.list.length +
+        (gv.idx ? ' · верно ' + gv.right : '');
+    coverStart();
+}
+function gvNext() { gv.idx++; gvShow(); }
+
+/* Задача может состоять из нескольких кругов (steps): после верной карты защита и разыгрывающий
+   доигрывают взятку (rest), и следует новый ход. Задача из одного круга задаётся полями led и correct. */
+const cover = { step: 0, dummy: [], you: [] };
+function coverSteps(t) { return t.steps || [{ led: t.led, correct: t.correct }]; }
+const COVER_POS = { N: { row: 1, col: 2 }, W: { row: 2, col: 1 }, E: { row: 2, col: 3 }, S: { row: 3, col: 2 } };
+function coverPut(p, rank) {
+    const el = coverCard(rank);
+    el.classList.add('entering');
+    el.style.gridRow = COVER_POS[p].row;
+    el.style.gridColumn = COVER_POS[p].col;
+    document.getElementById('coverTrick').appendChild(el);
+}
+
+let coverDone = false;
+const COVER_SUIT = 'S';
+
+/* Масть задачи: «Вист на второй руке» и тренировка — черви, «Защита взяток» — пики */
+function coverSuit() { return currentTask && [6, 7].includes(currentTask.folder) ? 'H' : COVER_SUIT; }
+function coverCard(rank) { return leadCardEl(coverSuit(), rank); }
+function coverIsHonor(r) { return ['Т', 'К', 'Д', 'В'].includes(r); }
+
+function coverStart() {
+    clearTimers();
+    const t = currentTask;
+    document.getElementById('coverResult').classList.remove('show', 'win', 'lose');
+    cover.step = 0;
+    cover.dummy = leadParse(t.dummy);
+    cover.you = leadParse(t.you);
+    ['W', 'E'].forEach(p => {
+        document.getElementById('coverLabel' + p).innerText = p === t.seat ? 'Вы' : (p === 'W' ? 'Запад' : 'Восток');
+        document.getElementById('coverSeat' + p).classList.toggle('you', p === t.seat);
+    });
+    coverLead();
+}
+
+/* Очередной круг: ход со стола или от разыгрывающего, ученик отвечает картой из своей руки */
+function coverLead() {
+    coverDone = false;
+    const t = currentTask;
+    const step = coverSteps(t)[cover.step];
+    document.getElementById('coverQuestion').innerHTML = step.question || t.question;
+    // Карта хода со стола уходит из руки стола
+    if (t.leader === 'N') cover.dummy = cover.dummy.filter(r => r !== step.led);
+    coverRenderHands();
+    document.getElementById('coverTrick').innerHTML = '';
+    coverPut(t.leader, step.led);
+}
+
+function coverRenderHands() {
+    const t = currentTask;
+    const box = id => document.getElementById(id);
+    box('coverN').innerHTML = '';
+    cover.dummy.forEach(r => box('coverN').appendChild(coverCard(r)));
+    box('cover' + t.seat).innerHTML = '';
+    // Ученик просто кладёт карту из своей руки: фигура — надбил, мелкая — нет
+    cover.you.forEach(r => {
+        const el = coverCard(r);
+        el.classList.add('clickable');
+        el.onclick = () => coverAnswer(r);
+        box('cover' + t.seat).appendChild(el);
+    });
+    const partner = t.seat === 'E' ? 'W' : 'E';
+    box('cover' + partner).innerHTML = '<div class="cover-hidden">карты партнёра<br>не видны</div>';
+}
+
+function coverAnswer(card) {
+    if (coverDone) return;
+    coverDone = true;
+    const t = currentTask;
+    const steps = coverSteps(t);
+    const step = steps[cover.step];
+    cover.you = cover.you.filter(r => r !== card);
+    coverRenderHands();
+    document.querySelectorAll('#cover' + t.seat + ' .card').forEach(c => { c.classList.remove('clickable'); c.classList.add('disabled'); });
+    coverPut(t.seat, card);
+    const ok = step.correct.includes(card);
+    if (!ok || cover.step === steps.length - 1) {
+        schedule(() => coverShowResult(ok), RESULT_PAUSE);
+        return;
+    }
+    // Верно — остальные доигрывают взятку, затем следующий круг
+    let delay = 650;
+    Object.entries(step.rest || {}).forEach(([p, rank]) => {
+        schedule(() => {
+            if (p === 'N') { cover.dummy = cover.dummy.filter(r => r !== rank); coverRenderHands(); }
+            coverPut(p, rank);
+        }, delay);
+        delay += 650;
+    });
+    schedule(() => { cover.step++; coverLead(); }, delay + 1200);
+}
+
+function coverShowResult(ok) {
+    const t = currentTask;
+    const panel = document.getElementById('coverResult');
+    const buttons = document.getElementById('coverResultButtons');
+    buttons.innerHTML = '';
+    const addButton = (label, fn) => {
+        const b = document.createElement('button');
+        b.innerText = label;
+        b.onclick = fn;
+        buttons.appendChild(b);
+    };
+    panel.classList.remove('win', 'lose');
+    // Тренировка: без пояснений; после ошибки можно посмотреть правильную карту
+    if (t.generated) {
+        if (ok && !t.counted) { gv.right++; }
+        t.counted = true;
+        panel.classList.add(ok ? 'win' : 'lose');
+        document.getElementById('coverResultTitle').innerText = ok ? 'Правильно!' : '';
+        document.getElementById('coverResultText').innerHTML = '';
+        if (!ok) {
+            addButton('Показать ответ', () => {
+                document.getElementById('coverResultText').innerHTML =
+                    '<div class="centered">Правильно: ' + t.correct.map(r => leadSuitText(LEAD_SYM[coverSuit()]) + r).join(' или ') + '</div>';
+            });
+            addButton('Ещё раз', coverStart);
+        }
+        addButton('Следующая задача', gvNext);
+        panel.classList.add('show');
+        return;
+    }
+    // Задача из темы сборника: следующая — внутри темы, в конце — к темам
+    if (gvt.active && t.folder === 6) {
+        const th = GV_THEMES[gvt.theme];
+        if (ok) {
+            panel.classList.add('win');
+            document.getElementById('coverResultTitle').innerText = 'Правильно!';
+            document.getElementById('coverResultText').innerHTML = t.explanation;
+            if (gvt.idx < th.tasks.length - 1) addButton('Следующая задача', () => gvThemeGo(gvt.idx + 1));
+            addButton('К темам', gvThemesMenu);
+        } else {
+            panel.classList.add('lose');
+            document.getElementById('coverResultTitle').innerText = '';
+            document.getElementById('coverResultText').innerHTML = '';
+            addButton('Показать решение', coverShowSolution);
+            addButton('Ещё раз', coverStart);
+            addButton('К темам', gvThemesMenu);
+        }
+        panel.classList.add('show');
+        return;
+    }
+    if (ok) {
+        panel.classList.add('win');
+        document.getElementById('coverResultTitle').innerText = 'Правильно!';
+        document.getElementById('coverResultText').innerHTML = t.explanation;
+        const list = folderTasks(t.folder);
+        const next = list[list.indexOf(t) + 1];
+        if (next) addButton('Следующая задача', () => loadTask(next.id));
+        addButton('К задачам', showMenu);
+    } else {
+        // Без заголовка и лишних слов: ошибку видно по красной рамке, дальше — решение или новая попытка
+        panel.classList.add('lose');
+        document.getElementById('coverResultTitle').innerText = '';
+        document.getElementById('coverResultText').innerHTML = '';
+        addButton('Показать решение', coverShowSolution);
+        addButton('Ещё раз', coverStart);
+        addButton('К задачам', showMenu);
+    }
+    panel.classList.add('show');
+}
+function coverShowSolution() {
+    document.getElementById('coverResultText').innerHTML = '<b>Решение.</b> ' + currentTask.explanation;
+}
+
+/* ============================================================
+   Розыгрыш сдачи целиком (раздел «Экспасс с убиткой» и будущие).
+   Первый ход делает защита, ученик играет за Север и Юг до конца.
+   Защита играет по правилам грамотных учеников, в концовке — перебором.
+   Итог: контракт выполнен с приёмом (technique) — «Ты справился!»;
+   выполнен без приёма — «Контракт выполнен!» и предложение применить приём;
+   не выполнен — «Упс».
+   Руки — строкой 'S:ДВ10 H:Д9 D:753 C:Т4'.
+   ============================================================ */
+TASKS.push(
+    {
+        id: 31, folder: 3, type: 'deal',
+        shortTitle: '4♥ · ♠ТДВ10 против синглета',
+        fullTitle: 'Экспасс с убиткой: 4♥',
+        contract: { text: '4♥', trump: 'H', need: 10 },
+        opening: { p: 'W', s: 'H', r: '7' },
+        hands: { N: 'S:ТДВ10 H:Д932 D:753 C:Т4', S: 'S:2 H:ТКВ108 D:К64 C:8765',
+                 // Король пик у Востока: импас проигрывает (Восток берёт и идёт в бубну через короля),
+                 // экспасс выигрывает при любом положении короля
+                 W: 'S:9873 H:76 D:ТД82 C:КДВ', E: 'S:К654 H:54 D:В109 C:10932' },
+        info: '<b>Контракт 4♥</b>, вы — Юг, стол — Север. Запад выходит в козыря. Нужно взять <b>10 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер пик; Восток взял королём — Юг бьёт, не взял — Юг сносит бубну
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'S' && ['Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const covered = t.some(x => x.p === 'E' && x.card.s === 'S' && x.card.r === 'К');
+            const south = t.find(x => x.p === 'S').card;
+            return covered ? south.s === 'H' : south.s === 'D';
+        },
+        note: 'король пик у Востока. Если бы вы провели импас — малой к даме, — Восток взял бы королём и пошёл в бубну ' +
+              'через нашего короля к ТД Запада: три бубновые взятки и король пик, контракт без одной. ' +
+              'Экспасс выигрывает при любом положении короля: Восток взял даму королём — бьём, и ♠В 10 отработаны; ' +
+              'не взял — дама берёт взятку.',
+        explanation:
+            'Пять козырей, ♣Т, одна трефа, убитая на столе (может быть две), и три пики обеспечат контракт.<br><br>' +
+            'Единственной опасностью является ход в бубну, вырезающий короля до того, как мы отработаем пику. ' +
+            'Чтобы этого избежать, после отбора козырей забираем ♠Т, а потом <b>ходим дамой</b>. ' +
+            'Если король не появится, <b>сносим бубну</b>.<br><br>' +
+            'Если Запад забирает даму, ход остаётся у него, обеспечивая нам только одну бубновую потерю. ' +
+            'С другой стороны, если оппоненты не пойдут в бубну, мы сможем две оставшиеся бубны снести на пику.'
+    },
+    {
+        id: 32, folder: 3, type: 'deal',
+        shortTitle: '4♥ · ♠ТДВ10 против ренонса',
+        fullTitle: 'Экспасс с убиткой: 4♥, ренонс в пике',
+        contract: { text: '4♥', trump: 'H', need: 10 },
+        opening: { p: 'W', s: 'H', r: '7' },
+        hands: { N: 'S:ТДВ10 H:Д932 D:К75 C:Т4', S: 'H:ТКВ108 D:6432 C:8765',
+                 // Король пик у Востока: он берёт даму королём — бьём, убитка делает работу туза.
+                 // Опасность — ход Запада в бубну через короля стола к ТД Востока
+                 W: 'S:98765 H:76 D:В109 C:КДВ', E: 'S:К432 H:54 D:ТД8 C:10932' },
+        info: '<b>Контракт 4♥</b>, вы — Юг, стол — Север. В пике у вас <b>ренонс</b>. Запад выходит в козыря. ' +
+              'Нужно взять <b>10 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер пик; Восток взял королём — Юг бьёт, не взял — Юг сносит потерю с руки
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'S' && ['Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const covered = t.some(x => x.p === 'E' && x.card.s === 'S' && x.card.r === 'К');
+            const south = t.find(x => x.p === 'S').card;
+            return covered ? south.s === 'H' : south.s !== 'H';
+        },
+        note: 'король пик у Востока. Он взял даму королём — вы его убили, и ♠В 10 стали старшими: ' +
+              'на них сносятся потери с руки. Экспасс удался.',
+        explanation:
+            'Этот приём очень похож на обычный импас, но применяется только в мастевых контрактах. ' +
+            '<b>Убитка выполняет работу, которую при импасе делает туз.</b><br><br>' +
+            'Отберите козырей, возьмите ♠Т (снесите потерю с руки) и <b>ходите ♠Д со стола</b>. ' +
+            'Если Восток возьмёт даму королём — <b>бейте</b>, и ♠В 10 станут старшими: на них сносятся потери с руки. ' +
+            'Если не возьмёт — снесите потерю.<br><br>' +
+            'Не забудьте про переход на стол: к ♠В 10 вернитесь <b>козырем</b>. ' +
+            'Если отдать ход Западу, он пойдёт в бубну через короля к ТД Востока.<br><br>' +
+            'Экспасс, как и импас, удаётся примерно в половине случаев. ' +
+            'Будь король у Запада, он взял бы даму, и мы отдали бы короля пик, две бубны (туз бубен за королём) и трефу. ' +
+            'Но при ренонсе приходится надеяться только на экспасс с убиткой.'
+    },
+    {
+        id: 33, folder: 3, type: 'deal',
+        shortTitle: '5♣ · ♥КДВ10 против ренонса',
+        fullTitle: 'Экспасс с убиткой: 5♣',
+        contract: { text: '5♣', trump: 'C', need: 11 },
+        opening: { p: 'W', s: 'S', r: 'Д' },
+        // Слайд 5: разыгрывающий — Запад; здесь сдача повёрнута, разыгрывающий — Юг.
+        // Туз червей у Запада: он возьмёт короля, но ♥Д В 10 станут старшими для сноса потерь с руки
+        hands: { N: 'S:Т74 H:КДВ10 D:73 C:В984', S: 'S:К65 D:КВ94 C:ТКД1032',
+                 W: 'S:ДВ109 H:Т98 D:ТД108 C:76', E: 'S:832 H:765432 D:652 C:5' },
+        info: '<b>Контракт 5♣</b>, вы — Юг, стол — Север. В червах у вас <b>ренонс</b>. Запад выходит ♠Д. ' +
+              'Нужно взять <b>11 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер червей; Восток взял тузом — Юг бьёт, не взял — Юг сносит потерю с руки
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'H' && ['К', 'Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const taken = t.some(x => x.p === 'E' && x.card.s === 'H' && x.card.r === 'Т');
+            const south = t.find(x => x.p === 'S').card;
+            return taken ? south.s === 'C' : south.s !== 'C';
+        },
+        note: 'туз червей у Запада. Он взял короля тузом, но ♥Д В 10 стали старшими: на них сносятся потери с руки. ' +
+              'Экспасс удался.',
+        explanation:
+            'Эта сдача — на экспасс с убиткой. <b>Отберите козырей, финишировав на столе</b>, и ходите <b>♥К</b>. ' +
+            'Если его не надобьют — <b>снесите бубну</b>. Если Восток возьмёт короля тузом — бейте.<br><br>' +
+            'В любом случае ♥Д В 10 станут старшими, и на них сносятся потери с руки. ' +
+            'Не забудьте про переход на стол: к ♥Д В 10 вернитесь <b>козырем</b>.'
+    },
+    // Задачи 34–36 — те же сдачи 31–33 с переставленными мастями (для урока)
+    {
+        id: 34, folder: 3, type: 'deal',
+        shortTitle: '4♠ · ♥ТДВ10 против синглета',
+        fullTitle: 'Экспасс с убиткой: 4♠',
+        contract: { text: '4♠', trump: 'S', need: 10 },
+        opening: { p: 'W', s: 'S', r: '9' },
+        // Сдача 31: пики ↔ черви, бубны ↔ трефы, фоски переставлены. Король червей у Востока
+        hands: { N: 'S:Д852 H:ТДВ10 D:Т7 C:862', S: 'S:ТКВ103 H:5 D:8632 C:К73',
+                 W: 'S:94 H:9862 D:КДВ C:ТД54', E: 'S:76 H:К743 D:10954 C:В109' },
+        info: '<b>Контракт 4♠</b>, вы — Юг, стол — Север. Запад выходит в козыря. Нужно взять <b>10 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер червей; Восток взял королём — Юг бьёт, не взял — Юг сносит трефу
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'H' && ['Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const covered = t.some(x => x.p === 'E' && x.card.s === 'H' && x.card.r === 'К');
+            const south = t.find(x => x.p === 'S').card;
+            return covered ? south.s === 'S' : south.s === 'C';
+        },
+        note: 'король червей у Востока. Если бы вы провели импас — малой к даме, — Восток взял бы королём и пошёл в трефу ' +
+              'через нашего короля к ТД Запада: три трефовые взятки и король червей, контракт без одной. ' +
+              'Экспасс выигрывает при любом положении короля: Восток взял даму королём — бьём, и ♥В 10 отработаны; ' +
+              'не взял — дама берёт взятку.',
+        explanation:
+            'Пять козырей, ♦Т, одна бубна, убитая на столе (может быть две), и три червы обеспечат контракт.<br><br>' +
+            'Единственной опасностью является ход в трефу, вырезающий короля до того, как мы отработаем черву. ' +
+            'Чтобы этого избежать, после отбора козырей забираем ♥Т, а потом <b>ходим дамой</b>. ' +
+            'Если король не появится, <b>сносим трефу</b>.<br><br>' +
+            'Если Запад забирает даму, ход остаётся у него, обеспечивая нам только одну трефовую потерю. ' +
+            'С другой стороны, если оппоненты не пойдут в трефу, мы сможем две оставшиеся трефы снести на черву.'
+    },
+    {
+        id: 35, folder: 3, type: 'deal',
+        shortTitle: '4♥ · ♠КДВ10 против ренонса',
+        fullTitle: 'Экспасс с убиткой: 4♥, ренонс в пике',
+        contract: { text: '4♥', trump: 'H', need: 10 },
+        opening: { p: 'W', s: 'H', r: '7' },
+        // Сдача 32: у стола ♠КДВ10, туз пик у Востока; бубны ↔ трефы.
+        // Опасность — ход Запада в трефу через короля стола к ТД Востока
+        hands: { N: 'S:КДВ10 H:Д932 D:Т4 C:К75', S: 'H:ТКВ108 D:8765 C:6432',
+                 W: 'S:98765 H:76 D:КДВ C:В109', E: 'S:Т432 H:54 D:10932 C:ТД8' },
+        info: '<b>Контракт 4♥</b>, вы — Юг, стол — Север. В пике у вас <b>ренонс</b>. Запад выходит в козыря. ' +
+              'Нужно взять <b>10 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер пик; Восток побил тузом — Юг бьёт, не побил — Юг сносит потерю с руки
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'S' && ['К', 'Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const covered = t.some(x => x.p === 'E' && x.card.s === 'S' && x.card.r === 'Т');
+            const south = t.find(x => x.p === 'S').card;
+            return covered ? south.s === 'H' : south.s !== 'H';
+        },
+        note: 'туз пик у Востока. Он побил короля тузом — вы перебили козырем, и ♠Д В 10 стали старшими: ' +
+              'на них сносятся потери с руки. Экспасс удался.',
+        explanation:
+            'Этот приём очень похож на обычный импас, но применяется только в мастевых контрактах. ' +
+            '<b>Убитка выполняет работу, которую при импасе делает туз.</b><br><br>' +
+            'Отберите козырей и <b>ходите ♠К со стола</b>. ' +
+            'Если Восток побьёт короля тузом — <b>бейте</b>, и ♠Д В 10 станут старшими: на них сносятся потери с руки. ' +
+            'Если не побьёт — снесите потерю.<br><br>' +
+            'Не забудьте про переход на стол: к ♠Д В 10 вернитесь <b>козырем</b>. ' +
+            'Если отдать ход Западу, он пойдёт в трефу через короля к ТД Востока.<br><br>' +
+            'Экспасс, как и импас, удаётся примерно в половине случаев. ' +
+            'Будь туз у Запада, он взял бы короля, и мы отдали бы туза пик, две трефы (туз треф за королём) и бубну. ' +
+            'Но при ренонсе приходится надеяться только на экспасс с убиткой.'
+    },
+    {
+        id: 36, folder: 3, type: 'deal',
+        shortTitle: '5♦ · ♠КДВ10 против ренонса',
+        fullTitle: 'Экспасс с убиткой: 5♦',
+        contract: { text: '5♦', trump: 'D', need: 11 },
+        opening: { p: 'W', s: 'H', r: 'Д' },
+        // Сдача 33: трефы ↔ бубны, черви ↔ пики; туз червей перенесён в руку (♥Т65 против ♥К74)
+        hands: { N: 'S:КДВ10 H:К74 D:В984 C:73', S: 'H:Т65 D:ТКД1032 C:КВ94',
+                 W: 'S:Т98 H:ДВ109 D:76 C:ТД108', E: 'S:765432 H:832 D:5 C:652' },
+        info: '<b>Контракт 5♦</b>, вы — Юг, стол — Север. В пиках у вас <b>ренонс</b>. Запад выходит ♥Д. ' +
+              'Нужно взять <b>11 взяток</b>.',
+        techniqueName: 'экспасса с убиткой',
+        techniqueButton: 'Попробовать экспасс',
+        // Приём: со стола онер пик; Восток побил тузом — Юг бьёт, не побил — Юг сносит потерю с руки
+        technique: (t) => {
+            if (!(t[0].p === 'N' && t[0].card.s === 'S' && ['К', 'Д', 'В', '10'].includes(t[0].card.r))) return false;
+            const taken = t.some(x => x.p === 'E' && x.card.s === 'S' && x.card.r === 'Т');
+            const south = t.find(x => x.p === 'S').card;
+            return taken ? south.s === 'D' : south.s !== 'D';
+        },
+        note: 'туз пик у Запада. Он взял короля тузом, но ♠Д В 10 стали старшими: на них сносятся потери с руки. ' +
+              'Экспасс удался.',
+        explanation:
+            'Эта сдача — на экспасс с убиткой. <b>Отберите козырей, финишировав на столе</b>, и ходите <b>♠К</b>. ' +
+            'Если его не надобьют — <b>снесите трефу</b>. Если Восток побьёт короля тузом — бейте.<br><br>' +
+            'В любом случае ♠Д В 10 станут старшими, и на них сносятся потери с руки. ' +
+            'Не забудьте про переходы на стол: козыри стола ♦В 9 8 старше козырей защиты, ' +
+            'и к ним можно переходить с руки младшими козырями.'
+    }
+);
+
+const DEAL_SEATS = ['N', 'E', 'S', 'W'];
+const DEAL_NAMES = { N: 'Север', E: 'Восток', S: 'Юг', W: 'Запад' };
+const DEAL_DD_LIMIT = 5;      // с этого числа карт на руке защита и проверки считают перебором
+let deal = null;
+
+function dealParse(txt) {
+    const cards = [];
+    txt.split(/\s+/).filter(Boolean).forEach(part => {
+        const [s, holding] = part.split(':');
+        leadParse(holding || '').forEach(r => cards.push({ s, r }));
+    });
+    return cards;
+}
+function dealRank(r) { return 13 - LEAD_RANKS.indexOf(r); }
+function dealNextSeat(p) { return DEAL_SEATS[(DEAL_SEATS.indexOf(p) + 1) % 4]; }
+function dealPartner(p) { return DEAL_SEATS[(DEAL_SEATS.indexOf(p) + 2) % 4]; }
+function dealIsNS(p) { return p === 'N' || p === 'S'; }
+function dealTrump() { return currentTask.contract.trump; }
+
+function dealWinner(trick, trump) {
+    let best = trick[0];
+    for (const t of trick.slice(1)) {
+        const c = t.card, b = best.card;
+        if (c.s === b.s ? dealRank(c.r) > dealRank(b.r) : c.s === trump) best = t;
+    }
+    return best;
+}
+function dealLegalFor(hand, trick) {
+    const led = trick.length ? trick[0].card.s : null;
+    const follow = led ? hand.filter(c => c.s === led) : [];
+    return follow.length ? follow : hand;
+}
+function dealLegal(p) { return dealLegalFor(deal.hands[p], deal.trick); }
+const byRankUp = (a, b) => dealRank(a.r) - dealRank(b.r);
+
+/* ---------- Перебор для концовки: сколько взяток возьмут Север–Юг ----------
+   worst = false — обе стороны играют лучшим образом;
+   worst = true  — Север–Юг играют как угодно плохо (для «клейма»: контракт гарантирован при любой игре) */
+function dealDD(hands, trick, turn, trump, worst, memo) {
+    if (trick.length === 4) {
+        const w = dealWinner(trick, trump).p;
+        return (dealIsNS(w) ? 1 : 0) + dealDD(hands, [], w, trump, worst, memo);
+    }
+    let key = null;
+    if (!trick.length) {
+        if (!hands.N.length && !hands.E.length && !hands.S.length && !hands.W.length) return 0;
+        key = turn + '|' + DEAL_SEATS.map(p => hands[p].map(c => c.s + c.r).join('')).join('|');
+        if (memo.has(key)) return memo.get(key);
+    }
+    const maximize = dealIsNS(turn) && !worst;
+    let best = maximize ? -1 : 99;
+    for (const c of dealLegalFor(hands[turn], trick)) {
+        const h2 = Object.assign({}, hands);
+        h2[turn] = hands[turn].filter(x => x !== c);
+        const v = dealDD(h2, trick.concat([{ p: turn, card: c }]), dealNextSeat(turn), trump, worst, memo);
+        best = maximize ? Math.max(best, v) : Math.min(best, v);
+    }
+    if (key) memo.set(key, best);
+    return best;
+}
+function dealSmall() { return Math.max(...DEAL_SEATS.map(p => deal.hands[p].length)) <= DEAL_DD_LIMIT; }
+
+/* ---------- Защита по правилам ---------- */
+function dealRuleCard(p) {
+    const trump = dealTrump();
+    const hand = deal.hands[p];
+    const legal = dealLegal(p).slice().sort(byRankUp);
+    if (!deal.trick.length) return dealLeadCard(p);
+    const led = deal.trick[0].card;
+    const win = dealWinner(deal.trick, trump);
+    const pos = deal.trick.length;            // 1 — вторая рука, 2 — третья, 3 — четвёртая
+    const partnerWins = win.p === dealPartner(p);
+    const beats = c => c.s === win.card.s ? dealRank(c.r) > dealRank(win.card.r) : c.s === trump;
+    if (legal[0].s === led.s) {
+        if (partnerWins) return legal[0];
+        const beat = legal.filter(beats);
+        if (pos === 1) return dealRank(led.r) >= dealRank('10') && beat.length ? beat[0] : legal[0];  // онер кроем онером
+        return beat.length ? beat[0] : legal[0];                                                       // третья, четвёртая — берём дёшево
+    }
+    // Масти нет: перебиваем козырем, если взятку берут противники
+    if (!partnerWins) {
+        const ruff = legal.filter(c => c.s === trump && beats(c)).sort(byRankUp);
+        if (ruff.length) return ruff[0];
+    }
+    return dealDiscard(hand.filter(c => legal.includes(c)));
+}
+function dealDiscard(cards) {
+    const trump = dealTrump();
+    const bySuit = {};
+    cards.forEach(c => (bySuit[c.s] = bySuit[c.s] || []).push(c));
+    const suits = Object.keys(bySuit).filter(s => s !== trump);
+    const pool = suits.length ? suits : Object.keys(bySuit);
+    const s = pool.sort((a, b) => bySuit[b].length - bySuit[a].length)[0];
+    return bySuit[s].sort(byRankUp)[0];
+}
+function dealLeadCard(p) {
+    const trump = dealTrump();
+    const hand = deal.hands[p];
+    const bySuit = {};
+    hand.forEach(c => (bySuit[c.s] = bySuit[c.s] || []).push(c));
+    Object.values(bySuit).forEach(a => a.sort(byRankUp));
+    const side = Object.keys(bySuit).filter(s => s !== trump);
+    // 1. Масть партнёра: из дубля — старшую, иначе младшую
+    for (const s of deal.ledBy[dealPartner(p)]) {
+        if (s !== trump && bySuit[s] && !deal.nsRuffed.includes(s)) return bySuit[s].length === 2 ? bySuit[s][1] : bySuit[s][0];
+    }
+    // 1а. Продолжаем свою масть (последнюю начатую), пока её не перебивают козырем:
+    //     раз начали отыгрывать масть — доводим дело до конца
+    for (const s of deal.ledBy[p].slice().reverse()) {
+        if (s !== trump && bySuit[s] && !deal.nsRuffed.includes(s)) return dealContinue(bySuit[s]);
+    }
+    // 2. Старшая из онерной секвенции (ТК, КД, ДВ, В10)
+    for (const s of side) {
+        const a = bySuit[s];
+        const top = a[a.length - 1], next = a[a.length - 2];
+        if (next && dealRank(top.r) >= dealRank('В') && dealRank(top.r) - dealRank(next.r) === 1) return top;
+    }
+    // 3. Младшая из самой длинной масти (козырь — только если больше нечем)
+    const pool = side.length ? side : Object.keys(bySuit);
+    const s = pool.sort((a, b) => bySuit[b].length - bySuit[a].length)[0];
+    return bySuit[s][0];
+}
+/* Продолжение своей масти (карты по возрастанию): из соседних старших (10 9) — старшую, иначе младшую */
+function dealContinue(cards) {
+    const top = cards[cards.length - 1], next = cards[cards.length - 2];
+    return next && dealRank(top.r) - dealRank(next.r) === 1 ? top : cards[0];
+}
+
+/* В концовке защита играет без ошибок; из равноценных карт — та, что по правилам */
+function dealDefenseCard(p) {
+    const rule = dealRuleCard(p);
+    if (!dealSmall()) return rule;
+    const trump = dealTrump();
+    const memo = new Map();
+    let best = null, bestV = 99, ruleV = 99;
+    for (const c of dealLegal(p).slice().sort(byRankUp)) {
+        const h2 = Object.assign({}, deal.hands);
+        h2[p] = deal.hands[p].filter(x => x !== c);
+        const v = dealDD(h2, deal.trick.concat([{ p, card: c }]), dealNextSeat(p), trump, false, memo);
+        if (v < bestV) { bestV = v; best = c; }
+        if (c === rule) ruleV = v;
+    }
+    return ruleV <= bestV ? rule : best;
+}
+
+/* ---------- Ход игры ---------- */
+function dealStart() {
+    clearTimers();
+    const t = currentTask;
+    const parsed = {};
+    DEAL_SEATS.forEach(p => (parsed[p] = dealParse(t.hands[p])));
+    deal = {
+        orig: { W: parsed.W.slice(), E: parsed.E.slice() },
+        hands: parsed, trick: [], lastTrick: null, turn: t.opening.p, trickNo: 0, ns: 0, ew: 0,
+        waiting: false, over: false, revealed: false, technique: false, claimed: 0, history: [],
+        nsRuffed: [],          // масти, в которых Север–Юг уже перебивали козырем: их защита не продолжает
+        ledBy: { N: [], E: [], S: [], W: [] }
+    };
+    document.getElementById('dealInfo').innerHTML = t.info;
+    document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
+    document.getElementById('dealTrick').innerHTML = '';
+    // Навигация по задачам раздела и кнопка «назад»
+    const list = folderTasks(t.folder), i = list.indexOf(t);
+    document.getElementById('dealPrev').disabled = i <= 0;
+    document.getElementById('dealNextBtn').disabled = i >= list.length - 1;
+    setBackButton('dealBack');
+    dealRender();
+    const o = t.opening;
+    const lead = deal.hands[o.p].find(c => c.s === o.s && c.r === o.r);
+    schedule(() => dealPlay(o.p, lead), 900);
+}
+
+function dealNext() {
+    if (deal.over) return;
+    const p = deal.turn;
+    if (dealIsNS(p)) { deal.waiting = true; dealRender(); return; }
+    deal.waiting = false;
+    dealRender();
+    schedule(() => dealPlay(p, dealDefenseCard(p)), 650);
+}
+
+function dealPlay(p, card) {
+    if (deal.over || !dealLegal(p).includes(card)) return;   // ходить в масть обязательно
+    const hand = deal.hands[p];
+    hand.splice(hand.indexOf(card), 1);
+    if (!deal.trick.length && !deal.ledBy[p].includes(card.s)) deal.ledBy[p].push(card.s);
+    deal.trick.push({ p, card });
+    deal.waiting = false;
+    deal.turn = dealNextSeat(p);
+    dealRender();
+    if (deal.trick.length === 4) schedule(dealResolve, 1000);
+    else dealNext();
+}
+
+function dealResolve() {
+    const t = currentTask;
+    const w = dealWinner(deal.trick, t.contract.trump);
+    if (dealIsNS(w.p)) deal.ns++; else deal.ew++;
+    deal.history.push(dealIsNS(w.p) ? 'ns' : 'ew');
+    const ledSuit = deal.trick[0].card.s;
+    if (dealIsNS(w.p) && w.card.s === t.contract.trump && ledSuit !== t.contract.trump && !deal.nsRuffed.includes(ledSuit))
+        deal.nsRuffed.push(ledSuit);
+    if (t.technique(deal.trick)) deal.technique = true;
+    deal.lastTrick = deal.trick;
+    deal.trickNo++;
+    const need = t.contract.need, left = 13 - deal.trickNo;
+    let result = null;
+    if (deal.ns >= need) result = 'made';
+    else if (deal.ns + left < need) { result = 'down'; deal.downBy = need - deal.ns - left; }
+    else if (dealSmall()) {
+        // Приём применён и контракт уже не проиграть никакой игрой — заканчиваем, как клейм
+        if (deal.technique && deal.ns + dealDD(deal.hands, [], w.p, t.contract.trump, true, new Map()) >= need) {
+            deal.claimed = need - deal.ns; result = 'made';
+        } else {
+            // Даже лучшей игрой контракт уже не выполнить
+            const best = dealDD(deal.hands, [], w.p, t.contract.trump, false, new Map());
+            if (deal.ns + best < need) { result = 'down'; deal.downBy = need - deal.ns - best; }
+        }
+    }
+    if (result) {
+        deal.over = true;
+        dealRender();
+        schedule(() => dealFinish(result), RESULT_PAUSE);
+        return;
+    }
+    deal.trick = [];
+    deal.turn = w.p;
+    dealRender();
+    dealNext();
+}
+
+function dealFinish(result) {
+    const t = currentTask;
+    deal.revealed = true;
+    dealRender();
+    const panel = document.getElementById('dealResult');
+    const title = document.getElementById('dealResultTitle');
+    const text = document.getElementById('dealResultText');
+    const buttons = document.getElementById('dealResultButtons');
+    buttons.innerHTML = '';
+    const addButton = (label, fn) => {
+        const b = document.createElement('button');
+        b.innerText = label;
+        b.onclick = fn;
+        buttons.appendChild(b);
+    };
+    // «К задачам» / «К разделам»; в разделе по ссылке, где задачи без меню, кнопки нет
+    const addBack = () => { const l = backLabel(); if (l) addButton(l, showMenu); };
+    const need = t.contract.need;
+    // Счёт взяток в итоговом окне не показываем: сдача часто не доигрывается до конца
+    const solution = '<div class="solution" id="dealSolution"><button class="solution-btn" onclick="dealShowSolution()">Показать решение</button></div>';
+    panel.classList.remove('win', 'lose', 'partial');
+    if (result === 'made' && deal.technique) {
+        panel.classList.add('win');
+        title.innerText = 'Ты справился!';
+        text.innerHTML = t.explanation + '<br><br><b>В этой сдаче:</b> ' + t.note;
+        const list = folderTasks(t.folder);
+        const next = list[list.indexOf(t) + 1];
+        if (next) addButton('Следующая задача', () => loadTask(next.id));
+        addBack();
+    } else if (result === 'made') {
+        panel.classList.add('partial');
+        title.innerText = 'Контракт выполнен!';
+        text.innerHTML = 'Ты нашёл свой путь к победе. А теперь попробуй выиграть с помощью приёма, который мы изучаем, — <b>' +
+            t.techniqueName + '</b>.' + solution;
+        addButton(t.techniqueButton || 'Попробовать ещё раз', dealStart);
+        addBack();
+    } else {
+        panel.classList.add('lose');
+        title.innerText = 'Упс, контракт не выполнен';
+        const down = deal.downBy || 1;
+        // Сдача не доигрывается, поэтому счёт взяток здесь не показываем
+        text.innerHTML = 'Контракт без ' + (down === 1 ? 'одной' : down) + '. Попробуй ещё раз!' + solution;
+        addButton('Ещё раз', dealStart);
+        addBack();
+    }
+    panel.classList.add('show');
+}
+function dealGo(d) {
+    const list = folderTasks(currentTask.folder);
+    const next = list[list.indexOf(currentTask) + d];
+    if (next) loadTask(next.id);
+}
+function dealShowSolution() {
+    document.getElementById('dealSolution').innerHTML = '<b>Решение.</b> ' + currentTask.explanation;
+}
+
+/* Показать последнюю взятку ещё раз (пока стол пуст) */
+function dealShowLast() {
+    if (!deal || !deal.lastTrick || deal.trick.length) return;
+    dealPaintTrick(deal.lastTrick, true);
+    schedule(() => { if (!deal.trick.length) document.getElementById('dealTrick').innerHTML = ''; }, 2500);
+}
+function dealPaintTrick(cards, ghost) {
+    const area = document.getElementById('dealTrick');
+    if (ghost || area.children.length > cards.length) area.innerHTML = '';
+    const pos = { N: { row: 1, col: 2 }, W: { row: 2, col: 1 }, E: { row: 2, col: 3 }, S: { row: 3, col: 2 } };
+    for (let i = area.children.length; i < cards.length; i++) {
+        const { p, card } = cards[i];
+        const el = leadCardEl(card.s, card.r);
+        if (!ghost) el.classList.add('entering');
+        el.style.gridRow = pos[p].row;
+        el.style.gridColumn = pos[p].col;
+        area.appendChild(el);
+    }
+}
+
+function dealRender() {
+    const legal = deal.waiting ? dealLegal(deal.turn) : [];
+    ['N', 'S'].forEach(p => {
+        const box = document.getElementById('deal' + p);
+        box.innerHTML = '';
+        LEAD_SUIT_ORDER.forEach(s => {
+            deal.hands[p].filter(c => c.s === s)
+                .sort((a, b) => dealRank(b.r) - dealRank(a.r))
+                .forEach((c, i) => {
+                    const el = leadCardEl(c.s, c.r);
+                    if (i === 0 && box.children.length) el.classList.add('suit-gap');
+                    if (deal.waiting && deal.turn === p && legal.includes(c)) {
+                        el.classList.add('clickable');
+                        el.onclick = () => { if (deal.waiting) dealPlay(p, c); };
+                    } else el.classList.add('disabled');
+                    box.appendChild(el);
+                });
+        });
+    });
+    ['W', 'E'].forEach(p => {
+        const box = document.getElementById('deal' + p);
+        if (deal.revealed) {
+            // В конце показываем исходные руки противников
+            const hand = deal.orig[p];
+            box.className = 'mini-hand revealed';
+            box.innerHTML = LEAD_SUIT_ORDER.map(s => {
+                const cards = hand.filter(c => c.s === s).sort((a, b) => dealRank(b.r) - dealRank(a.r)).map(c => c.r).join(' ');
+                return '<div>' + leadSuitText(LEAD_SYM[s]) + ' ' + (cards || '—') + '</div>';
+            }).join('');
+        } else {
+            const n = deal.hands[p].length;
+            box.className = 'mini-hand';
+            box.innerHTML = '<div class="mini-backs">' + '<span></span>'.repeat(n) + '</div>' +
+                '<div class="mini-count">' + n + ' карт</div>';
+        }
+    });
+    dealPaintTrick(deal.trick, false);
+    document.getElementById('dealTally').innerHTML =
+        '<div class="tally-row">' + deal.history.map(h => '<span class="t-' + h + '"></span>').join('') + '</div>' +
+        '<div class="tally-text">Мы <b>' + deal.ns + '</b> · Они <b>' + deal.ew + '</b></div>';
+    const t = currentTask;
+    const trumpName = { S: 'пики', H: 'черви', D: 'бубны', C: 'трефы' }[t.contract.trump];
+    let turnText = '';
+    if (!deal.over) {
+        turnText = deal.waiting
+            ? ' · <span class="your-turn">Ваш ход: ' + (deal.turn === 'N' ? 'стол' : 'рука') + '</span>'
+            : ' · Ходит ' + DEAL_NAMES[deal.turn] + '…';
+    }
+    const lastBtn = deal.lastTrick && !deal.trick.length && !deal.over
+        ? ' <button class="last-btn" onclick="dealShowLast()">Последняя взятка</button>' : '';
+    document.getElementById('dealStatus').innerHTML =
+        'Козыри: ' + leadSuitText(LEAD_SYM[t.contract.trump]) + ' ' + trumpName +
+        ' · Нужно взять <b>' + t.contract.need + '</b>' + turnText + lastBtn;
+}
+
+/* ============================================================
+   Розыгрыш масти: расклад берётся из заготовленных (sp.layouts);
+   засчитывается план из теории, а после него — доигрывание без потерь
+   (взяток не меньше цели). Защита играет без ошибок.
+   ============================================================ */
+const SP = { trickNum: 0, step: 0, order: [], nsTricks: 0, keySeen: false, layout: null,
+             planOn: false, leader: null, playedCards: new Set(), showedOut: { W: false, E: false } };
+const SP_NAMES = { N:'Север', E:'Восток', S:'Юг', W:'Запад' };
+const spMemo = new Map();
+
+function isSmall(c, honors) { return c !== '??' && !honors.includes(c); }
+function spCfg() { return currentTask.sp; }
+function spSpades(h, p) { return h[p].filter(c => c !== '??'); }
+function spHolder(lay, card) { return lay.W.includes(card) ? 'W' : 'E'; }
+function spHolderName(lay, card) { return SP_NAMES[spHolder(lay, card)]; }
+function spSortHand(h) { return h.sort((a, b) => (RANK_ORDER[b] || 0) - (RANK_ORDER[a] || 0)); }
+function spPad(h) { while (h.length < 4) h.push('??'); return spSortHand(h); }
+function spRemove(arr, card) { const r = arr.slice(); const i = r.indexOf(card); if (i >= 0) r.splice(i, 1); return r; }
+function spBuildOrder(leader) {
+    const seq = ['N','E','S','W'];
+    const i = seq.indexOf(leader);
+    return seq.slice(i).concat(seq.slice(0, i));
+}
+
+/* Расклады задаются русскими буквами: 'Т10' → ['A','T'] */
+const SP_RU = { 'Т':'A', 'К':'K', 'Д':'Q', 'В':'J', '10':'T' };
+function spParse(s) { return (s.match(/10|[ТКДВ2-9]/g) || []).map(c => SP_RU[c] || c); }
+
+/* Заготовленные расклады, в которых правильный план выигрывает, а типичная ошибка теряет взятку.
+   Подряд один и тот же расклад не выпадает. */
+const spLastLayout = {};
+function spDeal(cfg) {
+    const n = cfg.layouts.length;
+    const last = spLastLayout[currentTask.id];
+    let i = Math.floor(Math.random() * n);
+    if (n > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+    spLastLayout[currentTask.id] = i;
+    return spLayout(cfg.layouts[i]);
+}
+/* Расклад: ['Запад', 'Восток', цель] или { W, E, target, note, blunder }.
+   note — пояснение к раскладу в итоговом окне; blunder — заготовленная ошибка
+   защиты в первой взятке: { player: 'W', card: '5' }. */
+function spLayout(l) {
+    const o = Array.isArray(l) ? { W: l[0], E: l[1], target: l[2] } : l;
+    return { W: spParse(o.W), E: spParse(o.E), target: o.target, note: o.note || '',
+             blunder: o.blunder ? { player: o.blunder.player, card: spParse(o.blunder.card)[0] } : null };
+}
+
+/* Кто может начать следующую взятку */
+function spLeaders(h, lastWinner) {
+    const has = p => spSpades(h, p).length > 0;
+    const ns = ['N','S'].filter(has);
+    if (ns.length === 0 || !spCfg().noEntries) return ns;
+    if (lastWinner === 'N' || lastWinner === 'S') return has(lastWinner) ? [lastWinner] : ns;
+    return has('S') ? ['S'] : ns;   // защита уходит в другую масть, ход приходит в руку
+}
+
+function spTrickWinner(played) {
+    let best = null;
+    for (const t of played) if (t.card !== '??' && (!best || RANK_ORDER[t.card] > RANK_ORDER[best.card])) best = t;
+    return best ? best.player : played[0].player;
+}
+
+/* Полный перебор: сколько взяток возьмут Север и Юг при лучшей игре обеих сторон */
+function spValue(h, order, pos, played) {
+    if (pos === 4) {
+        const w = spTrickWinner(played);
+        return ((w === 'N' || w === 'S') ? 1 : 0) + spBetween(h, w);
+    }
+    const p = order[pos];
+    const options = spSpades(h, p);
+    if (options.length === 0) options.push('??');
+    const maximize = (p === 'N' || p === 'S');
+    let result = maximize ? -1 : 99;
+    for (const c of options) {
+        const nh = Object.assign({}, h);
+        nh[p] = spRemove(h[p], c);
+        const v = spValue(nh, order, pos + 1, played.concat([{ player: p, card: c }]));
+        result = maximize ? Math.max(result, v) : Math.min(result, v);
+    }
+    return result;
+}
+
+function spBetween(h, lastWinner) {
+    const leaders = spLeaders(h, lastWinner);
+    if (leaders.length === 0) return 0;
+    const key = currentTask.id + ':' + (spCfg().noEntries ? lastWinner : '') + ':' +
+        ['N','E','S','W'].map(p => spSpades(h, p).join('')).join('|');
+    if (spMemo.has(key)) return spMemo.get(key);
+    let best = 0;
+    for (const l of leaders) best = Math.max(best, spValue(h, spBuildOrder(l), 0, []));
+    spMemo.set(key, best);
+    return best;
+}
+
+function spCardValue(h, p, card) {
+    const nh = Object.assign({}, h);
+    nh[p] = spRemove(h[p], card);
+    return spValue(nh, SP.order, SP.step + 1, trick.concat([{ player: p, card }]));
+}
+
+/* Своя старшая карта уже берёт взятку, а ученик кладёт на неё фигуру, имея мелкую */
+function spWastesHonor(p, card) {
+    const isHonor = c => RANK_ORDER[c] >= RANK_ORDER['J'];
+    const partner = trick.find(t => t.player === (p === 'N' ? 'S' : 'N'));
+    if (!partner || !isHonor(partner.card) || spTrickWinner(trick) !== partner.player) return false;
+    return isHonor(card) && spSpades(hands, p).some(c => !isHonor(c));
+}
+
+function spContext() {
+    const second = trick.length > 1 ? trick[1].card : null;
+    return { round: SP.trickNum, step: SP.step, leader: SP.leader, second, played: trick, layout: SP.layout };
+}
+
+function spStart() {
+    const cfg = spCfg();
+    const d = spDeal(cfg);
+    hands = { N: spPad(cfg.N.slice()), S: spPad(cfg.S.slice()), W: spPad(d.W.slice()), E: spPad(d.E.slice()) };
+    SP.layout = { W: spSortHand(d.W.slice()), E: spSortHand(d.E.slice()) };
+    trick = [];
+    correct = true;
+    SP.trickNum = 0;
+    SP.step = 0;
+    SP.order = [];
+    SP.nsTricks = 0;
+    SP.finishedEarly = false;
+    SP.claimed = 0;
+    SP.keySeen = false;
+    SP.planOn = false;
+    SP.playedCards = new Set();
+    SP.showedOut = { W: false, E: false };
+    spMemo.clear();
+    // Сколько взяток можно взять в этом раскладе при лучшей игре
+    const starts = cfg.firstLeader ? [cfg.firstLeader] : ['N', 'S'];
+    SP.note = d.note;
+    SP.blunder = d.blunder;
+    SP.target = d.target || cfg.target || Math.max(...starts.map(l => spValue(hands, spBuildOrder(l), 0, [])));
+    const goal = document.getElementById('taskGoal');
+    // В задачах «на максимум» число взяток не показываем: оно подсказало бы, удачно ли лежит масть
+    goal.innerHTML = cfg.goal || ('Возьмите <b>максимум взяток</b>' +
+        (cfg.noThreeThree ? '. Распределение 3-3 не рассматриваем.' : '.'));
+    goal.classList.remove('hidden');
+    render();
+    if (cfg.firstLeader) { spBeginTrick(cfg.firstLeader, false); return; }
+    const hint = cfg.hint ? cfg.hint(SP.layout) + '<br>' : '';
+    showLeaderPanel(hint + 'С какой руки начать розыгрыш?', null, l => spBeginTrick(l, true));
+}
+
+function spBeginTrick(leader, chosen) {
+    const cfg = spCfg();
+    SP.planOn = SP.trickNum < cfg.planRounds && !SP.keySeen;
+    if (chosen && SP.planOn && !cfg.planLeader(leader, spContext())) correct = false;
+    SP.leader = leader;
+    SP.order = spBuildOrder(leader);
+    SP.step = 0;
+    spNext();
+}
+
+function spPlay(p, card) {
+    if (card === '??') SP.showedOut[p] = true;
+    else SP.playedCards.add(card);
+    playCard(p, card);
+    SP.step++;
+}
+
+function spNext() {
+    if (SP.step >= 4) { spResolve(); return; }
+    const p = SP.order[SP.step];
+    if (spSpades(hands, p).length === 0) {
+        schedule(() => { spPlay(p, '??'); spNext(); }, 550);
+        return;
+    }
+    if (p === 'N' || p === 'S') {
+        waiting = { player: p, expected: null };
+        render();
+    } else {
+        schedule(() => { spPlay(p, spDefenseCard(p)); spNext(); }, 550);
+    }
+}
+
+/* Защита играет без ошибок. Из равноценных карт: если взятку сейчас берёт разыгрывающий
+   и вистующий ходит последним — бьёт самой дешёвой старшей картой (так играют живые
+   вистующие), иначе кладёт младшую */
+function spDefenseCard(p) {
+    // Заготовленная ошибка вистующего в первой взятке
+    const b = SP.blunder;
+    if (b && SP.trickNum === 0 && b.player === p && hands[p].includes(b.card)) return b.card;
+    const spades = spSpades(hands, p).sort((a, b) => RANK_ORDER[a] - RANK_ORDER[b]);
+    const values = spades.map(c => spCardValue(hands, p, c));
+    const bestValue = Math.min(...values);
+    const equal = spades.filter((c, i) => values[i] === bestValue);
+    // Только четвёртой рукой: второй рукой живые вистующие обычно кладут мелкую
+    const top = trick.length === 3 ? spTrickWinner(trick) : null;
+    if (top === 'N' || top === 'S') {
+        const topRank = RANK_ORDER[trick.find(t => t.player === top).card];
+        const beat = equal.find(c => RANK_ORDER[c] > topRank);
+        if (beat) return beat;
+    }
+    return equal[0];
+}
+
+function spOnClick(player, card) {
+    if (!waiting || waiting.player !== player) return;
+    if (SP.planOn && !spCfg().planCard(player, card, spContext())) correct = false;
+    if (spWastesHonor(player, card)) correct = false;
+    waiting = null;
+    spPlay(player, card);
+    spNext();
+}
+
+function spResolve() {
+    const winner = spTrickWinner(trick);
+    if (trick.some(t => t.card === spCfg().key)) SP.keySeen = true;
+    // План может закончиться досрочно (например, выпала бланковая фигура)
+    if (spCfg().planEnds && spCfg().planEnds(trick, SP.trickNum)) SP.keySeen = true;
+    if (winner === 'N' || winner === 'S') SP.nsTricks++;
+    const leaders = spLeaders(hands, winner);
+    // Цель уже обеспечена (взятые взятки + старшие карты) — доигрывать нет смысла, как клейм за столом
+    if (leaders.length > 0 && SP.nsTricks < SP.target) {
+        const top = spTopTricks(hands);
+        // Ключевая карта уже вышла — гадать не о чем: заканчиваем, если цель достижима
+        const sure = SP.keySeen && spCfg().key ? spBetween(hands, winner) : top;
+        if (SP.nsTricks + Math.max(top, sure) >= SP.target) { SP.claimed = SP.target - SP.nsTricks; SP.nsTricks = SP.target; }
+    }
+    SP.finishedEarly = leaders.length > 0 && SP.nsTricks >= SP.target;
+    if (leaders.length === 0 || SP.finishedEarly) {
+        // Последняя взятка остаётся на столе — итог покажем после паузы
+        SP.trickNum++;
+        if (SP.nsTricks < SP.target) correct = false;
+        showResult();
+        return;
+    }
+    schedule(() => {
+        trick = [];
+        SP.trickNum++;
+        render();
+        if (leaders.length === 1) { spBeginTrick(leaders[0], false); return; }
+        const defenderWon = (winner === 'W' || winner === 'E');
+        const text = '<span class="who">' + SP_NAMES[winner] + '</span> ' +
+            (defenderWon ? 'взял взятку и сменил масть.' : 'получил взятку.') +
+            '<br>С какой руки продолжить?';
+        showLeaderPanel(text, null, l => spBeginTrick(l, true));
+    }, 900);
+}
+
+/* Сколько взяток гарантированно берут старшие карты: карты Севера и Юга выше всех
+   оставшихся карт защиты, но не больше числа оставшихся кругов */
+function spTopTricks(h) {
+    const def = spSpades(h, 'W').concat(spSpades(h, 'E'));
+    const highest = Math.max(0, ...def.map(c => RANK_ORDER[c]));
+    const ns = spSpades(h, 'N').concat(spSpades(h, 'S'));
+    const masters = ns.filter(c => RANK_ORDER[c] > highest).length;
+    const rounds = Math.max(spSpades(h, 'N').length, spSpades(h, 'S').length);
+    // Когда у защиты кончатся карты масти, оставшиеся наши карты тоже берут взятки
+    const defLen = Math.max(spSpades(h, 'W').length, spSpades(h, 'E').length);
+    return Math.min(rounds, masters + Math.max(0, rounds - defLen));
+}
+
+function spSummary() {
+    const fmt = cards => cards.length ? cards.map(c => RANK_LABEL[c] || c).join(' ') : 'пусто';
+    return '<br><br><b>Расклад:</b> Запад – ' + fmt(SP.layout.W) + ', Восток – ' + fmt(SP.layout.E) + '.<br>' +
+        '<b>Взято взяток:</b> ' + SP.nsTricks + ', по оптимальному плану — ' + SP.target + '.' +
+        (SP.claimed ? '<br>Из них ' + SP.claimed + ' — оставшимися картами: дальше гадать не о чем, доигрывать не нужно.'
+            : SP.finishedEarly ? '<br>Цель достигнута — остальные карты доигрывать не нужно.' : '');
+}
+
+/* ============================================================
+   Меню
+   ============================================================ */
+/* Разделы сгруппированы по темам: вист, торговля, розыгрыш. Номер раздела (id) — для ссылок ?razdel=N */
+const FOLDER_GROUPS = ['Вист', 'Торговля', 'Розыгрыш'];
+const FOLDERS = [
+    { id: 2, name: 'Первый ход', group: 'Вист' },
+    { id: 4, name: 'Защита взяток на висте', group: 'Вист' },
+    { id: 6, name: 'Вист на второй руке', group: 'Вист' },
+    { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true },
+    { id: 5, name: 'Торговля', group: 'Торговля' },
+    { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш' },
+    { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true }
+];
+// direct: true — при входе в раздел сразу открывается первая задача, внизу — «Предыдущая / Следующая»
+let currentFolder = null;
+
+/* Файл урока: только выбранные разделы и задачи. В sd.html — null (весь практикум).
+   Например: { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } } */
+const LESSON = { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } };
+const visibleFolders = () => LESSON ? FOLDERS.filter(f => LESSON.folders.includes(f.id)) : FOLDERS;
+
+function folderTasks(folderId) {
+    const only = LESSON && LESSON.tasks && LESSON.tasks[folderId];
+    return TASKS.filter(t => (t.folder || 1) === folderId && (!only || only.includes(t.id)));
+}
+/* Подпись кнопки «назад»; null — кнопки нет (раздел по ссылке, задачи без меню) */
+function backLabel() {
+    if (!currentFolder || !currentFolder.direct) return 'К задачам';
+    return lockedFolder !== null ? null : 'К разделам';
+}
+function setBackButton(id) {
+    const el = document.getElementById(id), l = backLabel();
+    el.classList.toggle('hidden', !l);
+    el.innerText = '← ' + (l || 'К задачам');
+}
+
+function taskWord(n) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'задача';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'задачи';
+    return 'задач';
+}
+
+function addMenuCard(grid, num, name, onclick, extraClass) {
+    const card = document.createElement('div');
+    card.className = 'task-card' + (extraClass ? ' ' + extraClass : '');
+    card.onclick = onclick;
+    card.innerHTML =
+        '<div class="arrow">→</div>' +
+        '<div class="num">' + num + '</div>' +
+        '<div class="name">' + name + '</div>';
+    grid.appendChild(card);
+}
+
+function renderMenu() {
+    const grid = document.getElementById('taskGrid');
+    const sub = document.getElementById('menuSubtitle');
+    const back = document.getElementById('folderBackBtn');
+    grid.innerHTML = '';
+    if (!currentFolder) {
+        sub.innerText = 'Выберите раздел';
+        back.classList.add('hidden');
+        FOLDER_GROUPS.forEach(g => {
+            const head = document.createElement('div');
+            head.className = 'menu-group';
+            head.innerText = g;
+            grid.appendChild(head);
+            const list = visibleFolders().filter(f => f.group === g);
+            if (!list.length) { head.remove(); return; }
+            list.forEach(f => {
+                const n = f.id === 7 ? GV_COUNT : folderTasks(f.id).length;
+                const count = f.id === 5 ? '18 сдач' : f.id === 7 ? 'новые задачи' : f.id === 6 ? GV_THEMES.filter(th => !th.hidden).length + ' темы' :
+                    n ? n + ' ' + taskWord(n) : 'скоро';
+                addMenuCard(grid, '📁 ' + count, f.name, () => openFolder(f.id), 'folder-card');
+            });
+        });
+        return;
+    }
+    sub.innerText = currentFolder.name;
+    // По ссылке на раздел (?razdel=N) другие разделы не показываем
+    back.classList.toggle('hidden', lockedFolder !== null);
+    // Сборник «Вист на второй руке» — по темам; комбинации в меню не показываем
+    if (currentFolder.id === 6) {
+        let num = 0;
+        GV_THEMES.forEach((th, i) => {
+            if (th.hidden) return;
+            num++;
+            addMenuCard(grid, 'Тема ' + num + ' · ' + th.tasks.length + ' ' + taskWord(th.tasks.length),
+                th.name, () => gvThemeOpen(i));
+        });
+        return;
+    }
+    const tasks = folderTasks(currentFolder.id);
+    if (tasks.length === 0) {
+        grid.innerHTML = '<div class="empty-folder">Задачи скоро появятся.</div>';
+        return;
+    }
+    tasks.forEach((task, i) => addMenuCard(grid, 'Задача ' + (i + 1), leadSuitText(task.shortTitle), () => loadTask(task.id)));
+}
+function openFolder(folderId) {
+    currentFolder = FOLDERS.find(f => f.id === folderId) || null;
+    // Раздел без меню задач — сразу первая задача
+    if (currentFolder && currentFolder.direct && folderTasks(folderId).length) {
+        loadTask(folderTasks(folderId)[0].id);
+        return;
+    }
+    renderMenu();
+    window.scrollTo(0, 0);
+}
+function showFolders() { openFolder(lockedFolder); }
+function showMenu() {
+    clearTimers();
+    waiting = null;
+    pendingLeaderCallback = null;
+    hideHandover();
+    hideResult();
+    // Из раздела без меню задач «назад» ведёт к разделам
+    const direct = currentFolder && currentFolder.direct;
+    if (direct && lockedFolder === null) currentFolder = null;
+    renderMenu();
+    document.getElementById('menuScreen').classList.remove('hidden');
+    document.getElementById('taskScreen').classList.add('hidden');
+    document.getElementById('leadScreen').classList.add('hidden');
+    document.getElementById('dealScreen').classList.add('hidden');
+    document.getElementById('coverScreen').classList.add('hidden');
+    document.getElementById('aucScreen').classList.add('hidden');
+    document.getElementById('coverNav').classList.add('hidden');
+    document.getElementById('coverScreen').classList.remove('intro');
+    gvt.active = false;
+}
+function loadTask(taskId) {
+    currentTask = TASKS.find(t => t.id === taskId);
+    if (!currentTask) return;
+    currentFolder = FOLDERS.find(f => f.id === (currentTask.folder || 1)) || null;
+    document.getElementById('menuScreen').classList.add('hidden');
+    window.scrollTo(0, 0);
+    if (currentTask.type === 'auction') {
+        document.getElementById('aucScreen').classList.remove('hidden');
+        aucStart();
+        return;
+    }
+    if (currentTask.type === 'cover-gen') {
+        document.getElementById('coverScreen').classList.remove('hidden');
+        setBackButton('coverBack');
+        gvStart();
+        return;
+    }
+    if (currentTask.type === 'cover') {
+        document.getElementById('coverScreen').classList.remove('hidden');
+        document.getElementById('coverTitle').innerText =
+            (currentTask.folder === 6 ? 'Вист на второй руке: ' : 'Защита взяток: ') + currentTask.shortTitle;
+        setBackButton('coverBack');
+        coverStart();
+        return;
+    }
+    if (currentTask.type === 'deal') {
+        document.getElementById('dealScreen').classList.remove('hidden');
+        document.getElementById('dealTitle').innerText = currentTask.fullTitle;
+        dealStart();
+        return;
+    }
+    if (currentTask.type === 'lead') {
+        document.getElementById('leadScreen').classList.remove('hidden');
+        document.getElementById('leadTitle').innerText = currentTask.fullTitle;
+        leadStart();
+        return;
+    }
+    document.getElementById('taskScreen').classList.remove('hidden');
+    document.getElementById('taskTitle').innerText = currentTask.fullTitle;
+    newDeal();
+}
+
+function newDeal() {
+    if (!currentTask) return;
+    clearTimers();
+    trick = [];
+    correct = true;
+    waiting = null;
+    pendingLeaderCorrect = null;
+    pendingLeaderCallback = null;
+    hideHandover();
+    hideResult();
+    phase = '';
+    spStart();
+}
+
+function onCardClick(player, card) { spOnClick(player, card); }
+
+function showLeaderPanel(text, correctLeader, callback) {
+    pendingLeaderCorrect = correctLeader;
+    pendingLeaderCallback = callback;
+    document.getElementById('handoverText').innerHTML = text;
+    document.getElementById('handoverPanel').classList.add('show');
+    render();
+}
+function hideHandover() { document.getElementById('handoverPanel').classList.remove('show'); }
+function chooseLeader(player) {
+    if (!pendingLeaderCallback) return;
+    hideHandover();
+    if (pendingLeaderCorrect && player !== pendingLeaderCorrect) correct = false;
+    const cb = pendingLeaderCallback;
+    pendingLeaderCallback = null;
+    pendingLeaderCorrect = null;
+    cb(player);
+}
+
+/* Итог — после паузы: последняя взятка остаётся на столе, чтобы ученик успел её увидеть */
+const RESULT_PAUSE = 1800;
+function showResult() {
+    phase = 'done';
+    waiting = null;
+    render();
+    schedule(() => {
+        const panel = document.getElementById('resultPanel');
+        const title = document.getElementById('resultTitle');
+        const expl  = document.getElementById('resultExplanation');
+        panel.classList.remove('win', 'lose');
+        if (correct) {
+            panel.classList.add('win');
+            title.innerText = 'Ты справился!';
+            expl.innerHTML = currentTask.explanation +
+                (SP.note ? '<br><br><b>В этом раскладе:</b> ' + SP.note : '') +
+                (currentTask.custom ? spSummary() : '');
+        } else {
+            panel.classList.add('lose');
+            title.innerText = 'Упс. Попробуй ещё раз.';
+            // Взяток хватило, но план не тот: в другом раскладе такая игра потеряет взятку
+            const lucky = currentTask.custom && SP.nsTricks >= SP.target;
+            expl.innerHTML = (lucky
+                ? 'Взяток хватило, но план розыгрыша неверный: при другом раскладе такая игра потеряет взятку.<br>'
+                : '') +
+                'Нажми «Новая попытка» и внимательно выбери карту.' + (currentTask.custom ? spSummary() : '') +
+                // Решение — только по кнопке: сначала пусть попробует ещё раз сам
+                '<div class="solution" id="solution"><button class="solution-btn" onclick="showSolution()">Показать решение</button></div>';
+        }
+        panel.classList.add('show');
+    }, RESULT_PAUSE);
+}
+function hideResult() { document.getElementById('resultPanel').classList.remove('show', 'win', 'lose'); }
+function showSolution() {
+    document.getElementById('solution').innerHTML = '<b>Решение.</b> ' + currentTask.explanation;
+}
+
+function createCardEl(card, faceUp) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    if (card === '??') {
+        if (faceUp) {
+            el.classList.add('discard');
+            el.innerHTML = 'другая<br>масть';
+        } else {
+            el.classList.add('back');
+        }
+        return el;
+    }
+    if (!faceUp) { el.classList.add('back'); return el; }
+    const label = RANK_LABEL[card[0]] || card[0];
+    el.classList.add('suit-' + SUIT);
+    el.innerHTML =
+        '<div class="corner"><div class="rank">' + label + '</div><div class="suit">' + SUIT_SYM + '</div></div>' +
+        '<div class="center-suit">' + SUIT_SYM + '</div>';
+    return el;
+}
+function render() {
+    renderHand('N', 'handN', true);
+    renderHand('S', 'handS', true);
+    renderHand('W', 'handW', false);
+    renderHand('E', 'handE', false);
+    renderTrick();
+}
+function renderHand(player, containerId, faceUp) {
+    const container = document.getElementById(containerId);
+    const label = container.querySelector('.hand-label');
+    container.innerHTML = '';
+    if (label) container.appendChild(label);
+    const isWaiting = waiting && waiting.player === player;
+    hands[player].forEach(card => {
+        const isDiscard = card === '??';
+        const el = createCardEl(card, isDiscard ? false : faceUp);
+        if (isWaiting && !isDiscard) {
+            el.classList.add('clickable');
+            el.onclick = () => onCardClick(player, card);
+        } else {
+            el.classList.add('disabled');
+        }
+        container.appendChild(el);
+    });
+}
+/* Карты на столе не пересоздаём: добавляем только новые, иначе при каждой
+   перерисовке последняя карта «прилетает» заново и дёргается */
+function renderTrick() {
+    const area = document.getElementById('trickArea');
+    if (area.children.length > trick.length) area.innerHTML = '';
+    const positions = { N:{row:1,col:2}, W:{row:2,col:1}, E:{row:2,col:3}, S:{row:3,col:2} };
+    for (let idx = area.children.length; idx < trick.length; idx++) {
+        const { player, card } = trick[idx];
+        const pos = positions[player];
+        const el = createCardEl(card, true);
+        el.classList.add('played', 'entering');
+        el.style.gridRow = pos.row;
+        el.style.gridColumn = pos.col;
+        area.appendChild(el);
+    }
+}
+
+/* Ссылка на один раздел: sd.html?razdel=2 — открывается только этот раздел */
+let lockedFolder = null;
+{
+    const id = Number(new URLSearchParams(location.search).get('razdel'));
+    if (visibleFolders().some(f => f.id === id)) {
+        lockedFolder = id;
+        currentFolder = FOLDERS.find(f => f.id === id);
+    }
+}
+renderMenu();
+showMenu();
+if (currentFolder && currentFolder.direct) openFolder(currentFolder.id);
+</script>
+</body>
+</html>
