@@ -1479,75 +1479,85 @@ function gvThemesMenu() {
 
 /* ============================================================
    Раздел «Вист на второй руке: тренировка» — задачи генерируются заново, без пояснений.
-   Типы задач (ответ — по правилам теории):
-   — small-N, small-S: со стола или с руки пошли фоской; у вас онер (10 и выше) и фоски — играем фоской;
-   — high-N: со стола пошли онером с фосками (других онеров на столе нет); у вас онер старше и фоски — надбиваем;
-   — adj-N: со стола пошли старшим из смежных онеров; у вас король или дама и фоски — играем фоской;
-   — dens-N, dens-S: со стола или с руки пошли онером; у вас два смежных онера старше — играем младшим из них.
-   Туза у вистующего не бывает: с тузом ответы спорные.
+   Задачи строятся по образцам из теории («Вист_2»): число карт и фоски — как в образце,
+   меняются только онеры (Т К Д В 10 9). Других форматов нет.
+   — low:   стол В72, у вас Д95, с руки ход 4 — играем фоской;
+   — high:  стол 1074, ход 10, у вас В62 — надбиваем;
+   — adj:   стол ДВ4, ход Д, у вас К73 — играем фоской (у вас король или дама);
+   — dens:  стол 8652, ход 2, у вас Д1093 — младший из своей плотности.
+   Туза у вистующего не бывает. В файле урока (LESSON.seed) задачи одинаковые у всех учеников.
    ============================================================ */
 const GV_COUNT = 20;
 TASKS.push({ id: 91, folder: 7, type: 'cover-gen', shortTitle: 'Тренировка: ' + GV_COUNT + ' задач без пояснений' });
 const GV_R = ['Т', 'К', 'Д', 'В', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+const GV_HONORS = ['Т', 'К', 'Д', 'В', '10', '9'];
 const gvVal = r => 14 - GV_R.indexOf(r);
 const gvHonor = r => GV_R.indexOf(r) <= 5;
-const gvPick = a => a[Math.floor(Math.random() * a.length)];
 const gvAdj = (a, b) => Math.abs(GV_R.indexOf(a) - GV_R.indexOf(b)) === 1;
-const GV_CATS = ['small-N', 'small-S', 'high-N', 'adj-N', 'dens-N', 'dens-S'];
-/* Задача заданного типа (cat): раздаём масть, пока не получится нужная ситуация */
-function gvGenerate(fixedCat) {
-    for (let tries = 0; tries < 50000; tries++) {
-        const cat = fixedCat || gvPick(GV_CATS);
-        const hands = { N: [], E: [], S: [], W: [] };
-        GV_R.forEach(r => hands[gvPick(['N', 'E', 'S', 'W'])].push(r));
-        const leader = cat.endsWith('-S') ? 'S' : 'N';
-        const seat = leader === 'N' ? 'E' : 'W';
-        const N = hands.N, L = hands[leader], you = hands[seat];
-        // У вистующего 2–3 карты, у Севера и Юга — 2–4
-        if (you.length < 2 || you.length > 3 || hands.S.length < 2 || hands.S.length > 4 || N.length < 2 || N.length > 4) continue;
-        if (you.includes('Т')) continue;
-        const hon = you.filter(gvHonor), smalls = you.filter(r => !gvHonor(r));
-        // Второй король под ходом фоской или смежным онером упадёт под туза — король у вистующего только третий
-        if (['small-N', 'small-S', 'adj-N'].includes(cat) && hon[0] === 'К' && you.length < 3) continue;
-        let led = null, correct = null;
-        if (cat === 'small-N' || cat === 'small-S') {
-            if (hon.length !== 1 || hon[0] === '9' || !smalls.length) continue;
-            const low = L.filter(r => !gvHonor(r));
-            if (!low.length) continue;
-            led = gvPick(low);
-            correct = smalls;
-        } else if (cat === 'high-N' || cat === 'adj-N') {
-            if (N.length < 3 || hon.length !== 1 || !smalls.length) continue;
-            const nh = N.filter(gvHonor);
-            if (cat === 'high-N') {
-                // На столе один онер, с фосками, и им пошли
-                if (nh.length !== 1 || nh[0] === 'Т') continue;
-                led = nh[0];
-                if (N.some(r => r !== led && gvAdj(r, led))) continue;   // 9 8 — уже смежные карты
-                if (gvVal(hon[0]) <= gvVal(led)) continue;
-                correct = [hon[0]];
+/* Случайные числа: в уроке — с постоянным зерном, чтобы у всех были одни и те же задачи */
+let gvRand = Math.random;
+function gvSeed(seed) {
+    let a = seed >>> 0;
+    gvRand = () => {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+const gvPick = a => a[Math.floor(gvRand() * a.length)];
+/* Перемешивание (Фишер — Йейтс): одинаковый результат во всех браузерах */
+function gvShuffle(a) {
+    a = a.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(gvRand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+}
+const GV_CATS = ['low', 'high', 'adj', 'dens'];
+/* Задача по образцу cat: онеры раздаём, пока не выполнены условия образца */
+function gvGenerate(cat) {
+    const sort = a => a.slice().sort((x, y) => GV_R.indexOf(x) - GV_R.indexOf(y));
+    for (let tries = 0; tries < 5000; tries++) {
+        const h = gvShuffle(GV_HONORS);   // онеры в случайном порядке
+        let N, you, leader, led, correct;
+        if (cat === 'low') {
+            // С руки ход 4. Либо стол: онер + 7 2, у вас: два несмежных онера + 5 (В72 — Д95);
+            // либо стол: два онера + 5, у вас: онер + 7 2 (Д105 — В72)
+            if (gvRand() < 0.5) {
+                N = [h[0], '7', '2']; you = [h[1], h[2], '5'];
+                if (gvAdj(h[1], h[2])) continue;
+                correct = ['5'];
             } else {
-                // Пошли старшим из смежных онеров стола; у вас король или дама
-                const tops = nh.filter(r => r !== 'Т' && nh.some(x => gvVal(x) === gvVal(r) - 1) && !N.some(x => gvVal(x) === gvVal(r) + 1));
-                if (!tops.length) continue;
-                led = gvPick(tops);
-                if (!['К', 'Д'].includes(hon[0]) || gvVal(hon[0]) <= gvVal(led)) continue;
-                correct = smalls;
+                N = [h[0], h[1], '5']; you = [h[2], '7', '2'];
+                correct = ['7', '2'];
             }
+            if (you.includes('Т')) continue;
+            // Дама или валет без скачка может так и не взять (у разыгрывающего Т К под ходом):
+            // старший онер вистующего — король, или на столе есть онер старше
+            const yTop = sort(you)[0], nTop = sort(N)[0];
+            if (yTop !== 'К' && gvVal(nTop) < gvVal(yTop)) continue;
+            leader = 'S'; led = '4';
+        } else if (cat === 'high') {
+            // Стол: онер + 7 4, ходят этим онером; у вас: онер старше + 6 2 — надбиваем
+            N = [h[0], '7', '4']; you = [h[1], '6', '2'];
+            // онер у вас старше карты хода не больше чем на две ступени (1074 — В62, 974 — В62)
+            if (h[0] === 'Т' || h[1] === 'Т' || gvVal(h[1]) <= gvVal(h[0]) || gvVal(h[1]) - gvVal(h[0]) > 2) continue;
+            // Надбивать есть смысл, только если есть что выработать: онер младше нашего, кроме карты хода
+            if (!GV_HONORS.some(r => gvVal(r) < gvVal(h[1]) && r !== h[0])) continue;
+            leader = 'N'; led = h[0]; correct = [h[1]];
+        } else if (cat === 'adj') {
+            // Стол: два смежных онера + 4, ход старшим; у вас король или дама + 7 3 — фоска
+            const hi = gvVal(h[0]) > gvVal(h[1]) ? h[0] : h[1], lo = hi === h[0] ? h[1] : h[0];
+            if (!gvAdj(hi, lo) || hi === 'Т' || !['К', 'Д'].includes(h[2]) || gvVal(h[2]) <= gvVal(hi)) continue;
+            N = [hi, lo, '4']; you = [h[2], '7', '3'];
+            leader = 'N'; led = hi; correct = ['7', '3'];
         } else {
-            // Плотность у нас: два смежных онера старше карты хода, других онеров нет
-            if (hon.length !== 2 || !gvAdj(hon[0], hon[1])) continue;
-            const cand = L.filter(r => gvHonor(r) && gvVal(r) < gvVal(hon[1]));
-            if (!cand.length) continue;
-            led = gvPick(cand);
-            if (leader === 'N' && N.some(r => r !== led && gvAdj(r, led))) continue;   // смежные на столе — другая тема
-            correct = [hon[1]];
+            // Стол: 8 6 5 2, ход 2; у вас три онера, два младших смежные, + 3 — младший из плотности
+            const mine = sort([h[0], h[1], h[2]]);
+            if (mine.includes('Т') || !gvAdj(mine[1], mine[2])) continue;
+            N = ['8', '6', '5', '2']; you = [...mine, '3'];
+            leader = 'N'; led = '2'; correct = [mine[2]];
         }
-        // Надбивать имеет смысл, только если есть что выработать: онер ниже нашей фигуры,
-        // который не лежит на столе и не является картой хода (он у нас или может быть у партнёра)
-        const cover = correct.length === 1 && gvHonor(correct[0]) && gvVal(correct[0]) > gvVal(led);
-        if (cover && !GV_R.some(r => gvHonor(r) && gvVal(r) < gvVal(correct[0]) && r !== led && !N.includes(r))) continue;
-        const sort = a => a.slice().sort((x, y) => GV_R.indexOf(x) - GV_R.indexOf(y));
         return gvTask(0, '', sort(N).join(''), sort(you).join(''), leader, led, correct, '');
     }
     return null;
@@ -1555,12 +1565,29 @@ function gvGenerate(fixedCat) {
 
 const gv = { list: [], idx: 0, right: 0 };
 function gvStart() {
-    // Типы ситуаций — по кругу (поровну), порядок случайный
+    // В уроке набор задач задан заранее: [стол, вы, кто ходит, карта хода, правильные карты]
+    if (LESSON && LESSON.training) {
+        gv.list = LESSON.training.map(x => gvTask(0, '', x[0], x[1], x[2], x[3], x[4], ''));
+        gv.idx = 0;
+        gv.right = 0;
+        gvShow();
+        return;
+    }
+    if (LESSON && LESSON.seed) gvSeed(LESSON.seed);
+    // Образцы — по кругу (поровну), порядок случайный
     const cats = [];
     while (cats.length < GV_COUNT) cats.push(...GV_CATS);
-    const order = cats.slice(0, GV_COUNT).sort(() => Math.random() - 0.5);
+    const order = gvShuffle(cats.slice(0, GV_COUNT));
     gv.list = [];
-    for (const c of order) { const t = gvGenerate(c); if (t) gv.list.push(t); }
+    // Одинаковых задач в одном наборе не бывает (вариантов у образцов немного — повторяем попытку)
+    const seen = new Set();
+    for (const c of order) {
+        for (let k = 0; k < 50; k++) {
+            const t = gvGenerate(c);
+            const key = t && t.dummy + '/' + t.you + '/' + t.led;
+            if (t && (!seen.has(key) || k === 49)) { seen.add(key); gv.list.push(t); break; }
+        }
+    }
     gv.idx = 0;
     gv.right = 0;
     gvShow();
@@ -2590,7 +2617,15 @@ let currentFolder = null;
 
 /* Файл урока: только выбранные разделы и задачи. В sd.html — null (весь практикум).
    Например: { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } } */
-const LESSON = { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } };
+const LESSON = { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] }, training: [
+    ['8652', 'КВ103', 'N', '2', ['10']], ['В72', 'К105', 'S', '4', ['5']], ['8652', 'В1093', 'N', '2', ['9']],
+    ['В104', 'Д73', 'N', 'В', ['7', '3']], ['Д74', 'К62', 'N', 'Д', ['К']], ['ДВ4', 'К73', 'N', 'Д', ['7', '3']],
+    ['8652', 'КДВ3', 'N', '2', ['В']], ['8652', 'Д1093', 'N', '2', ['9']], ['1094', 'Д73', 'N', '10', ['7', '3']],
+    ['К72', 'Д105', 'S', '4', ['5']], ['8652', 'К1093', 'N', '2', ['9']], ['Д105', 'В72', 'S', '4', ['7', '2']],
+    ['974', 'В62', 'N', '9', ['В']], ['1094', 'К73', 'N', '10', ['7', '3']], ['В74', 'Д62', 'N', 'В', ['Д']],
+    ['В95', '1072', 'S', '4', ['7', '2']], ['В74', 'К62', 'N', 'В', ['К']], ['В72', 'К95', 'S', '4', ['5']],
+    ['В104', 'К73', 'N', 'В', ['7', '3']], ['1074', 'В62', 'N', '10', ['В']]
+] };
 const visibleFolders = () => LESSON ? FOLDERS.filter(f => LESSON.folders.includes(f.id)) : FOLDERS;
 
 function folderTasks(folderId) {
