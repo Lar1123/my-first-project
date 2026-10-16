@@ -44,6 +44,7 @@
     .cover-nav { display: flex; justify-content: center; gap: 14px; padding: 6px 16px 22px; flex-wrap: wrap; }
     .cover-nav.hidden { display: none; }
     .back-btn.hidden { visibility: hidden; }
+    .task-nav { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); padding: 0; z-index: 25; flex-wrap: nowrap; }
     /* Задачи-решения («Как распознать карты противника») */
     .decide-screen { position: relative; min-height: 100vh; padding: 16px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .decide-screen.hidden { display: none; }
@@ -467,8 +468,13 @@
     <div class="table">
         <div class="title" id="taskTitle"></div>
         <div class="goal hidden" id="taskGoal"></div>
-        <button class="back-btn" onclick="showMenu()">← К задачам</button>
+        <button class="back-btn" id="taskBack" onclick="showMenu()">← К задачам</button>
         <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
+        <!-- Навигация по задачам раздела (раздел без меню задач) -->
+        <div class="cover-nav task-nav hidden" id="taskNav">
+            <button id="taskPrev" onclick="taskGo(-1)">← Предыдущая</button>
+            <button id="taskNext" onclick="taskGo(1)">Следующая →</button>
+        </div>
         <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
         <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
         <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
@@ -562,16 +568,12 @@ const TASKS = [
                 { W: 'Т105', E: 'К86',
                   note: 'даму забрал туз Запада. Сработал запасной парашют — импас десятки: ' +
                         'на девятку Восток отдал короля, и валет стал старшим.' },
-                { W: 'Т865', E: 'К10',
-                  note: 'даму забрал туз Запада. Запасной парашют — импас десятки: на девятку Восток ' +
-                        'отдал короля, и валет стал старшим.' },
-                { W: 'К865', E: 'Т10',
-                  note: 'даму забрал король Запада. Запасной парашют — импас десятки: на девятку Восток ' +
-                        'отдал туза, и валет стал старшим.' },
-                { W: 'Т10865', E: 'К',
-                  note: '<b>бланковый король</b> у Востока выпал на двойку. Мы сохранили даму, и она взяла взятку.' },
-                { W: 'К10865', E: 'Т',
-                  note: '<b>бланковый туз</b> у Востока выпал на двойку. Мы сохранили даму, и она взяла взятку.' },
+                { W: 'Т108', E: 'К65',
+                  note: 'даму забрал туз Запада. Сработал запасной парашют — импас десятки: ' +
+                        'на девятку Восток отдал короля, и валет стал старшим.' },
+                { W: 'К106', E: 'Т85',
+                  note: 'даму забрал король Запада. Сработал запасной парашют — импас десятки: ' +
+                        'на девятку Восток отдал туза, и валет стал старшим.' },
                 { W: 'К105', E: 'Т86', blunder: { player: 'W', card: '5' },
                   note: '<b>Запад ошибся</b>: не взял даму королём, и дама взяла взятку. ' +
                         'Вот зачем первым ходом играть к даме — дать защите шанс ошибиться.' }
@@ -607,8 +609,8 @@ const TASKS = [
             // Туз второй перед онерами: здесь ход к К Д выигрывает, а ход к валету теряет взятку.
             // Туз четвёртый перед онерами: по плану берём 2 взятки. Третье число — цель, если
             // игра с открытыми картами позволяет взять больше, чем даёт правильный план.
-            layouts: [['Т10', '9643'], ['Т9', '10643'], ['Т6', '10943'], ['Т4', '10963'], ['Т3', '10964'],
-                      ['Т1064', '93'], ['Т1063', '94'], ['Т1096', '43'], ['Т1094', '63', 2], ['Т643', '109', 2]],
+            // Только туз второй: при туза четвёртом выигрывали и неправильные розыгрыши
+            layouts: [['Т10', '9643'], ['Т9', '10643'], ['Т6', '10943'], ['Т4', '10963'], ['Т3', '10964']],
             noThreeThree: true,
             // Дважды ход малой от Юга к К Д
             planLeader: (l) => l === 'S',
@@ -696,7 +698,8 @@ const TASKS = [
             N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
             key: 'K', planRounds: 2,
             // Бланковый король у Востока (ради него страховка) и обычный импас
-            layouts: [['9874', 'К'], ['9874', 'К'], ['98', 'К74'], ['87', 'К94'], ['74', 'К98']],
+            // Только бланковый король у Востока: в остальных раскладах сразу ход дамой тоже выигрывал
+            layouts: [['9874', 'К']],
             // Сначала двойкой к десятке (страховка от бланкового короля перед тузом), затем импас со стола
             planLeader: (l) => l === 'N',
             planCard: (p, c, x) => {
@@ -718,7 +721,7 @@ const TASKS = [
             N: ['Q','J','3','2'], S: ['A','T','6','5'], missing: ['K','9','8','7','4'],
             key: 'K', planRounds: 2, noEntries: true, firstLeader: 'N',
             // Король у Востока: импас дамой, затем валетом
-            layouts: [['98', 'К74'], ['87', 'К94'], ['987', 'К4'], ['984', 'К7']],
+            layouts: [['98', 'К74'], ['87', 'К94'], ['97', 'К84'], ['94', 'К87'], ['84', 'К97'], ['74', 'К98']],
             // Дамой, и если удержали взятку — валетом; Юг кладёт мелкую, тузом — только на короля
             planLeader: () => true,
             planCard: (p, c, x) => {
@@ -751,7 +754,7 @@ TASKS.push(
             N: ['Q','J','4','2'], S: ['A','5','3'], missing: ['K','T','9','8','7','6'],
             key: 'K', planRounds: 3, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
             // Бланковый король у Востока: импас его не поймает, а туз — снимет
-            layouts: [['109876', 'К'], ['109876', 'К'], ['1098', 'К76'], ['К97', '1086'], ['К1076', '98'], ['987', 'К106']],
+            layouts: [['109876', 'К'], ['109876', 'К'], ['К1076', '98'], ['К1098', '76'], ['К986', '107'], ['К1087', '96']],
             // Сначала туз, затем малой от Юга к ДВ — без импаса; если дама взяла, снова из руки к столу
             planLeader: (l, x) => x.round === 0 || l === 'S',
             planCard: (p, c, x) => {
@@ -774,7 +777,7 @@ TASKS.push(
             N: ['Q','J','4','2'], S: ['A','5','3'], missing: ['K','T','9','8','7','6'],
             key: 'K', planRounds: 3, target: 3, noEntries: true, firstLeader: 'S',
             goal: 'Разыграйте на <b>три взятки</b>.',
-            layouts: [['1098', 'К76'], ['К97', '1086'], ['К1076', '98'], ['987', 'К106'], ['К1098', '76']],
+            layouts: [['К1076', '98'], ['К1098', '76'], ['К987', '106'], ['К1096', '87'], ['К986', '107']],
             // Малой из-под туза к ДВ; если дама удержала — туз становится переходом в руку для второго хода к столу
             planLeader: () => true,
             planCard: (p, c, x) => {
@@ -795,7 +798,7 @@ TASKS.push(
         sp: {
             N: ['K','T','4'], S: ['Q','5','3'], missing: ['A','J','9','8','7','6','2'],
             planRounds: 2, target: 2, goal: 'Разыграйте на <b>две взятки</b>.',
-            layouts: [['ТВ8', '9762'], ['В97', 'Т862'], ['ТВ96', '872'], ['В986', 'Т72'], ['98762', 'ТВ']],
+            layouts: [['ТВ8', '9762'], ['В97', 'Т862'], ['ТВ96', '872'], ['В986', 'Т72'], ['ТВ7', '9862']],
             // Малой со стола к даме; затем от Юга к К 10 — импас валета
             planLeader: (l, x) => l === (x.round === 0 ? 'N' : 'S'),
             planCard: (p, c, x) => {
@@ -814,7 +817,7 @@ TASKS.push(
         sp: {
             N: ['Q','T','9','8'], S: ['A','4','3','2'], missing: ['K','J','7','6','5'],
             planRounds: 2, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
-            layouts: [['К7', 'В65'], ['В76', 'К5'], ['К65', 'В7'], ['В5', 'К76'], ['76', 'КВ5']],
+            layouts: [['76', 'КВ5'], ['75', 'КВ6'], ['65', 'КВ7'], ['К765', 'В']],
             // Десяткой (девяткой) со стола и пустить; если Восток покрыл фигурой — туз
             planLeader: (l) => l === 'N',
             planCard: (p, c, x) => {
@@ -836,7 +839,7 @@ TASKS.push(
             planRounds: 2, target: 3, goal: 'Разыграйте на <b>три взятки</b>.',
             planEnds: (t) => t.some(x => 'KJ'.includes(x.card)),
             // КВхх у Запада — десятка выигрывает, дама проигрывает
-            layouts: [['КВ98', '7'], ['КВ97', '8'], ['КВ87', '9'], ['В98', 'К7'], ['В87', 'К9'], ['КВ', '987'], ['987', 'КВ']],
+            layouts: [['КВ98', '7'], ['КВ97', '8'], ['КВ87', '9'], ['К987', 'В']],
             // Сначала туз, затем малой от Юга; если онеры не появились — десятка
             planLeader: (l, x) => x.round === 0 || l === 'S',
             planCard: (p, c, x) => {
@@ -857,7 +860,8 @@ TASKS.push(
         sp: {
             N: ['T','7','4'], S: ['Q','9','8'], missing: ['A','K','J','6','5','3','2'],
             planRounds: 2, target: 1, goal: 'Разыграйте на <b>одну взятку</b>.',
-            layouts: [['Т65', 'КВ32'], ['К53', 'ТВ62'], ['ТК6', 'В532'], ['Т32', 'КВ65'], ['К62', 'ТВ53']],
+            // Т и К у Запада, валет у Востока: дама раньше времени всегда отдаётся старшей фигуре Запада
+            layouts: [['ТК6', 'В532'], ['ТК65', 'В32'], ['ТК53', 'В62'], ['ТК3', 'В652'], ['ТК62', 'В53']],
             // Пустить десятку (валет перед дамой); если взяли — вернуться на стол и снова импасировать
             planLeader: (l) => l === 'N',
             planCard: (p, c, x) => {
@@ -2378,7 +2382,7 @@ function dealStart() {
     document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
     document.getElementById('dealTrick').innerHTML = '';
     // Навигация по задачам раздела и кнопка «назад»
-    const list = folderTasks(t.folder), i = list.indexOf(t);
+    const list = orderedTasks(t.folder), i = list.indexOf(t);
     document.getElementById('dealPrev').disabled = i <= 0;
     document.getElementById('dealNextBtn').disabled = i >= list.length - 1;
     setBackButton('dealBack');
@@ -2495,7 +2499,7 @@ function dealFinish(result) {
     panel.classList.add('show');
 }
 function dealGo(d) {
-    const list = folderTasks(currentTask.folder);
+    const list = orderedTasks(currentTask.folder);
     const next = list[list.indexOf(currentTask) + d];
     if (next) loadTask(next.id);
 }
@@ -2707,6 +2711,8 @@ function spStart() {
     SP.claimed = 0;
     SP.keySeen = false;
     SP.planOn = false;
+    SP.offPlan = false;
+    SP.hist = [];
     SP.playedCards = new Set();
     SP.showedOut = { W: false, E: false };
     spMemo.clear();
@@ -2728,8 +2734,8 @@ function spStart() {
 
 function spBeginTrick(leader, chosen) {
     const cfg = spCfg();
-    SP.planOn = SP.trickNum < cfg.planRounds && !SP.keySeen;
-    if (chosen && SP.planOn && !cfg.planLeader(leader, spContext())) correct = false;
+    SP.planOn = SP.trickNum < cfg.planRounds && !SP.keySeen && !SP.offPlan;
+    if (chosen && SP.planOn && !cfg.planLeader(leader, spContext())) spDeviation(SP.hist.join(' | ') + ' || ход с ' + leader);
     SP.leader = leader;
     SP.order = spBuildOrder(leader);
     SP.step = 0;
@@ -2781,8 +2787,11 @@ function spDefenseCard(p) {
 
 function spOnClick(player, card) {
     if (!waiting || waiting.player !== player) return;
-    if (SP.planOn && !spCfg().planCard(player, card, spContext())) correct = false;
-    if (spWastesHonor(player, card)) correct = false;
+    const wastes = spWastesHonor(player, card);
+    if (SP.offPlan) { if (wastes) correct = false; }
+    else if (wastes || (SP.planOn && !spCfg().planCard(player, card, spContext())))
+        spDeviation(SP.hist.join(' | ') + (SP.hist.length ? ' | ' : '') + trick.map(spSig).join(' ') +
+                    ' >> ' + player + (RANK_LABEL[card] || card));
     waiting = null;
     spPlay(player, card);
     spNext();
@@ -2810,6 +2819,7 @@ function spResolve() {
         showResult();
         return;
     }
+    SP.hist.push(trick.map(spSig).join(' '));   // история взяток — для поиска равноценных отступлений
     schedule(() => {
         trick = [];
         SP.trickNum++;
@@ -2836,6 +2846,100 @@ function spTopTricks(h) {
     return Math.min(rounds, masters + Math.max(0, rounds - defLen));
 }
 
+/* ---------- Равноценные отступления от плана ----------
+   Ученик может сыграть не так, как в теории, но так же хорошо: по уже открытым картам такая игра
+   не проигрывает ни в одном раскладе, где выигрывает план. Такие ходы засчитываем как правильные.
+   Для задачи один раз перебираем все расклады и собираем «подписи» отступлений (что сыграно до этого
+   момента + ход ученика); равноценное — то, что ни разу не потеряло взятку. */
+const spEquivCache = {};
+const spSig = (t) => t.player + (RANK_LABEL[t.card] || t.card);
+function spDevMap(task, W, E) {
+    const cfg = task.sp, d = spLayout([W, E]);
+    const h0 = { N: spPad(cfg.N.slice()), S: spPad(cfg.S.slice()), W: spPad(d.W.slice()), E: spPad(d.E.slice()) };
+    const layout = { W: spSortHand(d.W.slice()), E: spSortHand(d.E.slice()) };
+    const starts = cfg.firstLeader ? [cfg.firstLeader] : ['N', 'S'];
+    const target = cfg.target || Math.max(...starts.map(l => spValue(h0, spBuildOrder(l), 0, [])));
+    const devs = {}, hist = [];
+    const mark = (sig, ok) => { devs[sig] = devs[sig] || ok; };
+    function afterTrick(h, played, round, ns, keySeen) {
+        const w = spTrickWinner(played);
+        if (played.some(t => t.card === cfg.key)) keySeen = true;
+        if (cfg.planEnds && cfg.planEnds(played, round)) keySeen = true;
+        if (w === 'N' || w === 'S') ns++;
+        const leaders = spLeaders(h, w);
+        if (leaders.length > 0 && ns < target) {
+            const top = spTopTricks(h), sure = keySeen && cfg.key ? spBetween(h, w) : top;
+            if (ns + Math.max(top, sure) >= target) return target;
+        }
+        if (leaders.length === 0 || ns >= target) return ns;
+        hist.push(played.map(spSig).join(' '));
+        const v = startTrick(h, round + 1, ns, keySeen, leaders, leaders.length > 1);
+        hist.pop();
+        return v;
+    }
+    function startTrick(h, round, ns, keySeen, leaders, chosen) {
+        const planOn = round < cfg.planRounds && !keySeen;
+        let A = planOn ? 99 : -1;
+        for (const l of leaders) {
+            const order = spBuildOrder(l);
+            if (!(chosen && planOn && !cfg.planLeader(l, { round, step: 0, leader: l, second: null, played: [], layout }))) {
+                const v = step(h, order, 0, [], round, ns, keySeen, planOn, l);
+                A = planOn ? Math.min(A, v) : Math.max(A, v);
+            } else mark(hist.join(' | ') + ' || ход с ' + l, ns + spValue(h, order, 0, []) >= target);
+        }
+        return A;
+    }
+    function step(h, order, pos, played, round, ns, keySeen, planOn, leader) {
+        if (pos === 4) return afterTrick(h, played, round, ns, keySeen);
+        const p = order[pos], cards = spSpades(h, p);
+        const next = c => { const nh = Object.assign({}, h); nh[p] = spRemove(h[p], c); return [nh, played.concat([{ player: p, card: c }])]; };
+        if (cards.length === 0) { const [nh, pl] = next('??'); return step(nh, order, pos + 1, pl, round, ns, keySeen, planOn, leader); }
+        if (p === 'W' || p === 'E') {
+            hands = h; trick = played; SP.order = order; SP.step = pos; SP.blunder = null; SP.trickNum = round;
+            const [nh, pl] = next(spDefenseCard(p));
+            return step(nh, order, pos + 1, pl, round, ns, keySeen, planOn, leader);
+        }
+        let A = planOn ? 99 : -1;
+        for (const c of cards) {
+            const [nh, pl] = next(c);
+            trick = played; hands = h;
+            const ctx = { round, step: pos, leader, second: played.length > 1 ? played[1].card : null, played, layout };
+            if (!spWastesHonor(p, c) && (!planOn || cfg.planCard(p, c, ctx))) {
+                const v = step(nh, order, pos + 1, pl, round, ns, keySeen, planOn, leader);
+                A = planOn ? Math.min(A, v) : Math.max(A, v);
+            } else mark(hist.join(' | ') + (hist.length ? ' | ' : '') + played.map(spSig).join(' ') + ' >> ' + p + (RANK_LABEL[c] || c),
+                        ns + spValue(nh, order, pos + 1, pl) >= target);
+        }
+        return A;
+    }
+    const A = startTrick(h0, 0, 0, false, starts, !cfg.firstLeader);
+    return { planOK: A >= target, devs };
+}
+function spEquivSet(task) {
+    if (spEquivCache[task.id]) return spEquivCache[task.id];
+    // Перебор пользуется общими переменными игры — сохраняем и восстанавливаем их
+    const saved = { hands, trick, order: SP.order, step: SP.step, blunder: SP.blunder, trickNum: SP.trickNum };
+    const cfg = task.sp, RU = { A: 'Т', K: 'К', Q: 'Д', J: 'В', T: '10' }, ru = a => a.map(c => RU[c] || c).join('');
+    const real = new Set(), seen = new Set();
+    for (let mask = 0; mask < (1 << cfg.missing.length); mask++) {
+        const W = [], E = [];
+        cfg.missing.forEach((c, i) => ((mask >> i) & 1 ? W : E).push(c));
+        if (cfg.noThreeThree && W.length === 3 && E.length === 3) continue;
+        const r = spDevMap(task, ru(W), ru(E));
+        if (!r.planOK) continue;
+        Object.entries(r.devs).forEach(([s, ok]) => { seen.add(s); if (!ok) real.add(s); });
+    }
+    hands = saved.hands; trick = saved.trick;
+    Object.assign(SP, { order: saved.order, step: saved.step, blunder: saved.blunder, trickNum: saved.trickNum });
+    spEquivCache[task.id] = new Set([...seen].filter(s => !real.has(s)));
+    return spEquivCache[task.id];
+}
+/* Отступление от плана: равноценное — дальше план не проверяем; иначе — ошибка */
+function spDeviation(sig) {
+    if (spEquivSet(currentTask).has(sig)) SP.offPlan = true;
+    else correct = false;
+}
+
 function spSummary() {
     const fmt = cards => cards.length ? cards.map(c => RANK_LABEL[c] || c).join(' ') : 'пусто';
     return '<br><br><b>Расклад:</b> Запад – ' + fmt(SP.layout.W) + ', Восток – ' + fmt(SP.layout.E) + '.<br>' +
@@ -2858,7 +2962,8 @@ const FOLDERS = [
     { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true, hidden: true, parent: 6 },
     { id: 8, name: 'Вист на третьей руке', group: 'Вист' },
     { id: 5, name: 'Торговля', group: 'Торговля' },
-    { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш' },
+    // shuffle: задачи раздела идут в случайном порядке (новый порядок при каждом входе)
+    { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш', direct: true, shuffle: true },
     { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true },
     { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш' }
 ];
@@ -2873,6 +2978,23 @@ const visibleFolders = () => LESSON ? FOLDERS.filter(f => LESSON.folders.include
 function folderTasks(folderId) {
     const only = LESSON && LESSON.tasks && LESSON.tasks[folderId];
     return TASKS.filter(t => (t.folder || 1) === folderId && (!only || only.includes(t.id)));
+}
+/* Порядок задач в разделе: для разделов с shuffle — перемешанный при входе */
+const folderOrder = {};
+function orderedTasks(folderId) {
+    const list = folderTasks(folderId), ord = folderOrder[folderId];
+    return ord ? ord.map(id => list.find(t => t.id === id)).filter(Boolean) : list;
+}
+function shuffleFolder(folderId) {
+    const ids = folderTasks(folderId).map(t => t.id);
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+    folderOrder[folderId] = ids;
+}
+/* Переход к соседней задаче раздела (экран розыгрыша масти) */
+function taskGo(d) {
+    const list = orderedTasks(currentTask.folder || 1);
+    const next = list[list.indexOf(currentTask) + d];
+    if (next) loadTask(next.id);
 }
 /* Подпись кнопки «назад»; null — кнопки нет (раздел по ссылке, задачи без меню) */
 function backLabel() {
@@ -2956,7 +3078,8 @@ function openFolder(folderId) {
     currentFolder = FOLDERS.find(f => f.id === folderId) || null;
     // Раздел без меню задач — сразу первая задача
     if (currentFolder && currentFolder.direct && folderTasks(folderId).length) {
-        loadTask(folderTasks(folderId)[0].id);
+        if (currentFolder.shuffle) shuffleFolder(folderId);
+        loadTask(orderedTasks(folderId)[0].id);
         return;
     }
     renderMenu();
@@ -3032,7 +3155,19 @@ function loadTask(taskId) {
         return;
     }
     document.getElementById('taskScreen').classList.remove('hidden');
-    document.getElementById('taskTitle').innerText = currentTask.fullTitle;
+    let title = currentTask.fullTitle;
+    const nav = document.getElementById('taskNav');
+    const direct = currentFolder && currentFolder.direct;
+    nav.classList.toggle('hidden', !direct);
+    if (direct) {
+        // Номер задачи — по текущему (перемешанному) порядку раздела
+        const list = orderedTasks(currentFolder.id), i = list.indexOf(currentTask);
+        title = 'Задача ' + (i + 1) + ' из ' + list.length + ': ' + title.replace(/^Задача \d+: /, '');
+        document.getElementById('taskPrev').disabled = i <= 0;
+        document.getElementById('taskNext').disabled = i >= list.length - 1;
+    }
+    document.getElementById('taskTitle').innerText = title;
+    setBackButton('taskBack');
     newDeal();
 }
 
