@@ -44,6 +44,24 @@
     .cover-nav { display: flex; justify-content: center; gap: 14px; padding: 6px 16px 22px; flex-wrap: wrap; }
     .cover-nav.hidden { display: none; }
     .back-btn.hidden { visibility: hidden; }
+    /* Задачи-решения («Как распознать карты противника») */
+    .decide-screen { position: relative; min-height: 100vh; padding: 16px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .decide-screen.hidden { display: none; }
+    .dec-auction table { margin: 0 auto; border-collapse: collapse; font-size: 20px; color: var(--panel-text); }
+    .dec-auction th { padding: 2px 18px; color: var(--accent-dark); }
+    .dec-auction td { padding: 2px 18px; text-align: center; font-weight: bold; }
+    .dec-note { font-size: 14px; color: var(--panel-text); margin-top: 6px; }
+    .dec-hands { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+    .dec-hand { background: var(--panel); color: var(--panel-text); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 22px; min-width: 190px; }
+    .dec-hand-label { font-size: 13px; font-weight: bold; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .dec-row { font-size: 22px; font-weight: bold; line-height: 1.35; white-space: nowrap; }
+    .dec-row .red, .dec-full .red { color: var(--red-on-light); }
+    .dec-row .club, .dec-full .club { color: var(--club); }
+    .lead-title .red { color: var(--red-on-felt); }
+    .lead-title .club { color: #9ad9a0; }
+    .dec-question { font-size: 19px; text-align: center; max-width: 640px; }
+    .dec-full { display: grid; grid-template-columns: repeat(3, auto); justify-content: center; gap: 4px 22px; margin: 16px auto 4px; font-size: 16px; font-weight: bold; text-align: left; }
+    .dec-full .dec-seat { font-size: 12px; color: var(--accent-dark); text-transform: uppercase; }
     .cover-nav button { padding: 10px 20px; font-size: 16px; font-weight: bold; font-family: inherit; border-radius: 8px; cursor: pointer; background: var(--btn); color: var(--gold); border: 2px solid var(--gold); }
     .cover-nav button:hover:not(:disabled) { background: var(--gold); color: var(--btn); }
     .cover-nav button:disabled { opacity: 0.35; cursor: default; }
@@ -402,6 +420,25 @@
         <div class="result-title" id="dealResultTitle"></div>
         <div class="result-explanation" id="dealResultText"></div>
         <div class="handover-buttons lead-buttons" id="dealResultButtons"></div>
+    </div>
+</div>
+
+<div class="task-screen decide-screen hidden" id="decideScreen">
+    <div class="lead-head">
+        <button class="back-btn" id="decideBack" onclick="showMenu()">← К задачам</button>
+        <div class="lead-title" id="decideTitle"></div>
+    </div>
+    <!-- Как за столом: стол (Север) сверху, торговля посередине, ваша рука (Юг) снизу -->
+    <div class="dec-hands" id="decideN"></div>
+    <div class="auction dec-auction" id="decideAuction"></div>
+    <div class="dec-hands" id="decideS"></div>
+    <div class="deal-info" id="decideStory"></div>
+    <div class="cover-question dec-question" id="decideQuestion"></div>
+    <div class="handover-buttons lead-buttons" id="decideOptions"></div>
+    <div class="result-panel" id="decideResult">
+        <div class="result-title" id="decideResultTitle"></div>
+        <div class="result-explanation" id="decideResultText"></div>
+        <div class="handover-buttons lead-buttons" id="decideResultButtons"></div>
     </div>
 </div>
 
@@ -2054,6 +2091,131 @@ TASKS.push(
     }
 );
 
+/* ============================================================
+   Раздел «Как распознать карты противника» (папка 9): задачи-решения.
+   Ученик видит торговлю, атаку, руки Севера и Юга и ход игры до ключевого момента,
+   выбирает один из вариантов; после ответа — разбор и полная сдача.
+   Сдачи — по мотивам книги М. Лоуренса, масти переставлены.
+   ============================================================ */
+TASKS.push(
+    {
+        id: 901, folder: 9, type: 'decide',
+        shortTitle: '4♥ · где туз треф?', fullTitle: 'Где туз треф? Контракт 4♥, атака ♠К',
+        dealer: 'W', auction: ['1♠', 'пас', '2♠', '3♥', 'пас', '4♥', 'пас', 'пас', 'пас'],
+        lead: '♠К',
+        // ♦В у Юга (ТВ103), ♦8 у Севера — чтобы заявка 3♥ на третьем уровне была обоснованнее
+        hands: { N: 'S:1086 H:КД4 D:КД84 C:876', S: 'S:73 H:Т10982 D:ТВ103 C:КВ',
+                 W: 'S:ТК942 H:53 D:95 C:Т1093', E: 'S:ДВ5 H:В76 D:762 C:Д542' },
+        story: 'Запад атакует ♠ТК и пикой, которую вы перебиваете козырем. Восток показал ♠ДВ5. ' +
+               'Вы отобрали козырей, финишируя на столе, — у Востока оказался ♥В. ' +
+               'Для выигрыша контракта нужна одна трефовая взятка.',
+        question: 'Вы ходите трефой со стола, Восток — малую. Какой картой сыграете?',
+        options: [{ text: '♣К', ok: false }, { text: '♣В', ok: true }],
+        explanation: 'У нас с партнёром 23 очка, у противников — 17. Восток уже показал ♠Д, ♠В и ♥В — это 4 очка. ' +
+            'Будь у него ещё ♣Т, у Запада осталось бы всего 9 очков, а с ними он не открыл бы торговлю. ' +
+            'Значит, <b>♣Т у Запада</b>. Играем <b>валетом</b>: он возьмёт, если ♣Д у Востока.'
+    },
+    {
+        id: 902, folder: 9, type: 'decide',
+        shortTitle: '4♥ · как разыгрывать козырь?', fullTitle: 'Как разыгрывать козырь? Контракт 4♥, атака ♦В',
+        dealer: 'W', auction: ['1БК*', 'контра', '2♦', '2♥', 'пас', '4♥', 'пас', 'пас', 'пас'],
+        note: '* 15–17 очков',
+        lead: '♦В',
+        hands: { N: 'S:КВ104 H:ТД10 D:КД4 C:Т109', S: 'S:8 H:9865432 D:85 C:Д86',
+                 W: 'S:ТД93 H:КВ7 D:В109 C:КВ7', E: 'S:7652 H:— D:Т7632 C:5432' },
+        story: 'На ♦В вы ставите ♦Д, Восток берёт её тузом. Восток продолжает бубной, вы берёте ♦К ' +
+               'и убиваете малую бубну козырем, оказываясь в руке.',
+        question: 'Как будете разыгрывать козырь?',
+        options: [{ text: 'Тузом, потом дамой', ok: false }, { text: 'Малой к даме', ok: false },
+                  { text: 'Малой к десятке', ok: true }],
+        explanation: 'На нашей линии 21 очко, у оппонентов — 19. Восток уже показал ♦Т — 4 очка. ' +
+            'Следовательно, <b>все остальные очки у Запада</b>, в том числе ♥КВ, иначе у него не набирается 15 очков. ' +
+            'Поэтому играем <b>малой к десятке</b>, переходим в руку и продолжаем в черву.'
+    }
+);
+const DEC_SUITS = [['S', '♠'], ['H', '♥'], ['D', '♦'], ['C', '♣']];
+function decSym(s, text) {
+    const cls = s === 'H' || s === 'D' ? 'red' : s === 'C' ? 'club' : '';
+    return '<span class="' + cls + '">' + text + '</span>';
+}
+function decHandRows(txt) {
+    const map = {};
+    txt.split(/\s+/).forEach(part => { const [s, h] = part.split(':'); map[s] = h; });
+    return DEC_SUITS.map(([s, sym]) => decSym(s, sym) + ' ' + ((map[s] || '—').replace(/(10|[ТКДВ2-9])/g, '$1 ').trim() || '—'));
+}
+function decText(text) {
+    return text.replace(/♥|♦/g, m => '<span class="red">' + m + '</span>').replace(/♣/g, '<span class="club">♣</span>');
+}
+function decideStart() {
+    clearTimers();
+    const t = currentTask;
+    document.getElementById('decideResult').classList.remove('show', 'win', 'lose');
+    // Торговля: столбцы З С В Ю, первая заявка — у сдающего
+    const seats = ['W', 'N', 'E', 'S'];
+    const cells = Array(seats.indexOf(t.dealer)).fill('').concat(t.auction);
+    let rows = '';
+    for (let i = 0; i < cells.length; i += 4)
+        rows += '<tr>' + [0, 1, 2, 3].map(k => '<td>' + decText(cells[i + k] || '') + '</td>').join('') + '</tr>';
+    document.getElementById('decideAuction').innerHTML =
+        '<div class="auction-label">Торговля</div><table><tr><th>Запад</th><th>Север</th><th>Восток</th><th>Юг</th></tr>' +
+        rows + '</table>' + (t.note ? '<div class="dec-note">' + t.note + '</div>' : '');   // атака — в заголовке задачи
+    [['N', 'Стол (Север)'], ['S', 'Вы (Юг)']].forEach(([p, label]) => {
+        document.getElementById('decide' + p).innerHTML =
+            '<div class="dec-hand"><div class="dec-hand-label">' + label + '</div>' +
+            decHandRows(t.hands[p]).map(r => '<div class="dec-row">' + r + '</div>').join('') + '</div>';
+    });
+    document.getElementById('decideStory').innerHTML = decText(t.story);
+    document.getElementById('decideQuestion').innerHTML = decText(t.question);
+    const box = document.getElementById('decideOptions');
+    box.innerHTML = '';
+    t.options.forEach(o => {
+        const b = document.createElement('button');
+        b.innerHTML = decText(o.text);
+        b.onclick = () => decideAnswer(o);
+        box.appendChild(b);
+    });
+}
+/* Полная сдача: Север сверху, Запад и Восток по бокам, Юг снизу */
+function decFullDeal(t) {
+    const hand = p => '<div><div class="dec-seat">' + { N: 'Север', S: 'Юг', W: 'Запад', E: 'Восток' }[p] + '</div>' +
+        decHandRows(t.hands[p]).join('<br>') + '</div>';
+    return '<div class="dec-full"><div></div>' + hand('N') + '<div></div>' + hand('W') + '<div></div>' + hand('E') +
+        '<div></div>' + hand('S') + '<div></div></div>';
+}
+function decideAnswer(o) {
+    const t = currentTask;
+    const panel = document.getElementById('decideResult');
+    const buttons = document.getElementById('decideResultButtons');
+    buttons.innerHTML = '';
+    const addButton = (label, fn) => {
+        const b = document.createElement('button');
+        b.innerText = label;
+        b.onclick = fn;
+        buttons.appendChild(b);
+    };
+    panel.classList.remove('win', 'lose');
+    const back = backLabel();
+    if (o.ok) {
+        panel.classList.add('win');
+        document.getElementById('decideResultTitle').innerText = 'Правильно!';
+        document.getElementById('decideResultText').innerHTML = decText(t.explanation) + decFullDeal(t);
+        const list = folderTasks(t.folder);
+        const next = list[list.indexOf(t) + 1];
+        if (next) addButton('Следующая задача', () => loadTask(next.id));
+    } else {
+        panel.classList.add('lose');
+        document.getElementById('decideResultTitle').innerText = '';
+        document.getElementById('decideResultText').innerHTML =
+            '<div class="solution" id="decideSolution"><button class="solution-btn" onclick="decideShowSolution()">Показать решение</button></div>';
+        addButton('Ещё раз', decideStart);
+    }
+    if (back) addButton(back, showMenu);
+    panel.classList.add('show');
+}
+function decideShowSolution() {
+    document.getElementById('decideSolution').innerHTML = '<b>Решение.</b> ' + decText(currentTask.explanation) + decFullDeal(currentTask);
+}
+
 const DEAL_SEATS = ['N', 'E', 'S', 'W'];
 const DEAL_NAMES = { N: 'Север', E: 'Восток', S: 'Юг', W: 'Запад' };
 const DEAL_DD_LIMIT = 5;      // с этого числа карт на руке защита и проверки считают перебором
@@ -2691,11 +2853,14 @@ const FOLDERS = [
     { id: 2, name: 'Первый ход', group: 'Вист' },
     { id: 4, name: 'Защита взяток на висте', group: 'Вист' },
     { id: 6, name: 'Вист на второй руке', group: 'Вист' },
-    { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true },
+    // Тренировка входит в раздел 6 (карточка после тем); отдельно в меню разделов не показываем,
+    // но ссылка ?razdel=7 и файл для учеников по-прежнему работают
+    { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true, hidden: true, parent: 6 },
     { id: 8, name: 'Вист на третьей руке', group: 'Вист' },
     { id: 5, name: 'Торговля', group: 'Торговля' },
     { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш' },
-    { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true }
+    { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true },
+    { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш' }
 ];
 // direct: true — при входе в раздел сразу открывается первая задача, внизу — «Предыдущая / Следующая»
 let currentFolder = null;
@@ -2712,6 +2877,7 @@ function folderTasks(folderId) {
 /* Подпись кнопки «назад»; null — кнопки нет (раздел по ссылке, задачи без меню) */
 function backLabel() {
     if (!currentFolder || !currentFolder.direct) return 'К задачам';
+    if (currentFolder.parent && lockedFolder !== currentFolder.id) return 'К темам';   // тренировка — назад к темам раздела
     return lockedFolder !== null ? null : 'К разделам';
 }
 function setBackButton(id) {
@@ -2751,7 +2917,7 @@ function renderMenu() {
             head.className = 'menu-group';
             head.innerText = g;
             grid.appendChild(head);
-            const list = visibleFolders().filter(f => f.group === g);
+            const list = visibleFolders().filter(f => f.group === g && (!f.hidden || LESSON));
             if (!list.length) { head.remove(); return; }
             list.forEach(f => {
                 const n = f.id === 7 ? GV_COUNT : folderTasks(f.id).length;
@@ -2774,6 +2940,9 @@ function renderMenu() {
             addMenuCard(grid, 'Тема ' + num + ' · ' + th.tasks.length + ' ' + taskWord(th.tasks.length),
                 th.name, () => gvThemeOpen(i));
         });
+        // Разделы, вложенные в этот (тренировка в «Висте на второй руке»)
+        FOLDERS.filter(f => f.parent === currentFolder.id && (!LESSON || LESSON.folders.includes(f.id))).forEach(f =>
+            addMenuCard(grid, 'Тренировка · новые задачи', f.name, () => openFolder(f.id)));
         return;
     }
     const tasks = folderTasks(currentFolder.id);
@@ -2801,13 +2970,17 @@ function showMenu() {
     hideHandover();
     hideResult();
     // Из раздела без меню задач «назад» ведёт к разделам
-    const direct = currentFolder && currentFolder.direct;
-    if (direct && lockedFolder === null) currentFolder = null;
+    const cf = currentFolder;
+    if (cf && cf.direct) {
+        if (cf.parent && lockedFolder !== cf.id) currentFolder = FOLDERS.find(f => f.id === cf.parent);
+        else if (lockedFolder === null) currentFolder = null;
+    }
     renderMenu();
     document.getElementById('menuScreen').classList.remove('hidden');
     document.getElementById('taskScreen').classList.add('hidden');
     document.getElementById('leadScreen').classList.add('hidden');
     document.getElementById('dealScreen').classList.add('hidden');
+    document.getElementById('decideScreen').classList.add('hidden');
     document.getElementById('coverScreen').classList.add('hidden');
     document.getElementById('aucScreen').classList.add('hidden');
     document.getElementById('coverNav').classList.add('hidden');
@@ -2843,6 +3016,13 @@ function loadTask(taskId) {
         document.getElementById('dealScreen').classList.remove('hidden');
         document.getElementById('dealTitle').innerText = currentTask.fullTitle;
         dealStart();
+        return;
+    }
+    if (currentTask.type === 'decide') {
+        document.getElementById('decideScreen').classList.remove('hidden');
+        document.getElementById('decideTitle').innerHTML = decText(currentTask.fullTitle);   // масти — цветные
+        setBackButton('decideBack');
+        decideStart();
         return;
     }
     if (currentTask.type === 'lead') {
