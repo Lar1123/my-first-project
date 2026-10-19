@@ -45,6 +45,47 @@
     .cover-nav.hidden { display: none; }
     .back-btn.hidden { visibility: hidden; }
     .task-nav { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); padding: 0; z-index: 25; flex-wrap: nowrap; }
+    /* Задачи с открытыми руками: все руки видны, доигрывание, отмена хода, комментарий внизу */
+    .open-screen { position: fixed; inset: 0; overflow-y: auto; padding: 14px 12px 230px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .open-screen.hidden { display: none; }
+    .open-board { display: grid; grid-template-areas: ". n ." "w c e" ". s ."; gap: 8px 18px; align-items: center; justify-items: center; width: 100%; max-width: 860px; }
+    .open-seat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .open-seat.you .seat-label { color: var(--gold); font-size: 17px; }
+    .open-seat.you .cover-hand .card { box-shadow: 0 0 0 2px var(--gold), 2px 3px 6px rgba(0,0,0,0.5); }
+    .open-seat .card.clickable { cursor: pointer; }
+    .open-board .open-trick { grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 62px); gap: 2px; }
+    .open-board .open-trick .card { width: 46px; height: 64px; }
+    .open-board .open-trick .card .corner .rank { font-size: 16px; }
+    .open-board .open-trick .card .corner .suit { font-size: 12px; }
+    .open-board .open-trick .card .center-suit { font-size: 20px; }
+    .open-trick .card.right { box-shadow: 0 0 0 3px var(--win), 0 0 16px rgba(46, 125, 50, 0.7); }
+    .open-trick .card.wrong { box-shadow: 0 0 0 3px var(--lose), 0 0 16px rgba(198, 40, 40, 0.7); }
+    .open-nav { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 12px; background: rgba(0, 0, 0, 0.6); border-top: 2px solid var(--gold); z-index: 40; align-items: center; }
+    .open-counter { color: #fff; font-weight: bold; min-width: 56px; text-align: center; }
+    .open-result { position: fixed; left: 50%; bottom: 70px; transform: translate(-50%, calc(100% + 120px)); width: calc(100% - 32px); max-width: 720px;
+                   background: var(--panel); color: var(--panel-text); border-radius: 14px; padding: 14px 22px; z-index: 35;
+                   transition: transform 0.35s ease; max-height: 38vh; overflow-y: auto; box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5); }
+    .open-result.show { transform: translate(-50%, 0); }
+    .open-result.win { border: 3px solid var(--win); }
+    .open-result.lose { border: 3px solid var(--lose); }
+    .open-result .result-title { font-size: 20px; margin-bottom: 6px; }
+    .open-result.win .result-title { color: var(--win); }
+    .open-result.lose .result-title { color: var(--lose); }
+    .open-result .result-explanation { font-size: 16px; line-height: 1.55; text-align: left; }
+    .open-result .red { color: var(--red-on-light); }
+    /* Экран правил раздела («Вист на второй руке») */
+    .theory-screen { min-height: 100vh; padding: 16px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .theory-screen.hidden { display: none; }
+    .theory-card { max-width: 780px; width: 100%; background: var(--panel); color: var(--panel-text); border: 2px solid var(--gold); border-radius: 14px; padding: 24px 30px; line-height: 1.7; font-size: 17px; }
+    .theory-card h2 { color: var(--accent-dark); margin: 0 0 12px; font-size: 23px; }
+    .theory-card h2 + p { margin-top: 0; }
+    .theory-card b { color: var(--accent-dark); }
+    .theory-card ul { padding-left: 22px; margin: 0; }
+    .theory-card li { margin-bottom: 8px; }
+    .theory-positions { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin: 12px 0 18px; }
+    .theory-pos { text-align: center; max-width: 260px; }
+    .theory-pos svg { display: block; margin: 0 auto 8px; }
+    .theory-pos .cap { font-size: 15px; line-height: 1.5; }
     /* Задачи-решения («Как распознать карты противника») */
     .decide-screen { position: relative; min-height: 100vh; padding: 16px 16px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .decide-screen.hidden { display: none; }
@@ -52,6 +93,7 @@
     .dec-auction th { padding: 2px 18px; color: var(--accent-dark); }
     .dec-auction td { padding: 2px 18px; text-align: center; font-weight: bold; }
     .dec-note { font-size: 14px; color: var(--panel-text); margin-top: 6px; }
+    .dec-note.dec-vul { margin: 0 0 8px; font-weight: bold; }
     .dec-hands { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
     .dec-hand { background: var(--panel); color: var(--panel-text); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 22px; min-width: 190px; }
     .dec-hand-label { font-size: 13px; font-weight: bold; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
@@ -323,6 +365,37 @@
     .solution { border-top: 1px solid rgba(0, 0, 0, 0.12); }
     .deal-status .red, .tally-text .red { color: var(--red-on-felt); }
     .menu-subtitle, .mini-count, .cover-hidden, .empty-folder { color: #cfe6dc; }
+
+    /* ===== Единое оформление задач (19.10) ===== */
+    /* Нижняя панель: ← Предыдущая · кнопки задачи · k / N · Следующая → */
+    .std-nav { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 12px; background: rgba(0, 0, 0, 0.6);
+               border-top: 2px solid var(--gold); z-index: 50; align-items: center; gap: 10px; }
+    .std-extra { display: flex; gap: 10px; }
+    .std-nav button { padding: 9px 16px; font-size: 15px; }
+    /* Комментарий к задаче — внизу, над панелью: сдача остаётся на виду */
+    .result-panel { position: fixed; top: auto; left: 50%; bottom: 64px; width: calc(100% - 32px); max-width: 720px;
+                    transform: translate(-50%, 24px); padding: 14px 22px; max-height: 42vh; overflow-y: auto; z-index: 45; }
+    .result-panel.show { transform: translate(-50%, 0); }
+    .result-panel .result-title { font-size: 22px; margin-bottom: 6px; text-align: left; }
+    .result-panel .lead-buttons { margin-top: 12px; justify-content: flex-start; gap: 12px; }
+    .result-panel .handover-buttons button { padding: 8px 20px; font-size: 16px; }
+    .result-panel .solution { margin-top: 10px; padding-top: 10px; }
+    .result-panel .result-title + .result-explanation:empty + .lead-buttons { margin-top: 4px; }
+    /* Место под нижней панелью и комментарием */
+    .lead-screen, .cover-screen, .deal-screen, .decide-screen, .auc-screen { padding-bottom: 90px; }
+    .open-result { bottom: 64px; }
+    /* Задачи-решения: после решения на экране только разбор и полная сдача */
+    .decide-screen.solved > *:not(.lead-head):not(.result-panel) { display: none; }
+    .decide-screen.solved .result-panel { position: static; transform: none; max-height: none; width: 100%; margin: 6px auto 0; flex-shrink: 0; }
+    .decide-screen { overflow-y: auto; }
+    .decide-screen > * { flex-shrink: 0; }
+    .title .red { color: var(--red-on-felt); }
+    .title .club { color: #9ad9a0; }
+    @media (max-width: 640px) {
+        .std-nav { gap: 6px; padding: 6px 6px; }
+        .std-nav button { padding: 7px 9px; font-size: 13px; }
+        .result-panel .result-title { font-size: 19px; }
+    }
 </style>
 </head>
 <body>
@@ -372,14 +445,10 @@
                 <div class="deal-trick" id="coverTrick"></div>
                 <div class="deal-seat cover-side" id="coverSeatE"><div class="seat-label" id="coverLabelE">Восток</div><div class="cover-hand" id="coverE"></div></div>
             </div>
+            <!-- Рука разыгрывающего видна только в задачах с открытыми руками -->
+            <div class="cover-hand" id="coverS"></div>
             <div class="seat-label">Разыгрывающий (Юг)</div>
         </div>
-    </div>
-    <!-- Навигация по задачам темы (сборник «Вист на второй руке») -->
-    <div class="cover-nav hidden" id="coverNav">
-        <button id="coverPrev" onclick="gvThemeGo(gvt.idx - 1)">← Предыдущая</button>
-        <button onclick="gvThemesMenu()">Темы</button>
-        <button id="coverNext" onclick="gvThemeGo(gvt.idx + 1)">Следующая →</button>
     </div>
     <div class="result-panel" id="coverResult">
         <div class="result-title" id="coverResultTitle"></div>
@@ -412,16 +481,33 @@
             <div class="seat-label">Вы (Юг)</div>
         </div>
     </div>
-    <!-- Навигация по задачам раздела -->
-    <div class="cover-nav" id="dealNav">
-        <button id="dealPrev" onclick="dealGo(-1)">← Предыдущая</button>
-        <button id="dealNextBtn" onclick="dealGo(1)">Следующая →</button>
-    </div>
     <div class="result-panel" id="dealResult">
         <div class="result-title" id="dealResultTitle"></div>
         <div class="result-explanation" id="dealResultText"></div>
         <div class="handover-buttons lead-buttons" id="dealResultButtons"></div>
     </div>
+</div>
+
+<div class="task-screen open-screen hidden" id="openScreen">
+    <div class="lead-head">
+        <button class="back-btn" onclick="showMenu()">← К разделу</button>
+        <div class="lead-title" id="openTitle"></div>
+    </div>
+    <div class="auction cover-question" id="openQuestion"></div>
+    <div class="open-board" id="openBoard"></div>
+    <!-- Комментарий — внизу, над панелью: сдача остаётся на виду -->
+    <div class="open-result" id="openResult">
+        <div class="result-title" id="openResultTitle"></div>
+        <div class="result-explanation" id="openResultText"></div>
+    </div>
+</div>
+
+<div class="theory-screen hidden" id="theoryScreen">
+    <div class="lead-head">
+        <button class="back-btn theory-back" onclick="showMenu()">← К разделу</button>
+        <div class="lead-title" id="theoryTitle"></div>
+    </div>
+    <div class="theory-card" id="theoryCard"></div>
 </div>
 
 <div class="task-screen decide-screen hidden" id="decideScreen">
@@ -469,12 +555,6 @@
         <div class="title" id="taskTitle"></div>
         <div class="goal hidden" id="taskGoal"></div>
         <button class="back-btn" id="taskBack" onclick="showMenu()">← К задачам</button>
-        <button class="restart-btn" onclick="newDeal()">Новая попытка</button>
-        <!-- Навигация по задачам раздела (раздел без меню задач) -->
-        <div class="cover-nav task-nav hidden" id="taskNav">
-            <button id="taskPrev" onclick="taskGo(-1)">← Предыдущая</button>
-            <button id="taskNext" onclick="taskGo(1)">Следующая →</button>
-        </div>
         <div class="hand hand-N" id="handN"><div class="hand-label">Стол (Север)</div></div>
         <div class="hand hand-S" id="handS"><div class="hand-label">Вы (Юг)</div></div>
         <div class="hand hand-W" id="handW"><div class="hand-label">Запад</div></div>
@@ -492,6 +572,14 @@
             <div class="result-explanation" id="resultExplanation"></div>
         </div>
     </div>
+</div>
+
+<!-- Единая нижняя панель задач: ← Предыдущая · (кнопки задачи) · k / N · Следующая → -->
+<div class="cover-nav std-nav hidden" id="stdNav">
+    <button id="stdPrev" onclick="stdGo(-1)">← Предыдущая</button>
+    <span class="std-extra" id="stdExtra"></span>
+    <span class="open-counter" id="stdCounter"></span>
+    <button id="stdNext" onclick="stdGo(1)">Следующая →</button>
 </div>
 
 <script>
@@ -1008,6 +1096,11 @@ function leadPick(suit, rank, el) {
     schedule(() => leadShowResult(ok), RESULT_PAUSE);
 }
 
+function leadShowSolution() {
+    const t = currentTask, answers = t.answers || [t.answer];
+    document.getElementById('leadResultText').innerHTML = '<b>Решение.</b> Атака — <b>' +
+        answers.map(a => leadSuitText(LEAD_SYM[a.suit]) + a.rank).join(' или ') + '</b>. ' + t.explanation;
+}
 function leadShowResult(ok) {
     const panel = document.getElementById('leadResult');
     const title = document.getElementById('leadResultTitle');
@@ -1025,16 +1118,13 @@ function leadShowResult(ok) {
         panel.classList.add('win');
         title.innerText = 'Отличная атака!';
         text.innerHTML = currentTask.explanation;
-        const list = folderTasks(currentTask.folder);
-        const next = list[list.indexOf(currentTask) + 1];
-        if (next) addButton('Следующая задача', () => loadTask(next.id));
-        addButton('К задачам', showMenu);
     } else {
+        // Как во всех разделах: сначала подумать ещё раз, решение — по кнопке
         panel.classList.add('lose');
-        title.innerText = 'Есть атака лучше.';
-        text.innerHTML = '<div class="centered">Попробуешь ещё?</div>';
-        addButton('Да', leadStart);
-        addButton('Нет', showMenu);
+        title.innerText = 'Есть атака лучше';
+        text.innerHTML = '';
+        addButton('Показать решение', leadShowSolution);
+        addButton('Ещё раз', leadStart);
     }
     panel.classList.add('show');
 }
@@ -1443,9 +1533,181 @@ TASKS.push(
         'когда со стола пойдут девяткой. Так разыгрывающему не удастся повторить импас.')
 );
 
-/* Темы сборника «Вист на второй руке»: в начале темы — правило, затем задачи по порядку.
-   hidden: true — тема пока скрыта из меню */
-const GV_THEMES = [
+/* Раздел «Вист на второй руке» в переделке преподавателя (файл «2ая рука.html», 19.10):
+   «Правила» + 8 задач с открытыми руками (стол ходит, вы — Восток). Задачи 61–88 и темы ниже
+   пока не показываются, но сохранены. */
+/* Задача с открытыми руками (type 'open'): видны все четыре руки, ученик отвечает картой Востока,
+   а затем может доиграть взятки картами любого игрока и отменять ходы. Комментарий — внизу экрана. */
+function gv2Task(id, N, W, E, S, led, correct, explanation) {
+    return { id, folder: 6, type: 'open', shortTitle: N + ' — у вас ' + E,
+             hands: { N, W, E, S }, led, correct, explanation,
+             question: 'Со стола ходят <b>' + { 'Т': 'тузом', 'К': 'королём', 'Д': 'дамой', 'В': 'валетом',
+                 '10': 'десяткой', '9': 'девяткой', '4': 'четвёркой', '3': 'тройкой' }[led] + '</b>. Какой картой сыграете?' };
+}
+TASKS.push(
+    gv2Task(161, 'В864', 'Т95', 'К102', 'Д73', '4', ['2'],
+        '<b>Играем двойкой.</b> На столе плотности нет — действует правило «малая на малую».'),
+    gv2Task(162, 'В543', '87', 'Д102', 'ТК96', '3', ['2'],
+        '<b>Играем двойкой.</b> На столе плотности нет — действует правило «малая на малую».'),
+    gv2Task(163, '1054', 'Д96', 'К72', 'ТВ83', '10', ['К'],
+        '<b>Играем королём.</b> Со стола пошли десяткой — это онер. Плотности на столе нет: старшая на старшую.'),
+    gv2Task(164, 'В3', '972', 'Д864', 'ТК105', 'В', ['Д'],
+        '<b>Играем дамой.</b> Со стола пошли валетом — это онер. Плотности на столе нет: старшая на старшую.'),
+    gv2Task(165, 'Д54', 'В96', 'К72', 'Т1083', 'Д', ['К'],
+        '<b>Играем королём.</b> Со стола пошли дамой. Плотности на столе нет: старшая на старшую.'),
+    gv2Task(166, '1053', 'К962', 'Д8', 'ТВ74', '10', ['Д'],
+        '<b>Играем дамой.</b> Десятка — онер. Плотности на столе нет: старшая на старшую.'),
+    gv2Task(167, 'ДВ86', '1043', 'К72', 'Т95', 'Д', ['7', '2'],
+        '<b>Играем фоской.</b> На столе плотность ДВ. На первый ход фигуру на фигуру не ставим — иначе король ' +
+        'попадёт под следующую карту плотности. Короля ставим на второй ход, когда пойдёт валет.'),
+    gv2Task(168, 'В108', 'Д2', 'К94', 'Т7653', 'В', ['4'],
+        '<b>Играем четвёркой.</b> На столе плотность В10. На первый ход фигуру не ставим — иначе король ' +
+        'попадёт под следующую карту плотности.')
+);
+/* Экран «Правила» раздела: две позиции второй руки, онеры, правила для запоминания */
+function gvSeatSvg(leader, you) {
+    const pos = { N: [100, 38], S: [100, 162], W: [38, 100], E: [162, 100] };
+    const box = { N: [75, 10, 50, 55], S: [75, 135, 50, 55], W: [10, 75, 55, 50], E: [135, 75, 55, 50] };
+    return '<svg width="170" height="170" viewBox="0 0 200 200" aria-hidden="true">' +
+        '<rect x="75" y="75" width="50" height="50" rx="6" fill="#17634d"/>' +
+        ['N', 'S', 'W', 'E'].map(p => {
+            const [x, y, w, h] = box[p], fill = p === leader ? '#f4d36b' : p === you ? '#ffffff' : '#a8dcbc';
+            return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="12" fill="' + fill + '"' +
+                (p === you ? ' stroke="#f4d36b" stroke-width="4"' : '') + '/>' +
+                '<text x="' + pos[p][0] + '" y="' + (pos[p][1] + 8) + '" font-size="22" font-weight="bold" text-anchor="middle" fill="#1d2a30">' +
+                (p === you ? 'Вы' : p) + '</text>';
+        }).join('') + '</svg>';
+}
+const GV_THEORY =
+    '<h2>Что такое вторая рука</h2>' +
+    '<p>Вторая рука — это вистующий, который кладёт карту сразу после хода разыгрывающего. Так бывает в двух случаях:</p>' +
+    '<div class="theory-positions">' +
+    '<div class="theory-pos">' + gvSeatSvg('N', 'E') + '<div class="cap">Разыгрывающий пошёл <b>со стола</b> (Север) — вы сидите после стола, на Востоке.</div></div>' +
+    '<div class="theory-pos">' + gvSeatSvg('S', 'W') + '<div class="cap">Разыгрывающий пошёл <b>с руки</b> (Юг) — вы сидите после него, на Западе.</div></div>' +
+    '</div>' +
+    '<p><b>Какие карты считаем онерами:</b> Т, К, Д, В, 10 и 9.</p>' +
+    '<h2>Правила для запоминания</h2>' +
+    '<ul>' +
+    '<li><b>Плотности нет:</b> малая на малую, большая на большую.</li>' +
+    '<li><b>Плотность у оппонента:</b> на плотность стола онер на первый ход не ставим.</li>' +
+    '<li><b>Плотность у нас:</b> из двух своих онеров ставим младший.</li>' +
+    '</ul>';
+/* ---------- Экран задач с открытыми руками ---------- */
+const OPEN = { hands: null, trick: [], history: [], answered: false, timer: null };
+const OPEN_SEATS = [['N', 'Стол (Север)'], ['W', 'Партнёр (Запад)'], ['E', 'Вы (Восток)'], ['S', 'Разыгрывающий (Юг)']];
+const openList = () => GV_THEMES[0].tasks;
+function openStart() {
+    clearTimers();
+    const t = currentTask;
+    OPEN.hands = {};
+    ['N', 'W', 'E', 'S'].forEach(p => (OPEN.hands[p] = leadParse(t.hands[p])));
+    OPEN.hands.N = OPEN.hands.N.filter(r => r !== t.led);
+    const first = { seat: 'N', card: t.led };
+    OPEN.trick = [first];
+    OPEN.history = [first];
+    OPEN.answered = false;
+    document.getElementById('openQuestion').innerHTML = t.question;
+    document.getElementById('openResult').classList.remove('show', 'win', 'lose');
+    openRender();
+}
+function openRender() {
+    const board = document.getElementById('openBoard');
+    board.innerHTML = '';
+    const area = { N: 'n', W: 'w', E: 'e', S: 's' };
+    OPEN_SEATS.forEach(([p, label]) => {
+        const seat = document.createElement('div');
+        seat.className = 'open-seat' + (p === 'E' ? ' you' : '');
+        seat.style.gridArea = area[p];
+        const hand = document.createElement('div');
+        hand.className = 'cover-hand';
+        if (!OPEN.hands[p].length) hand.innerHTML = '<div class="cover-hidden">—</div>';
+        OPEN.hands[p].forEach(r => {
+            const el = leadCardEl('H', r);
+            el.classList.add('clickable');
+            el.onclick = () => openClick(p, r);
+            hand.appendChild(el);
+        });
+        const lab = '<div class="seat-label">' + label + '</div>';
+        seat.innerHTML = p === 'S' ? '' : lab;
+        seat.appendChild(hand);
+        if (p === 'S') seat.insertAdjacentHTML('beforeend', lab);
+        board.appendChild(seat);
+    });
+    // Взятка в центре: карта каждого игрока — со своей стороны
+    const trick = document.createElement('div');
+    trick.className = 'deal-trick open-trick';
+    trick.style.gridArea = 'c';
+    OPEN.trick.forEach((x, k) => {
+        const el = leadCardEl('H', x.card);
+        el.style.gridRow = COVER_POS[x.seat].row;
+        el.style.gridColumn = COVER_POS[x.seat].col;
+        if (x.mark) el.classList.add(x.mark);
+        trick.appendChild(el);
+    });
+    board.appendChild(trick);
+}
+function openClick(seat, card) {
+    const t = currentTask;
+    if (OPEN.timer) return;                       // взятка ещё на столе — ждём, пока её уберут
+    OPEN.hands[seat] = OPEN.hands[seat].filter(r => r !== card);
+    const played = { seat, card };
+    OPEN.trick.push(played);
+    OPEN.history.push(played);
+    // Ответ засчитывается по первой карте Востока
+    if (seat === 'E' && !OPEN.answered) {
+        OPEN.answered = true;
+        const ok = t.correct.includes(card);
+        played.mark = ok ? 'right' : 'wrong';
+        played.answer = true;
+        schedule(() => openResult(ok), 500);
+    }
+    openRender();
+    if (OPEN.trick.length === 4) {
+        OPEN.timer = schedule(() => { OPEN.trick = []; OPEN.timer = null; openRender(); }, 1600);
+    }
+}
+function openUndo() {
+    if (OPEN.history.length <= 1) return;         // первую карту стола не отменяем
+    if (OPEN.timer) { clearTimeout(OPEN.timer); timers.delete(OPEN.timer); OPEN.timer = null; }
+    const last = OPEN.history.pop();
+    OPEN.hands[last.seat] = leadParse(OPEN.hands[last.seat].join('') + last.card);
+    const inTrick = OPEN.history.length % 4;
+    OPEN.trick = inTrick ? OPEN.history.slice(-inTrick) : [];
+    if (last.answer) {
+        OPEN.answered = false;
+        delete last.mark; delete last.answer;
+        document.getElementById('openResult').classList.remove('show', 'win', 'lose');
+    }
+    openRender();
+}
+/* Итог: верно — разбор; неверно — «Показать решение» (ход можно отменить и попробовать ещё раз) */
+function openResult(ok) {
+    const t = currentTask, panel = document.getElementById('openResult');
+    panel.classList.remove('win', 'lose');
+    panel.classList.add(ok ? 'win' : 'lose', 'show');
+    document.getElementById('openResultTitle').innerText = ok ? 'Правильно!' : 'Есть ход лучше';
+    document.getElementById('openResultText').innerHTML = ok ? t.explanation :
+        '<div class="solution" id="openSolution"><button class="solution-btn" onclick="openShowSolution()">Показать решение</button></div>';
+}
+function openShowSolution() {
+    const t = currentTask;
+    document.getElementById('openSolution').innerHTML = '<b>Решение.</b> Правильная карта — <b>' +
+        t.correct.map(r => leadSuitText('♥') + r).join(' или ') + '</b>. ' + t.explanation;
+}
+/* Экран «Правила» раздела. «Вист на третьей руке» — правила тем подряд */
+function showTheory(fid) {
+    clearTimers();
+    const html = fid === 6 ? GV_THEORY :
+        T3_THEMES.map(th => '<h2>' + th.name + '</h2><p>' + th.rule + '</p>').join('');
+    document.getElementById('menuScreen').classList.add('hidden');
+    document.getElementById('theoryTitle').innerText = FOLDERS.find(f => f.id === fid).name + ': правила';
+    document.getElementById('theoryCard').innerHTML = html;
+    document.getElementById('theoryScreen').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+/* Прежние темы раздела (до переделки 19.10) — сейчас не показываются */
+const GV_THEMES_OLD = [
     { name: 'Младшая на младшую', tasks: [61, 62, 78, 79, 80],
       rule: 'Если со стола или с руки пошли <b>фоской</b>, на второй руке играем <b>фоской</b>.' },
     { name: 'Старшая на старшую', tasks: [64, 67, 81],
@@ -1539,6 +1801,10 @@ const T3_THEMES = [
             'сколько карт <b>старше карты хода</b> у трёх других игроков: у стола, у вас и у разыгрывающего. ' +
             'Карты стола и свои вы видите — значит, знаете, сколько таких карт у разыгрывающего.' }
 ];
+/* «Вист на второй руке» — один набор задач без экрана правила (правила — отдельной карточкой) */
+const GV_THEMES = [
+    { name: 'Вист на второй руке', card: ['🎯 8 задач', 'Задачи'], tasks: [161, 162, 163, 164, 165, 166, 167, 168] }
+];
 /* Разделы, где задачи собраны по темам (в начале темы — правило) */
 const THEMES = { 6: GV_THEMES, 8: T3_THEMES };
 const gvt = { active: false, folder: 6, theme: 0, idx: 0 };
@@ -1553,9 +1819,17 @@ function gvThemeOpen(i) {
     document.getElementById('menuScreen').classList.add('hidden');
     document.getElementById('coverScreen').classList.remove('hidden');
     setBackButton('coverBack');
+    // Кнопка в нижней навигации: к списку тем или (если тема одна) к разделу
+    document.getElementById('coverNavMenu').innerText = THEMES[gvt.folder].length > 1 ? 'Темы' : 'К разделу';
+    if (THEMES[gvt.folder].length === 1) document.getElementById('coverBack').innerText = '← К разделу';
     gvThemeGo(0);
-    // Правило темы — перед первой задачей
+    // Правило темы — перед первой задачей (если оно есть)
     const panel = document.getElementById('coverResult');
+    if (!th.rule) {
+        panel.classList.remove('show', 'rule');
+        document.getElementById('coverScreen').classList.remove('intro');
+        return;
+    }
     panel.classList.remove('win', 'lose');
     panel.classList.add('rule', 'show');
     document.getElementById('coverResultTitle').innerText = th.name;
@@ -1745,7 +2019,8 @@ function coverStart() {
     cover.you = leadParse(t.you);
     ['W', 'E'].forEach(p => {
         document.getElementById('coverLabel' + p).innerText = p === t.seat ? 'Вы' :
-            t.leader === 'W' ? 'Партнёр' : (p === 'W' ? 'Запад' : 'Восток');
+            t.leader === 'W' ? 'Партнёр' : t.partner ? 'Партнёр (' + (p === 'W' ? 'Запад' : 'Восток') + ')' :
+            (p === 'W' ? 'Запад' : 'Восток');
         document.getElementById('coverSeat' + p).classList.toggle('you', p === t.seat);
     });
     coverLead();
@@ -1788,7 +2063,13 @@ function coverRenderHands() {
         box('cover' + t.seat).appendChild(el);
     });
     const partner = t.seat === 'E' ? 'W' : 'E';
-    box('cover' + partner).innerHTML = '<div class="cover-hidden">карты партнёра<br>не видны</div>';
+    // Задачи с открытыми руками: видны карты партнёра и разыгрывающего
+    if (t.partner) {
+        box('cover' + partner).innerHTML = '';
+        leadParse(t.partner).forEach(r => { const el = coverCard(r); el.classList.add('disabled'); box('cover' + partner).appendChild(el); });
+    } else box('cover' + partner).innerHTML = '<div class="cover-hidden">карты партнёра<br>не видны</div>';
+    box('coverS').innerHTML = '';
+    if (t.decl) leadParse(t.decl).forEach(r => { const el = coverCard(r); el.classList.add('disabled'); box('coverS').appendChild(el); });
 }
 
 function coverAnswer(card) {
@@ -1856,14 +2137,14 @@ function coverShowResult(ok) {
             document.getElementById('coverResultTitle').innerText = 'Правильно!';
             document.getElementById('coverResultText').innerHTML = t.explanation;
             if (gvt.idx < th.tasks.length - 1) addButton('Следующая задача', () => gvThemeGo(gvt.idx + 1));
-            addButton('К темам', gvThemesMenu);
+            addButton(THEMES[gvt.folder].length > 1 ? 'К темам' : 'К разделу', gvThemesMenu);
         } else {
             panel.classList.add('lose');
             document.getElementById('coverResultTitle').innerText = '';
             document.getElementById('coverResultText').innerHTML = '';
             addButton('Показать решение', coverShowSolution);
             addButton('Ещё раз', coverStart);
-            addButton('К темам', gvThemesMenu);
+            addButton(THEMES[gvt.folder].length > 1 ? 'К темам' : 'К разделу', gvThemesMenu);
         }
         panel.classList.add('show');
         return;
@@ -1872,18 +2153,13 @@ function coverShowResult(ok) {
         panel.classList.add('win');
         document.getElementById('coverResultTitle').innerText = 'Правильно!';
         document.getElementById('coverResultText').innerHTML = t.explanation;
-        const list = folderTasks(t.folder);
-        const next = list[list.indexOf(t) + 1];
-        if (next) addButton('Следующая задача', () => loadTask(next.id));
-        addButton('К задачам', showMenu);
     } else {
-        // Без заголовка и лишних слов: ошибку видно по красной рамке, дальше — решение или новая попытка
+        // Как во всех разделах: «Есть ход лучше», дальше — решение или новая попытка
         panel.classList.add('lose');
-        document.getElementById('coverResultTitle').innerText = '';
+        document.getElementById('coverResultTitle').innerText = 'Есть ход лучше';
         document.getElementById('coverResultText').innerHTML = '';
         addButton('Показать решение', coverShowSolution);
         addButton('Ещё раз', coverStart);
-        addButton('К задачам', showMenu);
     }
     panel.classList.add('show');
 }
@@ -2135,6 +2411,48 @@ TASKS.push(
         explanation: 'На нашей линии 21 очко, у оппонентов — 19. Восток уже показал ♦Т — 4 очка. ' +
             'Следовательно, <b>все остальные очки у Запада</b>, в том числе ♥КВ, иначе у него не набирается 15 очков. ' +
             'Поэтому играем <b>малой к десятке</b>, переходим в руку и продолжаем в черву.'
+    },
+    {
+        // По мотивам Лоуренса (с. 24–25), расклад переделан преподавателем 19.10.
+        // У Востока ♥К986 (в присланном раскладе семёрка червей была и у Запада, и у Востока)
+        id: 903, folder: 9, type: 'decide',
+        shortTitle: '5♠ · где король бубен?', fullTitle: 'Где король бубен? Контракт 5♠, атака ♥Д',
+        vul: 'С–Ю в зоне, З–В до зоны',
+        // Правка 19.10: у Юга три трефы (♣3 — Западу, взамен ♠5 Югу), ♠Д — Северу (♠3 — Югу), Север — 2БК (инвит с фитом)
+        dealer: 'W', auction: ['пас', 'пас', 'пас', '1♠', '2♥', '2БК', '5♥', '5♠', 'пас', 'пас', 'пас'],
+        lead: '♥Д',
+        hands: { N: 'S:Д1064 H:42 D:ТДВ3 C:В82', S: 'S:ТКВ9532 H:Т5 D:4 C:Д105',
+                 W: 'S:87 H:ДВ1073 D:К7 C:К943', E: 'S:— H:К986 D:1098652 C:Т76' },
+        story: 'Вы берёте ♥Д тузом. Надо решить, как разыгрывать бубну.',
+        question: 'Как будете разыгрывать бубну?',
+        options: [{ text: 'Малой к ♦Д — импас короля', ok: true },
+                  { text: '♦Т, затем ♦Д со стола — снести потерю, если Восток не поставит ♦К', ok: false }],
+        explanation: 'Запад вошёл в торговлю после паса заявкой 2♥ и атаковал ♥Д, показав тем самым и ♥В. ' +
+            'Запад не атаковал трефовой фигурой — значит, трефовые фигуры у оппонентов разделены. ' +
+            'Считаем показанные Западом очки: ♥ДВ и одна трефовая фигура — Т или К. Без ♦К у него будет 6–7 очков, ' +
+            'а этого недостаточно, чтобы войти в торговлю. Значит, <b>♦К у Запада</b>, и мы <b>проводим импас</b>.'
+    },
+    {
+        // Лоуренс, с. 24–25, сдача как в книге (масти не переставлены). ♥3 у Севера вместо второй двойки
+        // (опечатка в книге); заявка Севера — 2♥ (в книге опечатка «1♥»)
+        id: 904, folder: 9, type: 'decide',
+        // Правка 19.10: у Запада пика Д10963 (♠9 от Севера, ♠8 — Северу), чтобы вход 1♠ был оправданнее
+        shortTitle: '5♥ · где король треф?', fullTitle: 'Где король треф? Контракт 5♥, атака ♠6',
+        vul: 'С–Ю в зоне, З–В до зоны',
+        dealer: 'W', auction: ['пас', 'пас', 'пас', '1♥', '1♠', '2♥', '4♠', '5♥', 'пас', 'пас', 'пас'],
+        lead: '♠6',
+        hands: { N: 'S:82 H:10643 D:В82 C:ТДВ3', S: 'S:Т7 H:ТКД952 D:Д1053 C:4',
+                 W: 'S:Д10963 H:В7 D:Т94 C:К76', E: 'S:КВ54 H:8 D:К76 C:109852' },
+        story: 'Восток взял атаку ♠К, вы перебили тузом. Козыри разложились 2–1, ♥В был у Запада. ' +
+               'Теперь нужно решить, как разыгрывать трефу.',
+        question: 'Как будете разыгрывать трефу?',
+        options: [{ text: 'Малой к ♣Д — импас короля', ok: true },
+                  { text: '♣Т, затем ♣Д со стола — снести потерю, если Восток не поставит ♣К', ok: false }],
+        explanation: 'Что известно о картах Запада? Атака ♠6: с ♠ДВ Запад вышел бы дамой — значит, ♠В у Востока, ' +
+            'вместе с показанным ♠К. Запад не атаковал бубновой фигурой — значит, ♦Т и ♦К вместе у него нет. ' +
+            'Пика у Запада возглавлена самое большее дамой, в бубне — не больше одного старшего онера. ' +
+            'Без ♣К Западу не с чем было бы входить в торговлю (синглет червей, который мог бы его оправдать, — у Востока). ' +
+            'Значит, <b>♣К у Запада</b>, и мы <b>проводим импас</b>: малой к ♣Д.'
     }
 );
 const DEC_SUITS = [['S', '♠'], ['H', '♥'], ['D', '♦'], ['C', '♣']];
@@ -2154,6 +2472,7 @@ function decideStart() {
     clearTimers();
     const t = currentTask;
     document.getElementById('decideResult').classList.remove('show', 'win', 'lose');
+    document.getElementById('decideScreen').classList.remove('solved');
     // Торговля: столбцы З С В Ю, первая заявка — у сдающего
     const seats = ['W', 'N', 'E', 'S'];
     const cells = Array(seats.indexOf(t.dealer)).fill('').concat(t.auction);
@@ -2161,7 +2480,7 @@ function decideStart() {
     for (let i = 0; i < cells.length; i += 4)
         rows += '<tr>' + [0, 1, 2, 3].map(k => '<td>' + decText(cells[i + k] || '') + '</td>').join('') + '</tr>';
     document.getElementById('decideAuction').innerHTML =
-        '<div class="auction-label">Торговля</div><table><tr><th>Запад</th><th>Север</th><th>Восток</th><th>Юг</th></tr>' +
+        '<div class="auction-label">Торговля</div>' + (t.vul ? '<div class="dec-note dec-vul">' + t.vul + '</div>' : '') + '<table><tr><th>Запад</th><th>Север</th><th>Восток</th><th>Юг</th></tr>' +
         rows + '</table>' + (t.note ? '<div class="dec-note">' + t.note + '</div>' : '');   // атака — в заголовке задачи
     [['N', 'Стол (Север)'], ['S', 'Вы (Юг)']].forEach(([p, label]) => {
         document.getElementById('decide' + p).innerHTML =
@@ -2198,26 +2517,29 @@ function decideAnswer(o) {
         buttons.appendChild(b);
     };
     panel.classList.remove('win', 'lose');
-    const back = backLabel();
     if (o.ok) {
         panel.classList.add('win');
         document.getElementById('decideResultTitle').innerText = 'Правильно!';
         document.getElementById('decideResultText').innerHTML = decText(t.explanation) + decFullDeal(t);
-        const list = folderTasks(t.folder);
-        const next = list[list.indexOf(t) + 1];
-        if (next) addButton('Следующая задача', () => loadTask(next.id));
+        document.getElementById('decideScreen').classList.add('solved');
     } else {
         panel.classList.add('lose');
         document.getElementById('decideResultTitle').innerText = '';
-        document.getElementById('decideResultText').innerHTML =
-            '<div class="solution" id="decideSolution"><button class="solution-btn" onclick="decideShowSolution()">Показать решение</button></div>';
+        document.getElementById('decideResultTitle').innerText = 'Есть решение лучше';
+        document.getElementById('decideResultText').innerHTML = '';
+        addButton('Показать решение', decideShowSolution);
         addButton('Ещё раз', decideStart);
     }
-    if (back) addButton(back, showMenu);
     panel.classList.add('show');
 }
+/* Решение: на экране остаются только разбор и полная сдача (торговля и руки скрываются) */
 function decideShowSolution() {
-    document.getElementById('decideSolution').innerHTML = '<b>Решение.</b> ' + decText(currentTask.explanation) + decFullDeal(currentTask);
+    document.getElementById('decideResultText').innerHTML = '<b>Решение.</b> ' + decText(currentTask.explanation) + decFullDeal(currentTask);
+    document.getElementById('decideScreen').classList.add('solved');
+    // Решение уже открыто — кнопка больше не нужна, остаётся «Ещё раз»
+    document.querySelectorAll('#decideResultButtons button').forEach(b => { if (b.innerText === 'Показать решение') b.remove(); });
+    window.scrollTo(0, 0);
+    document.getElementById('decideScreen').scrollTop = 0;
 }
 
 const DEAL_SEATS = ['N', 'E', 'S', 'W'];
@@ -2381,11 +2703,6 @@ function dealStart() {
     document.getElementById('dealInfo').innerHTML = t.info;
     document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
     document.getElementById('dealTrick').innerHTML = '';
-    // Навигация по задачам раздела и кнопка «назад»
-    const list = orderedTasks(t.folder), i = list.indexOf(t);
-    document.getElementById('dealPrev').disabled = i <= 0;
-    document.getElementById('dealNextBtn').disabled = i >= list.length - 1;
-    setBackButton('dealBack');
     dealRender();
     const o = t.opening;
     const lead = deal.hands[o.p].find(c => c.s === o.s && c.r === o.r);
@@ -2466,35 +2783,30 @@ function dealFinish(result) {
         b.onclick = fn;
         buttons.appendChild(b);
     };
-    // «К задачам» / «К разделам»; в разделе по ссылке, где задачи без меню, кнопки нет
-    const addBack = () => { const l = backLabel(); if (l) addButton(l, showMenu); };
     const need = t.contract.need;
     // Счёт взяток в итоговом окне не показываем: сдача часто не доигрывается до конца
-    const solution = '<div class="solution" id="dealSolution"><button class="solution-btn" onclick="dealShowSolution()">Показать решение</button></div>';
+    // Решение появляется здесь по кнопке «Показать решение» (кнопки — в одном ряду, как во всех разделах)
+    const solution = '<div id="dealSolution"></div>';
     panel.classList.remove('win', 'lose', 'partial');
     if (result === 'made' && deal.technique) {
         panel.classList.add('win');
         title.innerText = 'Ты справился!';
         text.innerHTML = t.explanation + '<br><br><b>В этой сдаче:</b> ' + t.note;
-        const list = folderTasks(t.folder);
-        const next = list[list.indexOf(t) + 1];
-        if (next) addButton('Следующая задача', () => loadTask(next.id));
-        addBack();
     } else if (result === 'made') {
         panel.classList.add('partial');
         title.innerText = 'Контракт выполнен!';
         text.innerHTML = 'Ты нашёл свой путь к победе. А теперь попробуй выиграть с помощью приёма, который мы изучаем, — <b>' +
             t.techniqueName + '</b>.' + solution;
+        addButton('Показать решение', dealShowSolution);
         addButton(t.techniqueButton || 'Попробовать ещё раз', dealStart);
-        addBack();
     } else {
         panel.classList.add('lose');
         title.innerText = 'Упс, контракт не выполнен';
         const down = deal.downBy || 1;
         // Сдача не доигрывается, поэтому счёт взяток здесь не показываем
         text.innerHTML = 'Контракт без ' + (down === 1 ? 'одной' : down) + '. Попробуй ещё раз!' + solution;
+        addButton('Показать решение', dealShowSolution);
         addButton('Ещё раз', dealStart);
-        addBack();
     }
     panel.classList.add('show');
 }
@@ -2504,7 +2816,9 @@ function dealGo(d) {
     if (next) loadTask(next.id);
 }
 function dealShowSolution() {
-    document.getElementById('dealSolution').innerHTML = '<b>Решение.</b> ' + currentTask.explanation;
+    const s = document.getElementById('dealSolution');
+    s.className = 'solution';
+    s.innerHTML = '<b>Решение.</b> ' + currentTask.explanation;
 }
 
 /* Показать последнюю взятку ещё раз (пока стол пуст) */
@@ -2953,19 +3267,21 @@ function spSummary() {
    ============================================================ */
 /* Разделы сгруппированы по темам: вист, торговля, розыгрыш. Номер раздела (id) — для ссылок ?razdel=N */
 const FOLDER_GROUPS = ['Вист', 'Торговля', 'Розыгрыш'];
+/* Единый вход в раздел: theory — меню «Правила / Задачи»; direct — сразу первая задача */
 const FOLDERS = [
-    { id: 2, name: 'Первый ход', group: 'Вист' },
-    { id: 4, name: 'Защита взяток на висте', group: 'Вист' },
-    { id: 6, name: 'Вист на второй руке', group: 'Вист' },
+    { id: 2, name: 'Первый ход', group: 'Вист', direct: true },
+    { id: 4, name: 'Защита взяток на висте', group: 'Вист', direct: true },
+    { id: 6, name: 'Вист на второй руке', group: 'Вист', theory: true },
     // Тренировка входит в раздел 6 (карточка после тем); отдельно в меню разделов не показываем,
     // но ссылка ?razdel=7 и файл для учеников по-прежнему работают
-    { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true, hidden: true, parent: 6 },
-    { id: 8, name: 'Вист на третьей руке', group: 'Вист' },
-    { id: 5, name: 'Торговля', group: 'Торговля' },
+    // 19.10: в переделанном разделе 6 тренировки нет (раздел скрыт; вернуть — добавить parent: 6)
+    { id: 7, name: 'Вист на второй руке: тренировка', group: 'Вист', direct: true, hidden: true },
+    { id: 8, name: 'Вист на третьей руке', group: 'Вист', theory: true },
+    { id: 5, name: 'Торговля', group: 'Торговля', direct: true },
     // shuffle: задачи раздела идут в случайном порядке (новый порядок при каждом входе)
     { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш', direct: true, shuffle: true },
     { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true },
-    { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш' }
+    { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш', direct: true }
 ];
 // direct: true — при входе в раздел сразу открывается первая задача, внизу — «Предыдущая / Следующая»
 let currentFolder = null;
@@ -2973,6 +3289,8 @@ let currentFolder = null;
 /* Файл урока: только выбранные разделы и задачи. В sd.html — null (весь практикум).
    Например: { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } } */
 const LESSON = null;
+/* Раздел открывается сразу задачей — кроме разделов, которые в уроке показаны списком задач (LESSON.lists) */
+const isDirect = f => !!f.direct && !(LESSON && LESSON.lists && LESSON.lists.includes(f.id));
 const visibleFolders = () => LESSON ? FOLDERS.filter(f => LESSON.folders.includes(f.id)) : FOLDERS;
 
 function folderTasks(folderId) {
@@ -2998,7 +3316,8 @@ function taskGo(d) {
 }
 /* Подпись кнопки «назад»; null — кнопки нет (раздел по ссылке, задачи без меню) */
 function backLabel() {
-    if (!currentFolder || !currentFolder.direct) return 'К задачам';
+    if (!currentFolder) return 'К разделам';
+    if (!isDirect(currentFolder)) return 'К разделу';   // раздел с меню «Правила / Задачи»
     if (currentFolder.parent && lockedFolder !== currentFolder.id) return 'К темам';   // тренировка — назад к темам раздела
     return lockedFolder !== null ? null : 'К разделам';
 }
@@ -3043,8 +3362,9 @@ function renderMenu() {
             if (!list.length) { head.remove(); return; }
             list.forEach(f => {
                 const n = f.id === 7 ? GV_COUNT : folderTasks(f.id).length;
-                const count = f.id === 5 ? '18 сдач' : f.id === 7 ? 'новые задачи' : THEMES[f.id] ? THEMES[f.id].filter(th => !th.hidden).length + ' темы' :
-                    n ? n + ' ' + taskWord(n) : 'скоро';
+                const sn = sectionList(f.id).length;
+                const count = f.id === 5 ? '18 сдач' : f.id === 7 ? 'новые задачи' :
+                    f.theory ? 'правила и ' + sn + ' ' + taskWord(sn) : n ? n + ' ' + taskWord(n) : 'скоро';
                 addMenuCard(grid, '📁 ' + count, f.name, () => openFolder(f.id), 'folder-card');
             });
         });
@@ -3054,13 +3374,22 @@ function renderMenu() {
     // По ссылке на раздел (?razdel=N) другие разделы не показываем
     back.classList.toggle('hidden', lockedFolder !== null);
     // Сборники по темам («Вист на второй руке», «Вист на третьей руке»); комбинации в меню не показываем
+    // Раздел с теорией: две карточки — «Правила» и «Задачи» (сразу задача 1)
+    if (currentFolder.theory) {
+        const fid = currentFolder.id, list = sectionList(fid);
+        addMenuCard(grid, '📖 Теория', 'Правила', () => showTheory(fid));
+        addMenuCard(grid, '🎯 ' + list.length + ' ' + taskWord(list.length), 'Задачи', () => loadTask(list[0]));
+        return;
+    }
     if (THEMES[currentFolder.id]) {
         let num = 0;
         THEMES[currentFolder.id].forEach((th, i) => {
             if (th.hidden) return;
             num++;
-            addMenuCard(grid, 'Тема ' + num + ' · ' + th.tasks.length + ' ' + taskWord(th.tasks.length),
-                th.name, () => gvThemeOpen(i));
+            // Задачи с открытыми руками открываются своим экраном, остальные темы — через правило темы
+            const open = TASKS.find(x => x.id === th.tasks[0]).type === 'open';
+            addMenuCard(grid, th.card ? th.card[0] : 'Тема ' + num + ' · ' + th.tasks.length + ' ' + taskWord(th.tasks.length),
+                th.card ? th.card[1] : th.name, () => open ? loadTask(th.tasks[0]) : gvThemeOpen(i));
         });
         // Разделы, вложенные в этот (тренировка в «Висте на второй руке»)
         FOLDERS.filter(f => f.parent === currentFolder.id && (!LESSON || LESSON.folders.includes(f.id))).forEach(f =>
@@ -3077,7 +3406,7 @@ function renderMenu() {
 function openFolder(folderId) {
     currentFolder = FOLDERS.find(f => f.id === folderId) || null;
     // Раздел без меню задач — сразу первая задача
-    if (currentFolder && currentFolder.direct && folderTasks(folderId).length) {
+    if (currentFolder && isDirect(currentFolder) && folderTasks(folderId).length) {
         if (currentFolder.shuffle) shuffleFolder(folderId);
         loadTask(orderedTasks(folderId)[0].id);
         return;
@@ -3094,7 +3423,7 @@ function showMenu() {
     hideResult();
     // Из раздела без меню задач «назад» ведёт к разделам
     const cf = currentFolder;
-    if (cf && cf.direct) {
+    if (cf && isDirect(cf)) {
         if (cf.parent && lockedFolder !== cf.id) currentFolder = FOLDERS.find(f => f.id === cf.parent);
         else if (lockedFolder === null) currentFolder = null;
     }
@@ -3104,9 +3433,12 @@ function showMenu() {
     document.getElementById('leadScreen').classList.add('hidden');
     document.getElementById('dealScreen').classList.add('hidden');
     document.getElementById('decideScreen').classList.add('hidden');
+    document.getElementById('theoryScreen').classList.add('hidden');
+    document.getElementById('openScreen').classList.add('hidden');
+    OPEN.timer = null;
     document.getElementById('coverScreen').classList.add('hidden');
     document.getElementById('aucScreen').classList.add('hidden');
-    document.getElementById('coverNav').classList.add('hidden');
+    document.getElementById('stdNav').classList.add('hidden');
     document.getElementById('coverScreen').classList.remove('intro');
     gvt.active = false;
 }
@@ -3118,57 +3450,75 @@ function loadTask(taskId) {
     window.scrollTo(0, 0);
     if (currentTask.type === 'auction') {
         document.getElementById('aucScreen').classList.remove('hidden');
+        stdBack();
         aucStart();
         return;
     }
     if (currentTask.type === 'cover-gen') {
         document.getElementById('coverScreen').classList.remove('hidden');
-        setBackButton('coverBack');
+        stdBack();
         gvStart();
         return;
     }
-    if (currentTask.type === 'cover') {
-        document.getElementById('coverScreen').classList.remove('hidden');
-        document.getElementById('coverTitle').innerText =
-            (currentTask.folder === 6 ? 'Вист на второй руке: ' : 'Защита взяток: ') + currentTask.shortTitle;
-        setBackButton('coverBack');
-        coverStart();
-        return;
-    }
-    if (currentTask.type === 'deal') {
-        document.getElementById('dealScreen').classList.remove('hidden');
-        document.getElementById('dealTitle').innerText = currentTask.fullTitle;
-        dealStart();
-        return;
-    }
-    if (currentTask.type === 'decide') {
-        document.getElementById('decideScreen').classList.remove('hidden');
-        document.getElementById('decideTitle').innerHTML = decText(currentTask.fullTitle);   // масти — цветные
-        setBackButton('decideBack');
-        decideStart();
-        return;
-    }
-    if (currentTask.type === 'lead') {
-        document.getElementById('leadScreen').classList.remove('hidden');
-        document.getElementById('leadTitle').innerText = currentTask.fullTitle;
-        leadStart();
-        return;
-    }
-    document.getElementById('taskScreen').classList.remove('hidden');
-    let title = currentTask.fullTitle;
-    const nav = document.getElementById('taskNav');
-    const direct = currentFolder && currentFolder.direct;
-    nav.classList.toggle('hidden', !direct);
-    if (direct) {
-        // Номер задачи — по текущему (перемешанному) порядку раздела
-        const list = orderedTasks(currentFolder.id), i = list.indexOf(currentTask);
-        title = 'Задача ' + (i + 1) + ' из ' + list.length + ': ' + title.replace(/^Задача \d+: /, '');
-        document.getElementById('taskPrev').disabled = i <= 0;
-        document.getElementById('taskNext').disabled = i >= list.length - 1;
-    }
-    document.getElementById('taskTitle').innerText = title;
-    setBackButton('taskBack');
-    newDeal();
+    // Остальные типы задач: свой экран + единые заголовок, кнопка «назад» и нижняя панель
+    const screen = { cover: 'coverScreen', deal: 'dealScreen', open: 'openScreen', decide: 'decideScreen', lead: 'leadScreen' }[currentTask.type] || 'taskScreen';
+    document.getElementById(screen).classList.remove('hidden');
+    stdSetup();
+    if (currentTask.type === 'cover') coverStart();
+    else if (currentTask.type === 'deal') dealStart();
+    else if (currentTask.type === 'open') { OPEN.timer = null; openStart(); }
+    else if (currentTask.type === 'decide') decideStart();
+    else if (currentTask.type === 'lead') leadStart();
+    else newDeal();
+}
+
+/* ============================================================
+   Единое оформление задач: заголовок «Задача k из N · название», кнопка «назад»,
+   нижняя панель «← Предыдущая · (кнопки задачи) · k / N · Следующая →».
+   ============================================================ */
+const STD_TITLE = { cover: 'coverTitle', deal: 'dealTitle', open: 'openTitle', decide: 'decideTitle', lead: 'leadTitle' };
+/* Порядок задач раздела (для навигации и счётчика) */
+function sectionList(folderId) {
+    if (folderId === 6) return GV_THEMES[0].tasks.slice();
+    if (folderId === 8) return [].concat(...T3_THEMES.map(th => th.tasks));
+    return orderedTasks(folderId).map(t => t.id);
+}
+function stdSetup() {
+    const t = currentTask, folder = t.folder || 1;
+    const list = sectionList(folder), i = list.indexOf(t.id);
+    // Заголовок
+    let name = (t.fullTitle || '').replace(/^Задача \d+:\s*/, '');
+    if (!name) name = t.type === 'cover' && folder === 4 ? t.shortTitle : (currentFolder ? currentFolder.name : '');
+    const el = document.getElementById(STD_TITLE[t.type] || 'taskTitle');
+    el.innerHTML = decText('Задача ' + (i + 1) + ' из ' + list.length + (name ? ' · ' + name : ''));
+    stdBack();
+    // Нижняя панель
+    document.getElementById('stdNav').classList.remove('hidden');
+    document.getElementById('stdCounter').innerText = (i + 1) + ' / ' + list.length;
+    document.getElementById('stdPrev').disabled = i <= 0;
+    document.getElementById('stdNext').disabled = i >= list.length - 1;
+    const extra = document.getElementById('stdExtra');
+    extra.innerHTML = '';
+    const add = (label, fn) => { const b = document.createElement('button'); b.innerText = label; b.onclick = fn; extra.appendChild(b); };
+    if (!t.type) add('Новая попытка', newDeal);          // розыгрыш масти
+    if (t.type === 'open') add('↶ Отменить ход', openUndo);
+}
+/* Кнопки «назад» на всех экранах задач: «К разделу» / «К разделам» / нет (раздел по ссылке) */
+function stdBack() {
+    const l = backLabel();
+    document.querySelectorAll('.task-screen .back-btn').forEach(b => {
+        b.classList.toggle('hidden', !l);
+        b.innerText = '← ' + (l || '');
+    });
+}
+function stdGo(d) {
+    const list = sectionList(currentTask.folder || 1);
+    const id = list[list.indexOf(currentTask.id) + d];
+    if (id === undefined) return;
+    clearTimers();
+    ['taskScreen', 'coverScreen', 'dealScreen', 'openScreen', 'decideScreen', 'leadScreen'].forEach(s =>
+        document.getElementById(s).classList.add('hidden'));
+    loadTask(id);
 }
 
 function newDeal() {
@@ -3315,7 +3665,7 @@ let lockedFolder = null;
 }
 renderMenu();
 showMenu();
-if (currentFolder && currentFolder.direct) openFolder(currentFolder.id);
+if (currentFolder && isDirect(currentFolder)) openFolder(currentFolder.id);
 </script>
 </body>
 </html>
