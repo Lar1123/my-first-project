@@ -2462,23 +2462,29 @@ TASKS.push(
         contract: { text: '6♦', trump: 'D', need: 12 },
         opening: { p: 'W', s: 'C', r: '3' },
         hands: { N: 'S:65 H:КД64 D:КД5 C:Д1076', S: 'S:ТВ7 D:ТВ10987 C:ТКВ9',
-                 W: 'S:КД9 H:Т987 D:643 C:543', E: 'S:108432 H:В10532 D:2 C:82' },
+                 W: 'S:КД9 H:Т98 D:643 C:5432', E: 'S:108432 H:В107532 D:2 C:8' },
+        // Правка преподавателя (23.10): у Востока синглет трефы (♣2 — Западу, взамен ♥7 — Востоку),
+        // после атаки Восток сразу ренонс в трефе.
         // Переделка преподавателя (22.10): учебная сдача. Если ученик снял один козырь и пошёл в пику —
-        // отдаём Востоку козырь (для убитки трефы), а Западу — трефы Востока.
+        // отдаём Востоку козырь (для убитки трефы), а Западу — взамен младшую черву Востока.
         // Так получается «козыри 2-2», и Запад, взяв пику, идёт в трефу, чтобы Восток убил.
         onSpadePlay: (d, sTrumpPlayed) => {
             if (sTrumpPlayed !== 1) return;
             const wDiamonds = d.hands.W.filter(c => c.s === 'D')
                 .sort((a, b) => LEAD_RANKS.indexOf(b.r) - LEAD_RANKS.indexOf(a.r));
-            const eClubs = d.hands.E.filter(c => c.s === 'C');
-            if (wDiamonds.length > 0 && eClubs.length > 0) {
+            const eGive = d.hands.E.filter(c => c.s === 'C').concat(d.hands.E.filter(c => c.s === 'H').sort(byRankUp))[0];
+            if (wDiamonds.length > 0 && eGive) {
                 const diamond = wDiamonds[0];
-                d.hands.E = d.hands.E.filter(c => c.s !== 'C');
+                d.hands.E = d.hands.E.filter(c => c !== eGive);
                 d.hands.E.push(diamond);
                 d.hands.W = d.hands.W.filter(c => c !== diamond);
-                d.hands.W.push(...eClubs);
+                d.hands.W.push(eGive);
             }
         },
+        // Козыри не отобраны (у Востока есть козырь, трефы нет) — Запад, получив ход, идёт в трефу под убитку
+        defLead: (p, bySuit, d) =>
+            p === 'W' && bySuit['C'] && d.hands.E.some(c => c.s === 'D') && !d.hands.E.some(c => c.s === 'C')
+                ? bySuit['C'][0] : null,
         info: '<b>Контракт 6♦</b>, вы — Юг, стол — Север. Запад выходит ♣3. Нужно взять <b>12 взяток</b>.',
         techniqueName: 'потери на потерю',
         techniqueButton: 'Попробовать ещё раз',
@@ -2499,6 +2505,9 @@ TASKS.push(
         opening: { p: 'W', s: 'H', r: 'К' },
         hands: { N: 'S:КВ654 H:Д4 D:543 C:КД6', S: 'S:ТД109832 D:ТД8 C:ТВ10',
                  W: 'S:7 H:ТКВ2 D:КВ62 C:9875', E: 'H:10987653 D:1097 C:432' },
+        // Правка преподавателя (23.10): если трефа не отыграна, Запад, получив ход, безопасно выходит в трефу
+        // (тогда импас бубен проигрывает). Трефы у Запада нет — играет по общим правилам.
+        defLead: (p, bySuit) => p === 'W' && bySuit['C'] ? bySuit['C'][0] : null,
         info: '<b>Контракт 6♠</b>, вы — Юг, стол — Север. Запад выходит ♥К. Нужно взять <b>12 взяток</b>.',
         techniqueName: 'потери на потерю со впусткой',
         techniqueButton: 'Попробовать ещё раз',
@@ -2792,6 +2801,11 @@ function dealLeadCard(p) {
         // у разыгрывающего 2+ козыря сыграно — продолжаем козырь; один — идём в трефу (Восток убивает)
         if (deal.sTrumpPlayed >= 2 && bySuit[trump]) return bySuit[trump][0];
         if (deal.sTrumpPlayed === 1 && bySuit['C']) return bySuit['C'][0];
+    }
+    // 0а. Особый ход защиты, заданный в самой сдаче (defLead)
+    if (currentTask.defLead) {
+        const c = currentTask.defLead(p, bySuit, deal);
+        if (c) return c;
     }
     // 1. Масть партнёра: из дубля — старшую, иначе младшую
     for (const s of deal.ledBy[dealPartner(p)]) {
