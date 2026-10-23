@@ -115,6 +115,11 @@
     .result-panel.rule .result-explanation { font-size: 19px; text-align: center; }
     .menu-group { grid-column: 1 / -1; font-size: 22px; font-weight: bold; color: var(--gold); text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); margin: 10px 0 -6px; border-bottom: 1px solid rgba(244, 211, 107, 0.4); padding-bottom: 6px; }
     .menu-group:first-child { margin-top: 0; }
+    /* Первая страница практикума: четыре папки разделов, две колонки */
+    .task-grid.groups-grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); max-width: 760px; }
+    @media (max-width: 640px) {
+        .task-grid.groups-grid { grid-template-columns: 1fr; }
+    }
     .auc-screen { display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 90px; }
     .auc-screen.hidden { display: none; }
     .auc-table { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px) minmax(0, 1fr); gap: 16px; align-items: start; max-width: 1150px; width: 100%; margin: 16px auto 0; padding: 0 16px; }
@@ -371,9 +376,14 @@
     .build-screen { overflow-y: auto; padding-bottom: 90px; }
     .build-task { max-width: 980px; margin: 12px auto 0; padding: 10px 18px; background: var(--panel); color: var(--panel-text);
                   border: 2px solid var(--gold); border-radius: 12px; font-size: 18px; font-weight: bold; text-align: center; }
-    .build-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; max-width: 980px; margin: 14px auto 0; padding: 0 12px; align-items: start; }
-    .build-left, .build-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-    .build-left .auction { max-width: none; padding: 12px 10px; }
+    .build-grid { display: flex; flex-direction: column; gap: 12px; max-width: 1040px; margin: 14px auto 0; padding: 0 12px; }
+    .build-hands { display: flex; gap: 16px; align-items: flex-start; }
+    .build-hands > * { flex: 1; min-width: 0; }
+    .build-hands > :empty { display: none; }
+    /* Торговля стоит в одном ряду с колодой, из которой собирают руку */
+    .build-pick { display: flex; gap: 16px; align-items: stretch; justify-content: center; }
+    .build-pick .auction { flex: 0 0 auto; width: auto; max-width: 340px; margin: 0; padding: 12px 10px; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+    .build-pick .build-deck { flex: 0 1 auto; min-width: 0; }
     .bhand { background: var(--panel); color: var(--panel-text); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 14px; }
     .bhand.fixed { border-color: rgba(244, 211, 107, 0.5); }
     .bhand-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
@@ -397,7 +407,8 @@
     .build-msg { min-height: 0; color: #ffd0cc; font-weight: bold; text-align: center; }
     .build-msg:empty { display: none; }
     @media (max-width: 760px) {
-        .build-grid { grid-template-columns: 1fr; }
+        .build-hands, .build-pick { flex-direction: column; }
+        .build-pick .auction { max-width: none; width: 100%; }
         .bcard { width: 25px; height: 34px; font-size: 11px; }
         .bcard .s { font-size: 9px; }
         .build-task { font-size: 15px; margin: 10px 12px 0; }
@@ -546,14 +557,14 @@
     </div>
     <div class="build-task" id="buildTask"></div>
     <div class="build-grid">
-        <div class="build-left">
-            <!-- На втором шаге рука Юга стоит слева сверху — напротив собираемой руки Севера; торговля под ней -->
+        <div class="build-hands">
+            <!-- На втором шаге рука Юга — напротив собираемой руки Севера -->
             <div id="buildFixed"></div>
-            <div class="auction dec-auction" id="buildAuction"></div>
-        </div>
-        <div class="build-right">
             <div id="buildHand"></div>
-            <div class="build-msg" id="buildMsg"></div>
+        </div>
+        <div class="build-msg" id="buildMsg"></div>
+        <div class="build-pick">
+            <div class="auction dec-auction" id="buildAuction"></div>
             <div class="build-deck" id="buildDeck"></div>
         </div>
     </div>
@@ -3520,6 +3531,9 @@ const FOLDERS = [
 ];
 // direct: true — при входе в раздел сразу открывается первая задача, внизу — «Предыдущая / Следующая»
 let currentFolder = null;
+/* Первая страница практикума: выбрана папка раздела (Вист, Торговля…). null — ещё не выбрана.
+   В файле урока не используется: там короткий список, лишний шаг не нужен. */
+let currentGroup = null;
 
 /* Файл урока: только выбранные разделы и задачи. В sd.html — null (весь практикум).
    Например: { folders: [3, 7, 2], tasks: { 3: [34, 35, 36] } } */
@@ -3549,12 +3563,23 @@ function taskGo(d) {
     const next = list[list.indexOf(currentTask) + d];
     if (next) loadTask(next.id);
 }
+/* Последняя задача папки в полном практикуме: выход сразу на главную, мимо списка подраздела */
+function isLastInFolder() {
+    if (!currentTask) return false;
+    const list = sectionList(currentTask.folder || 1);
+    return list.length > 0 && list[list.length - 1] === currentTask.id;
+}
+function folderDone() {
+    return !LESSON && lockedFolder === null && !!currentFolder && isDirect(currentFolder) && isLastInFolder();
+}
 /* Подпись кнопки «назад»; null — кнопки нет (раздел по ссылке, задачи без меню) */
 function backLabel() {
     if (!currentFolder) return 'К разделам';
     if (!isDirect(currentFolder)) return 'К разделу';   // раздел с меню «Правила / Задачи»
     if (currentFolder.parent && lockedFolder !== currentFolder.id) return 'К темам';   // тренировка — назад к темам раздела
-    return lockedFolder !== null ? null : 'К разделам';
+    if (lockedFolder !== null) return null;
+    if (folderDone()) return 'К разделам';
+    return currentGroup || 'К разделам';
 }
 function setBackButton(id) {
     const el = document.getElementById(id), l = backLabel();
@@ -3568,6 +3593,12 @@ function taskWord(n) {
     if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'задачи';
     return 'задач';
 }
+function sectionWord(n) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'раздел';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'раздела';
+    return 'разделов';
+}
 
 function addMenuCard(grid, num, name, onclick, extraClass) {
     const card = document.createElement('div');
@@ -3580,21 +3611,41 @@ function addMenuCard(grid, num, name, onclick, extraClass) {
     grid.appendChild(card);
 }
 
+function menuFolders() {
+    return visibleFolders().filter(f => !f.hidden || LESSON);
+}
 function renderMenu() {
     const grid = document.getElementById('taskGrid');
     const sub = document.getElementById('menuSubtitle');
     const back = document.getElementById('folderBackBtn');
     grid.innerHTML = '';
+    grid.classList.remove('groups-grid');
     if (!currentFolder) {
-        sub.innerText = 'Выберите раздел';
-        back.classList.add('hidden');
+        const folders = menuFolders().filter(f => !currentGroup || f.group === currentGroup);
+        const groups = FOLDER_GROUPS.filter(g => menuFolders().some(f => f.group === g));
+        // Практикум целиком: сначала только папки разделов. В уроке список короткий — сразу разделы.
+        if (!LESSON && !currentGroup && groups.length > 1) {
+            sub.innerText = 'Выберите раздел';
+            back.classList.add('hidden');
+            grid.classList.add('groups-grid');
+            groups.forEach(g => {
+                const n = menuFolders().filter(f => f.group === g).length;
+                addMenuCard(grid, '📁 ' + n + ' ' + sectionWord(n), g, () => openGroup(g), 'folder-card');
+            });
+            return;
+        }
+        sub.innerText = currentGroup || 'Выберите раздел';
+        back.classList.toggle('hidden', !currentGroup);
+        if (currentGroup) back.innerText = '← К разделам';
         FOLDER_GROUPS.forEach(g => {
-            const head = document.createElement('div');
-            head.className = 'menu-group';
-            head.innerText = g;
-            grid.appendChild(head);
-            const list = visibleFolders().filter(f => f.group === g && (!f.hidden || LESSON));
-            if (!list.length) { head.remove(); return; }
+            const list = folders.filter(f => f.group === g);
+            if (!list.length) return;
+            if (!currentGroup) {
+                const head = document.createElement('div');
+                head.className = 'menu-group';
+                head.innerText = g;
+                grid.appendChild(head);
+            }
             list.forEach(f => {
                 const n = f.id === 7 ? GV_COUNT : folderTasks(f.id).length;
                 const sn = sectionList(f.id).length;
@@ -3608,6 +3659,7 @@ function renderMenu() {
     sub.innerText = currentFolder.name;
     // По ссылке на раздел (?razdel=N) другие разделы не показываем
     back.classList.toggle('hidden', lockedFolder !== null);
+    if (lockedFolder === null) back.innerText = '← ' + (currentGroup || 'К разделам');
     // Сборники по темам («Вист на второй руке», «Вист на третьей руке»); комбинации в меню не показываем
     // Раздел с теорией: две карточки — «Правила» и «Задачи» (сразу задача 1)
     if (currentFolder.theory) {
@@ -3638,8 +3690,15 @@ function renderMenu() {
     }
     tasks.forEach((task, i) => addMenuCard(grid, 'Задача ' + (i + 1), leadSuitText(task.shortTitle), () => loadTask(task.id)));
 }
+function openGroup(g) {
+    currentGroup = g;
+    currentFolder = null;
+    renderMenu();
+    window.scrollTo(0, 0);
+}
 function openFolder(folderId) {
     currentFolder = FOLDERS.find(f => f.id === folderId) || null;
+    if (currentFolder && !LESSON) currentGroup = currentFolder.group;
     // Раздел без меню задач — сразу первая задача
     if (currentFolder && isDirect(currentFolder) && folderTasks(folderId).length) {
         if (currentFolder.shuffle) shuffleFolder(folderId);
@@ -3649,18 +3708,29 @@ function openFolder(folderId) {
     renderMenu();
     window.scrollTo(0, 0);
 }
-function showFolders() { openFolder(lockedFolder); }
+function showFolders() {
+    if (lockedFolder !== null) { openFolder(lockedFolder); return; }
+    // Из меню раздела — к его папке; с папки разделов — к четырём папкам практикума
+    if (currentFolder) currentFolder = null;
+    else currentGroup = null;
+    renderMenu();
+    window.scrollTo(0, 0);
+}
 function showMenu() {
     clearTimers();
     waiting = null;
     pendingLeaderCallback = null;
     hideHandover();
     hideResult();
-    // Из раздела без меню задач «назад» ведёт к разделам
-    const cf = currentFolder;
+    // Из раздела без меню задач «назад» ведёт к разделам.
+    // С последней задачи папки — сразу на главную, без остановки в папке подраздела.
+    const cf = currentFolder, goHome = folderDone();
     if (cf && isDirect(cf)) {
         if (cf.parent && lockedFolder !== cf.id) currentFolder = FOLDERS.find(f => f.id === cf.parent);
-        else if (lockedFolder === null) currentFolder = null;
+        else if (lockedFolder === null) {
+            if (goHome) currentGroup = null;
+            currentFolder = null;
+        }
     }
     renderMenu();
     document.getElementById('menuScreen').classList.remove('hidden');
@@ -3682,6 +3752,7 @@ function loadTask(taskId) {
     currentTask = TASKS.find(t => t.id === taskId);
     if (!currentTask) return;
     currentFolder = FOLDERS.find(f => f.id === (currentTask.folder || 1)) || null;
+    if (currentFolder && !LESSON && lockedFolder === null) currentGroup = currentFolder.group;
     document.getElementById('menuScreen').classList.add('hidden');
     window.scrollTo(0, 0);
     if (currentTask.type === 'auction') {
@@ -3731,13 +3802,14 @@ TASKS.push({
     contract: { text: '4♥', trump: 'H', need: 10 },
     steps: [
         { seat: 'S', label: 'Твоя рука (Юг)',
-          text: 'Собери руку, с которой ты дашь инвит на дополнение в трефе. У открывающего — первый диапазон силы (не больше 15 очков), ' +
+          text: 'Собери руку, с которой ты дашь инвит на дополнение в трефе. У открывающего заявка 1♥: больше 11 очков и не больше 15, ' +
                 'в трефе — проблемы: три-пять карт и не больше одной старшей фигуры',
-          // Первый диапазон силы (не больше 15 очков) и пять+ червей (с запасом мест под них)
+          // Заявка 1♥: больше 11 и не больше 15 очков; пять+ червей (с запасом мест под них)
           // Трефа (масть инвита): 3–5 карт, не больше одной старшей фигуры из Т К Д (по теории занятия 14)
           check: h => {
               const clubs = h.filter(c => c.s === 'C'), hearts = h.filter(c => c.s === 'H').length;
               if (bHcp(h) > 15) return 'По условиям задачи у открывающего первый диапазон силы. Измени количество очков.';
+              if (bTooWeakToOpen(h)) return 'Заявка 1♥: у открывающего больше 11 очков.';
               if (clubs.filter(c => 'ТКД'.includes(c.r)).length > 1)
                   return 'Инвит на дополнение даём, когда в трефе проблемы: не больше одной старшей фигуры (Т, К или Д).';
               if (clubs.length > 5) return 'По условиям задачи в трефе у открывающего не больше пяти карт.';
@@ -3753,12 +3825,56 @@ TASKS.push({
     technique: () => true,
     info: '<b>Контракт 4♥</b>, вы — Юг, стол — Север. Нужно взять <b>10 взяток</b>.'
 });
+TASKS.push({
+    id: 1102, folder: 11, type: 'build', build: true,
+    shortTitle: 'Инвит на дополнение в черве', fullTitle: 'Инвит на дополнение в черве',
+    // Вы — Юг: открыли 1♠ и пригласили 3♥ (инвит на дополнение), партнёр (Север) принял — 4♠
+    dealer: 'S', auction: ['1♠', 'пас', '2♠', 'пас', '3♥', 'пас', '4♠', 'пас', 'пас', 'пас'],
+    contract: { text: '4♠', trump: 'S', need: 10 },
+    steps: [
+        { seat: 'S', label: 'Твоя рука (Юг)',
+          text: 'Собери руку, с которой ты дашь инвит на дополнение в черве. У открывающего заявка 1♠: больше 11 очков и не больше 15, ' +
+                'в черве — проблемы: три-пять карт и не больше одной старшей фигуры',
+          // Заявка 1♠: больше 11 и не больше 15 очков; пять+ пик (с запасом мест под них)
+          // Черва (масть инвита): 3–5 карт, не больше одной старшей фигуры из Т К Д
+          check: h => {
+              const hearts = h.filter(c => c.s === 'H'), spades = h.filter(c => c.s === 'S').length;
+              if (bHcp(h) > 15) return 'По условиям задачи у открывающего первый диапазон силы. Измени количество очков.';
+              if (bTooWeakToOpen(h)) return 'Заявка 1♠: у открывающего больше 11 очков.';
+              if (hearts.filter(c => 'ТКД'.includes(c.r)).length > 1)
+                  return 'Инвит на дополнение даём, когда в черве проблемы: не больше одной старшей фигуры (Т, К или Д).';
+              if (hearts.length > 5) return 'По условиям задачи в черве у открывающего не больше пяти карт.';
+              if (Math.max(0, 5 - spades) + Math.max(0, 3 - hearts.length) > 13 - h.length)
+                  return 'По условиям задачи у открывающего пять или больше пик и три или больше червы.';
+              return '';
+          } },
+        { seat: 'N', label: 'Рука партнёра (Север)', text: 'Собери руку партнёра, с которой он примет инвит',
+          // Поднятие 2♠ — не больше 10 очков и фит: три+ пики
+          check: h => bHcp(h) > 10 ? 'Это рука для инвита, а не для заявки 2♠. У Севера не больше 10 очков.' :
+                      (h.filter(c => c.s === 'S').length + (13 - h.length) < 3) ? 'Без фита заявка 2♠ не делается: у Севера три или больше пик.' : '' }
+    ],
+    technique: () => true,
+    info: '<b>Контракт 4♠</b>, вы — Юг, стол — Север. Нужно взять <b>10 взяток</b>.'
+});
 const BUILD = { step: 0, hands: { S: [], N: [] }, msg: '' };
 const B_SUITS = [['S', '♠'], ['H', '♥'], ['D', '♦'], ['C', '♣']];
 const bCls = s => (s === 'H' || s === 'D') ? 'red' : s === 'C' ? 'club' : '';
 const bSort = h => h.slice().sort((a, b) => B_SUITS.findIndex(x => x[0] === a.s) - B_SUITS.findIndex(x => x[0] === b.s) ||
     LEAD_RANKS.indexOf(a.r) - LEAD_RANKS.indexOf(b.r));
 const bHas = (h, s, r) => h.some(c => c.s === s && c.r === r);
+/* Заявка 1♥ / 1♠: больше 11 очков. Мелкую карту принимаем, пока оставшимися ещё можно добрать до 12. */
+function bTooWeakToOpen(h) {
+    const need = 12 - bHcp(h);
+    if (need <= 0) return false;
+    const slots = 13 - h.length;
+    if (slots <= 0) return true;
+    const left = [];
+    B_SUITS.forEach(([s]) => LEAD_RANKS.forEach(r => { if (!bHas(h, s, r)) left.push(B_HCP[r] || 0); }));
+    left.sort((a, b) => b - a);
+    let add = 0;
+    for (let i = 0; i < slots && i < left.length; i++) add += left[i];
+    return add < need;
+}
 
 function buildStart() {
     BUILD.step = 0; BUILD.hands = { S: [], N: [] }; BUILD.msg = '';
@@ -3898,7 +4014,9 @@ function stdSetup() {
     document.getElementById('stdNav').classList.remove('hidden');
     document.getElementById('stdCounter').innerText = (i + 1) + ' / ' + list.length;
     document.getElementById('stdPrev').disabled = i <= 0;
-    document.getElementById('stdNext').disabled = i >= list.length - 1;
+    const next = document.getElementById('stdNext'), home = folderDone();
+    next.disabled = !home && i >= list.length - 1;
+    next.innerText = home ? 'К разделам →' : 'Следующая →';
     const extra = document.getElementById('stdExtra');
     extra.innerHTML = '';
     const add = (label, fn) => { const b = document.createElement('button'); b.innerText = label; b.onclick = fn; extra.appendChild(b); };
@@ -3917,7 +4035,10 @@ function stdBack() {
 function stdGo(d) {
     const list = sectionList(currentTask.folder || 1);
     const id = list[list.indexOf(currentTask.id) + d];
-    if (id === undefined) return;
+    if (id === undefined) {
+        if (d > 0 && folderDone()) showMenu();
+        return;
+    }
     clearTimers();
     ['taskScreen', 'coverScreen', 'dealScreen', 'openScreen', 'decideScreen', 'leadScreen', 'buildScreen'].forEach(s =>
         document.getElementById(s).classList.add('hidden'));
