@@ -80,7 +80,8 @@
     .theory-card h2 { color: var(--accent-dark); margin: 0 0 12px; font-size: 23px; }
     .theory-card h2 + p { margin-top: 0; }
     .theory-card b { color: var(--accent-dark); }
-    .theory-card ul { padding-left: 22px; margin: 0; }
+    .theory-card ul, .theory-card ol { padding-left: 22px; margin: 0 0 14px; }
+    .theory-card h2:not(:first-child) { margin-top: 18px; }
     .theory-card li { margin-bottom: 8px; }
     .theory-positions { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin: 12px 0 18px; }
     .theory-pos { text-align: center; max-width: 260px; }
@@ -366,6 +367,41 @@
     .deal-status .red, .tally-text .red { color: var(--red-on-felt); }
     .menu-subtitle, .mini-count, .cover-hidden, .empty-folder { color: #cfe6dc; }
 
+    /* ===== Конструктор: сборка рук ===== */
+    .build-screen { overflow-y: auto; padding-bottom: 90px; }
+    .build-task { max-width: 980px; margin: 12px auto 0; padding: 10px 18px; background: var(--panel); color: var(--panel-text);
+                  border: 2px solid var(--gold); border-radius: 12px; font-size: 18px; font-weight: bold; text-align: center; }
+    .build-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; max-width: 980px; margin: 14px auto 0; padding: 0 12px; align-items: start; }
+    .build-left, .build-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .build-left .auction { max-width: none; padding: 12px 10px; }
+    .bhand { background: var(--panel); color: var(--panel-text); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 14px; }
+    .bhand.fixed { border-color: rgba(244, 211, 107, 0.5); }
+    .bhand-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .bhand-count.full { color: var(--win); }
+    .bhand-row { display: flex; align-items: center; gap: 6px; min-height: 40px; }
+    .bsym { font-size: 22px; width: 24px; text-align: center; font-weight: bold; flex-shrink: 0; }
+    .bsym.S { color: #161c20; } .bsym.H, .bsym.D { color: var(--red-on-light); } .bsym.C { color: var(--club); }
+    .bcards { display: flex; gap: 3px; flex-wrap: wrap; flex: 1; }
+    .bcard { width: 30px; height: 40px; background: #fff; border: 1.5px solid #222; border-radius: 4px; display: flex; flex-direction: column; align-items: center;
+             padding-top: 2px; font-weight: bold; line-height: 1.05; font-size: 13px; color: #111; flex-shrink: 0; }
+    .bcard .s { font-size: 11px; }
+    .bcard.red { color: var(--red-on-light); } .bcard.club { color: var(--club); }
+    .bcard.pick { cursor: pointer; transition: transform 0.1s; }
+    .bcard.pick:hover { transform: translateY(-3px); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35); }
+    .bcard.used { opacity: 0.2; cursor: default; }
+    .bempty { color: #b9c2bd; font-weight: bold; }
+    .build-deck { background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 10px 12px; }
+    .build-deck .bhand-row { min-height: 44px; }
+    .build-deck .bsym.S { color: #fff; } .build-deck .bsym.H, .build-deck .bsym.D { color: var(--red-on-felt); } .build-deck .bsym.C { color: #9ad9a0; }
+    .build-deck .bcards { flex-wrap: nowrap; overflow-x: auto; }
+    .build-msg { min-height: 0; color: #ffd0cc; font-weight: bold; text-align: center; }
+    .build-msg:empty { display: none; }
+    @media (max-width: 760px) {
+        .build-grid { grid-template-columns: 1fr; }
+        .bcard { width: 25px; height: 34px; font-size: 11px; }
+        .bcard .s { font-size: 9px; }
+        .build-task { font-size: 15px; margin: 10px 12px 0; }
+    }
     /* ===== Единое оформление задач (19.10) ===== */
     /* Нижняя панель: ← Предыдущая · кнопки задачи · k / N · Следующая → */
     .std-nav { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 12px; background: rgba(0, 0, 0, 0.6);
@@ -499,6 +535,27 @@
     <div class="open-result" id="openResult">
         <div class="result-title" id="openResultTitle"></div>
         <div class="result-explanation" id="openResultText"></div>
+    </div>
+</div>
+
+<!-- Конструктор: ученик собирает руки, затем разыгрывает сдачу (раздел «Конструктор») -->
+<div class="task-screen build-screen hidden" id="buildScreen">
+    <div class="lead-head">
+        <button class="back-btn" onclick="showMenu()">← К разделам</button>
+        <div class="lead-title" id="buildTitle"></div>
+    </div>
+    <div class="build-task" id="buildTask"></div>
+    <div class="build-grid">
+        <div class="build-left">
+            <!-- На втором шаге рука Юга стоит слева сверху — напротив собираемой руки Севера; торговля под ней -->
+            <div id="buildFixed"></div>
+            <div class="auction dec-auction" id="buildAuction"></div>
+        </div>
+        <div class="build-right">
+            <div id="buildHand"></div>
+            <div class="build-msg" id="buildMsg"></div>
+            <div class="build-deck" id="buildDeck"></div>
+        </div>
     </div>
 </div>
 
@@ -1694,10 +1751,33 @@ function openShowSolution() {
     document.getElementById('openSolution').innerHTML = '<b>Решение.</b> Правильная карта — <b>' +
         t.correct.map(r => leadSuitText('♥') + r).join(' или ') + '</b>. ' + t.explanation;
 }
+/* Правила раздела «Потеря на потерю» (по наработке преподавателя) */
+const LL_THEORY =
+    '<h2>Как работает приём</h2>' +
+    '<ol>' +
+    '<li><b>Отдаём взятку.</b> Ходим картой, которая является потерей, с одной руки — сознательно позволяем сопернику забрать эту взятку.</li>' +
+    '<li><b>Сносим потерю с другой руки.</b> С другой руки избавляемся от ещё одной карты, которая в этой ситуации тоже не могла взять взятку.</li>' +
+    '<li><b>Получаем выгоду.</b> Сохраняем козырь для более важного момента или избавляемся сразу от двух проблемных карт. ' +
+    'Иногда такой ход позволяет потом взять дополнительную взятку.</li>' +
+    '</ol>' +
+    '<h2>Когда применяем приём</h2>' +
+    '<ul>' +
+    '<li><b>Чтобы избежать надбитки.</b> Вместо того чтобы тратить козырь на карту оппонента, сносим заведомо проигрышную карту.</li>' +
+    '<li><b>Чтобы сохранить возможность убитки.</b> Отдаём взятку в одной масти, а козырь оставляем для убиток.</li>' +
+    '<li><b>Чтобы избавиться от двух потерь.</b></li>' +
+    '<li><b>Вместе со впусткой.</b> Отдаём взятку нужному оппоненту и вынуждаем его сделать выгодный нам ход.</li>' +
+    '</ul>' +
+    '<h2>Вопросы перед сносом потери на потерю</h2>' +
+    '<ol>' +
+    '<li>Какие потери есть на обеих руках?</li>' +
+    '<li>Можно ли отдать взятку и при этом снести ещё одну потерю?</li>' +
+    '<li>Сохранит ли этот ход наши козыри?</li>' +
+    '<li>Не лишимся ли мы возможности сделать убитку позже?</li>' +
+    '</ol>';
 /* Экран «Правила» раздела. «Вист на третьей руке» — правила тем подряд */
 function showTheory(fid) {
     clearTimers();
-    const html = fid === 6 ? GV_THEORY :
+    const html = fid === 6 ? GV_THEORY : fid === 10 ? LL_THEORY :
         T3_THEMES.map(th => '<h2>' + th.name + '</h2><p>' + th.rule + '</p>').join('');
     document.getElementById('menuScreen').classList.add('hidden');
     document.getElementById('theoryTitle').innerText = FOLDERS.find(f => f.id === fid).name + ': правила';
@@ -2372,6 +2452,78 @@ TASKS.push(
 );
 
 /* ============================================================
+   Раздел «Потеря на потерю» (папка 10): полные сдачи, движок как в «Экспассе».
+   По наработке преподавателя (файл «Потеря на потерю.html», 20.10).
+   ============================================================ */
+TASKS.push(
+    {
+        id: 1001, folder: 10, type: 'deal',
+        shortTitle: '6♦ · потеря на потерю', fullTitle: 'Потеря на потерю: 6♦',
+        contract: { text: '6♦', trump: 'D', need: 12 },
+        opening: { p: 'W', s: 'C', r: '3' },
+        hands: { N: 'S:65 H:КД64 D:КД5 C:Д1076', S: 'S:ТВ7 D:ТВ10987 C:ТКВ9',
+                 W: 'S:КД9 H:Т98 D:643 C:5432', E: 'S:108432 H:В107532 D:2 C:8' },
+        // Правка преподавателя (23.10): у Востока синглет трефы (♣2 — Западу, взамен ♥7 — Востоку),
+        // после атаки Восток сразу ренонс в трефе.
+        // Переделка преподавателя (22.10): учебная сдача. Если ученик снял один козырь и пошёл в пику —
+        // отдаём Востоку козырь (для убитки трефы), а Западу — взамен младшую черву Востока.
+        // Так получается «козыри 2-2», и Запад, взяв пику, идёт в трефу, чтобы Восток убил.
+        onSpadePlay: (d, sTrumpPlayed) => {
+            if (sTrumpPlayed !== 1) return;
+            const wDiamonds = d.hands.W.filter(c => c.s === 'D')
+                .sort((a, b) => LEAD_RANKS.indexOf(b.r) - LEAD_RANKS.indexOf(a.r));
+            const eGive = d.hands.E.filter(c => c.s === 'C').concat(d.hands.E.filter(c => c.s === 'H').sort(byRankUp))[0];
+            if (wDiamonds.length > 0 && eGive) {
+                const diamond = wDiamonds[0];
+                d.hands.E = d.hands.E.filter(c => c !== eGive);
+                d.hands.E.push(diamond);
+                d.hands.W = d.hands.W.filter(c => c !== diamond);
+                d.hands.W.push(eGive);
+            }
+        },
+        // Козыри не отобраны (у Востока есть козырь, трефы нет) — Запад, получив ход, идёт в трефу под убитку
+        defLead: (p, bySuit, d) =>
+            p === 'W' && bySuit['C'] && d.hands.E.some(c => c.s === 'D') && !d.hands.E.some(c => c.s === 'C')
+                ? bySuit['C'][0] : null,
+        info: '<b>Контракт 6♦</b>, вы — Юг, стол — Север. Запад выходит ♣3. Нужно взять <b>12 взяток</b>.',
+        techniqueName: 'потери на потерю',
+        techniqueButton: 'Попробовать ещё раз',
+        // Приём: со стола черва, Юг сносит на неё пику (отдаём черву вместо пики)
+        technique: (t) => t[0].p === 'N' && t[0].card.s === 'H' && t.find(x => x.p === 'S').card.s === 'S',
+        note: 'на ♥К вы снесли пику, Запад взял тузом. На ♥Д ушла вторая пика — вместо двух пиковых потерь ' +
+              'вы отдали одну червовую.',
+        explanation:
+            '<b>План:</b> возьмите первую взятку <b>♣Т</b>. Отберите козырей. Перейдите на стол по <b>♣10</b>. ' +
+            'Сыграйте <b>♥К</b> и снесите на него пику. На <b>♥Д</b> снесите вторую пику.<br><br>' +
+            'Этот план безопасен при любом раскладе козырей: вы не пытаетесь отдать пику и не зависите от того, ' +
+            'как легли козыри (3-1 или 4-0).'
+    },
+    {
+        id: 1002, folder: 10, type: 'deal',
+        shortTitle: '6♠ · потеря на потерю со впусткой', fullTitle: 'Потеря на потерю со впусткой: 6♠',
+        contract: { text: '6♠', trump: 'S', need: 12 },
+        opening: { p: 'W', s: 'H', r: 'К' },
+        hands: { N: 'S:КВ654 H:Д4 D:543 C:КД6', S: 'S:ТД109832 D:ТД8 C:ТВ10',
+                 W: 'S:7 H:ТКВ2 D:КВ62 C:9875', E: 'H:10987653 D:1097 C:432' },
+        // Правка преподавателя (23.10): если трефа не отыграна, Запад, получив ход, безопасно выходит в трефу
+        // (тогда импас бубен проигрывает). Трефы у Запада нет — играет по общим правилам.
+        defLead: (p, bySuit) => p === 'W' && bySuit['C'] ? bySuit['C'][0] : null,
+        info: '<b>Контракт 6♠</b>, вы — Юг, стол — Север. Запад выходит ♥К. Нужно взять <b>12 взяток</b>.',
+        techniqueName: 'потери на потерю со впусткой',
+        techniqueButton: 'Попробовать ещё раз',
+        // Приём: со стола ♥Д, Юг сносит на неё бубну — Запад во впустке
+        technique: (t) => t[0].p === 'N' && t[0].card.s === 'H' && t.find(x => x.p === 'S').card.s === 'D',
+        note: 'Запад взял ♥Д тузом и оказался во впустке: ход в бубну — бесплатный импас, ' +
+              'ход в черву или трефу — убитка на столе со сносом бубны с руки.',
+        explanation:
+            '<b>План:</b> убейте <b>♥К</b> козырем. Отберите козырей. Трижды сыграйте трефу, ' +
+            'закончив на столе. Сыграйте <b>♥Д</b> и снесите на неё <b>♦8</b>.<br><br>' +
+            'Запад получит взятку на <b>♥Т</b>, но будет вынужден выйти либо в бубну (давая вам бесплатный импас), ' +
+            'либо в черву или трефу (давая возможность убить козырем на столе и снести <b>♦Д</b> с руки).'
+    }
+);
+
+/* ============================================================
    Раздел «Как распознать карты противника» (папка 9): задачи-решения.
    Ученик видит торговлю, атаку, руки Севера и Юга и ход игры до ключевого момента,
    выбирает один из вариантов; после ответа — разбор и полная сдача.
@@ -2644,6 +2796,17 @@ function dealLeadCard(p) {
     hand.forEach(c => (bySuit[c.s] = bySuit[c.s] || []).push(c));
     Object.values(bySuit).forEach(a => a.sort(byRankUp));
     const side = Object.keys(bySuit).filter(s => s !== trump);
+    // 0. Учебная сдача «Потеря на потерю» (onSpadePlay): Запад только что взял взятку в пике
+    if (currentTask.onSpadePlay && p === 'W' && deal.lastWinner === 'W' && deal.lastLeadSuit === 'S') {
+        // у разыгрывающего 2+ козыря сыграно — продолжаем козырь; один — идём в трефу (Восток убивает)
+        if (deal.sTrumpPlayed >= 2 && bySuit[trump]) return bySuit[trump][0];
+        if (deal.sTrumpPlayed === 1 && bySuit['C']) return bySuit['C'][0];
+    }
+    // 0а. Особый ход защиты, заданный в самой сдаче (defLead)
+    if (currentTask.defLead) {
+        const c = currentTask.defLead(p, bySuit, deal);
+        if (c) return c;
+    }
     // 1. Масть партнёра: из дубля — старшую, иначе младшую
     for (const s of deal.ledBy[dealPartner(p)]) {
         if (s !== trump && bySuit[s] && !deal.nsRuffed.includes(s)) return bySuit[s].length === 2 ? bySuit[s][1] : bySuit[s][0];
@@ -2672,6 +2835,10 @@ function dealContinue(cards) {
 
 /* В концовке защита играет без ошибок; из равноценных карт — та, что по правилам */
 function dealDefenseCard(p) {
+    if (typeof currentTask.defenseCard === 'function') {
+        const forced = currentTask.defenseCard(p, dealLegal(p));
+        if (forced && dealLegal(p).includes(forced)) return forced;
+    }
     const rule = dealRuleCard(p);
     if (!dealSmall()) return rule;
     const trump = dealTrump();
@@ -2697,8 +2864,12 @@ function dealStart() {
         orig: { W: parsed.W.slice(), E: parsed.E.slice() },
         hands: parsed, trick: [], lastTrick: null, turn: t.opening.p, trickNo: 0, ns: 0, ew: 0,
         waiting: false, over: false, revealed: false, technique: false, claimed: 0, history: [],
+        adapted: false,        // расклад З–В уже подстроили под неверную линию
         nsRuffed: [],          // масти, в которых Север–Юг уже перебивали козырем: их защита не продолжает
-        ledBy: { N: [], E: [], S: [], W: [] }
+        ledBy: { N: [], E: [], S: [], W: [] },
+        snaps: [],             // снимки перед каждым ходом ученика (отмена хода)
+        // Для учебных сдач с подменой карт (onSpadePlay): сколько козырей сыграл Юг, кто взял прошлую взятку
+        sTrumpPlayed: 0, lastLeadSuit: null, lastWinner: null, pikPlayed: false
     };
     document.getElementById('dealInfo').innerHTML = t.info;
     document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
@@ -2712,7 +2883,11 @@ function dealStart() {
 function dealNext() {
     if (deal.over) return;
     const p = deal.turn;
-    if (dealIsNS(p)) { deal.waiting = true; dealRender(); return; }
+    if (dealIsNS(p)) {
+        // Снимок перед ходом ученика — для «↶ Отменить ход»
+        deal.snaps.push(dealSnapshot());
+        deal.waiting = true; dealRender(); return;
+    }
     deal.waiting = false;
     dealRender();
     schedule(() => dealPlay(p, dealDefenseCard(p)), 650);
@@ -2720,6 +2895,22 @@ function dealNext() {
 
 function dealPlay(p, card) {
     if (deal.over || !dealLegal(p).includes(card)) return;   // ходить в масть обязательно
+    // Учебная сдача: при первом ходе Юга в пику карты защиты могут переложиться (см. onSpadePlay)
+    if (p === 'S' && card.s === 'S' && !deal.pikPlayed && currentTask.onSpadePlay) {
+        deal.pikPlayed = true;
+        const key = c => c.s + c.r;
+        const before = { W: deal.hands.W.map(key), E: deal.hands.E.map(key) };
+        currentTask.onSpadePlay(deal, deal.sTrumpPlayed);
+        // Те же перемещения — в исходных руках, чтобы в конце показать сдачу, как её сыграли
+        ['W', 'E'].forEach(from => {
+            const to = from === 'W' ? 'E' : 'W';
+            deal.hands[to].filter(c => before[from].includes(key(c))).forEach(c => {
+                const i = deal.orig[from].findIndex(x => key(x) === key(c));
+                if (i >= 0) deal.orig[to].push(deal.orig[from].splice(i, 1)[0]);
+            });
+        });
+    }
+    if (p === 'S' && card.s === dealTrump()) deal.sTrumpPlayed = (deal.sTrumpPlayed || 0) + 1;
     const hand = deal.hands[p];
     hand.splice(hand.indexOf(card), 1);
     if (!deal.trick.length && !deal.ledBy[p].includes(card.s)) deal.ledBy[p].push(card.s);
@@ -2741,6 +2932,8 @@ function dealResolve() {
         deal.nsRuffed.push(ledSuit);
     if (t.technique(deal.trick)) deal.technique = true;
     deal.lastTrick = deal.trick;
+    deal.lastLeadSuit = ledSuit;
+    deal.lastWinner = w.p;
     deal.trickNo++;
     const need = t.contract.need, left = 13 - deal.trickNo;
     let result = null;
@@ -2788,6 +2981,19 @@ function dealFinish(result) {
     // Решение появляется здесь по кнопке «Показать решение» (кнопки — в одном ряду, как во всех разделах)
     const solution = '<div id="dealSolution"></div>';
     panel.classList.remove('win', 'lose', 'partial');
+    // Конструктор: приёма нет — только выполнен ли контракт; можно переиграть те же руки или новую раскладку
+    if (t.build) {
+        const made = result === 'made';
+        panel.classList.add(made ? 'win' : 'lose');
+        title.innerText = made ? 'Контракт выполнен!' : 'Контракт не выполнен';
+        text.innerHTML = made ? 'Партнёры собрали руки, на которых гейм выполняется. Отличная работа!'
+            : 'Контракт без ' + ((deal.downBy || 1) === 1 ? 'одной' : deal.downBy) + '. Попробуйте сыграть иначе или собрать другие руки.';
+        addButton('Ещё раз', () => buildPlay(true));
+        addButton('Новые руки защиты', () => buildPlay(false));
+        addButton('Собрать заново', buildStart);
+        panel.classList.add('show');
+        return;
+    }
     if (result === 'made' && deal.technique) {
         panel.classList.add('win');
         title.innerText = 'Ты справился!';
@@ -2804,11 +3010,38 @@ function dealFinish(result) {
         title.innerText = 'Упс, контракт не выполнен';
         const down = deal.downBy || 1;
         // Сдача не доигрывается, поэтому счёт взяток здесь не показываем
-        text.innerHTML = 'Контракт без ' + (down === 1 ? 'одной' : down) + '. Попробуй ещё раз!' + solution;
+        const why = (deal.adapted && t.failNote) ? t.failNote + '<br><br>' : '';
+        text.innerHTML = why + 'Контракт без ' + (down === 1 ? 'одной' : down) + '. Попробуй ещё раз!' + solution;
         addButton('Показать решение', dealShowSolution);
         addButton('Ещё раз', dealStart);
     }
     panel.classList.add('show');
+}
+/* ---------- Отмена хода ----------
+   Перед каждым ходом Севера или Юга запоминаем положение; отмена возвращает к последнему
+   ходу ученика (вместе с картами защиты, сыгранными после него). Работает и после итога. */
+const DEAL_SNAP_KEYS = ['hands', 'trick', 'lastTrick', 'turn', 'trickNo', 'ns', 'ew', 'technique', 'claimed',
+                        'history', 'nsRuffed', 'ledBy', 'orig', 'sTrumpPlayed', 'lastLeadSuit', 'lastWinner', 'pikPlayed'];
+function dealSnapshot() {
+    const o = {};
+    DEAL_SNAP_KEYS.forEach(k => (o[k] = deal[k]));
+    return JSON.stringify(o);
+}
+function dealUndo() {
+    if (!deal || !deal.snaps.length) return;
+    clearTimers();
+    // Ученик сейчас думает над ходом — этот снимок и есть текущее положение: отходим к предыдущему.
+    // Если сдача доигрывается защитой или уже закончена — возвращаемся к последнему ходу ученика.
+    if (deal.waiting && !deal.over) {
+        if (deal.snaps.length < 2) return;
+        deal.snaps.pop();
+    }
+    Object.assign(deal, JSON.parse(deal.snaps[deal.snaps.length - 1]));
+    deal.over = false; deal.revealed = false; deal.downBy = 0; deal.waiting = true;
+    document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
+    document.getElementById('dealTrick').innerHTML = '';
+    dealRender();
+    if (deal.trick.length) dealPaintTrick(deal.trick, false);
 }
 function dealGo(d) {
     const list = orderedTasks(currentTask.folder);
@@ -3266,7 +3499,7 @@ function spSummary() {
    Меню
    ============================================================ */
 /* Разделы сгруппированы по темам: вист, торговля, розыгрыш. Номер раздела (id) — для ссылок ?razdel=N */
-const FOLDER_GROUPS = ['Вист', 'Торговля', 'Розыгрыш'];
+const FOLDER_GROUPS = ['Вист', 'Торговля', 'Розыгрыш', 'Конструктор'];
 /* Единый вход в раздел: theory — меню «Правила / Задачи»; direct — сразу первая задача */
 const FOLDERS = [
     { id: 2, name: 'Первый ход', group: 'Вист', direct: true },
@@ -3281,7 +3514,9 @@ const FOLDERS = [
     // shuffle: задачи раздела идут в случайном порядке (новый порядок при каждом входе)
     { id: 1, name: 'Розыгрыш онерных секвенций', group: 'Розыгрыш', direct: true, shuffle: true },
     { id: 3, name: 'Экспасс с убиткой', group: 'Розыгрыш', direct: true },
-    { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш', direct: true }
+    { id: 9, name: 'Распознать карты оппонента', group: 'Розыгрыш', direct: true },
+    { id: 10, name: 'Потеря на потерю', group: 'Розыгрыш', theory: true },
+    { id: 11, name: 'Инвит на дополнение', group: 'Конструктор', direct: true }
 ];
 // direct: true — при входе в раздел сразу открывается первая задача, внизу — «Предыдущая / Следующая»
 let currentFolder = null;
@@ -3434,6 +3669,7 @@ function showMenu() {
     document.getElementById('dealScreen').classList.add('hidden');
     document.getElementById('decideScreen').classList.add('hidden');
     document.getElementById('theoryScreen').classList.add('hidden');
+    document.getElementById('buildScreen').classList.add('hidden');
     document.getElementById('openScreen').classList.add('hidden');
     OPEN.timer = null;
     document.getElementById('coverScreen').classList.add('hidden');
@@ -3461,10 +3697,12 @@ function loadTask(taskId) {
         return;
     }
     // Остальные типы задач: свой экран + единые заголовок, кнопка «назад» и нижняя панель
-    const screen = { cover: 'coverScreen', deal: 'dealScreen', open: 'openScreen', decide: 'decideScreen', lead: 'leadScreen' }[currentTask.type] || 'taskScreen';
+    const screen = { cover: 'coverScreen', deal: 'dealScreen', open: 'openScreen', decide: 'decideScreen', lead: 'leadScreen',
+                     build: 'buildScreen' }[currentTask.type] || 'taskScreen';
     document.getElementById(screen).classList.remove('hidden');
     stdSetup();
-    if (currentTask.type === 'cover') coverStart();
+    if (currentTask.type === 'build') buildStart();
+    else if (currentTask.type === 'cover') coverStart();
     else if (currentTask.type === 'deal') dealStart();
     else if (currentTask.type === 'open') { OPEN.timer = null; openStart(); }
     else if (currentTask.type === 'decide') decideStart();
@@ -3476,7 +3714,171 @@ function loadTask(taskId) {
    Единое оформление задач: заголовок «Задача k из N · название», кнопка «назад»,
    нижняя панель «← Предыдущая · (кнопки задачи) · k / N · Следующая →».
    ============================================================ */
-const STD_TITLE = { cover: 'coverTitle', deal: 'dealTitle', open: 'openTitle', decide: 'decideTitle', lead: 'leadTitle' };
+/* ============================================================
+   Раздел «Конструктор»: ученик собирает свою руку и руку партнёра под торговлю,
+   затем разыгрывает контракт против случайных рук Запада и Востока (движок полных сдач).
+   По наработке преподавателя (файл «конструктор1_инвит на дополнение.html», 22.10).
+   ============================================================ */
+const B_HCP = { 'Т': 4, 'К': 3, 'Д': 2, 'В': 1 };
+const bHcp = h => h.reduce((s, c) => s + (B_HCP[c.r] || 0), 0);
+/* Не хватит места, чтобы набрать нужное число червей: червей + оставшиеся места < need */
+const bShort = (h, need) => h.filter(c => c.s === 'H').length + (13 - h.length) < need;
+TASKS.push({
+    id: 1101, folder: 11, type: 'build', build: true,
+    shortTitle: 'Инвит на дополнение в трефе', fullTitle: 'Инвит на дополнение в трефе',
+    // Вы — Юг: открыли 1♥ и пригласили 3♣ (инвит на дополнение), партнёр (Север) принял — 4♥
+    dealer: 'S', auction: ['1♥', 'пас', '2♥', 'пас', '3♣', 'пас', '4♥', 'пас', 'пас', 'пас'],
+    contract: { text: '4♥', trump: 'H', need: 10 },
+    steps: [
+        { seat: 'S', label: 'Твоя рука (Юг)',
+          text: 'Собери руку, с которой ты дашь инвит на дополнение в трефе. У открывающего — первый диапазон силы (не больше 15 очков), ' +
+                'в трефе — проблемы: три-пять карт и не больше одной старшей фигуры',
+          // Первый диапазон силы (не больше 15 очков) и пять+ червей (с запасом мест под них)
+          // Трефа (масть инвита): 3–5 карт, не больше одной старшей фигуры из Т К Д (по теории занятия 14)
+          check: h => {
+              const clubs = h.filter(c => c.s === 'C'), hearts = h.filter(c => c.s === 'H').length;
+              if (bHcp(h) > 15) return 'По условиям задачи у открывающего первый диапазон силы. Измени количество очков.';
+              if (clubs.filter(c => 'ТКД'.includes(c.r)).length > 1)
+                  return 'Инвит на дополнение даём, когда в трефе проблемы: не больше одной старшей фигуры (Т, К или Д).';
+              if (clubs.length > 5) return 'По условиям задачи в трефе у открывающего не больше пяти карт.';
+              if (Math.max(0, 5 - hearts) + Math.max(0, 3 - clubs.length) > 13 - h.length)
+                  return 'По условиям задачи у открывающего пять или больше червей и три или больше трефы.';
+              return '';
+          } },
+        { seat: 'N', label: 'Рука партнёра (Север)', text: 'Собери руку партнёра, с которой он примет инвит',
+          // Поднятие 2♥ — не больше 10 очков и фит: три+ червы
+          check: h => bHcp(h) > 10 ? 'Это рука для инвита, а не для заявки 2♥. У Севера не больше 10 очков.' :
+                      bShort(h, 3) ? 'Без фита заявка 2♥ не делается: у Севера три или больше червей.' : '' }
+    ],
+    technique: () => true,
+    info: '<b>Контракт 4♥</b>, вы — Юг, стол — Север. Нужно взять <b>10 взяток</b>.'
+});
+const BUILD = { step: 0, hands: { S: [], N: [] }, msg: '' };
+const B_SUITS = [['S', '♠'], ['H', '♥'], ['D', '♦'], ['C', '♣']];
+const bCls = s => (s === 'H' || s === 'D') ? 'red' : s === 'C' ? 'club' : '';
+const bSort = h => h.slice().sort((a, b) => B_SUITS.findIndex(x => x[0] === a.s) - B_SUITS.findIndex(x => x[0] === b.s) ||
+    LEAD_RANKS.indexOf(a.r) - LEAD_RANKS.indexOf(b.r));
+const bHas = (h, s, r) => h.some(c => c.s === s && c.r === r);
+
+function buildStart() {
+    BUILD.step = 0; BUILD.hands = { S: [], N: [] }; BUILD.msg = '';
+    document.getElementById('dealScreen').classList.add('hidden');
+    document.getElementById('buildScreen').classList.remove('hidden');
+    document.getElementById('dealResult').classList.remove('show', 'win', 'lose', 'partial');
+    buildRender();
+}
+/* Рука по мастям; editable — карты можно вернуть в колоду кликом */
+function buildHandHtml(cards, label, editable, counter) {
+    const sorted = bSort(cards);
+    return '<div class="bhand' + (editable ? '' : ' fixed') + '"><div class="bhand-head"><span>' + label + '</span>' +
+        (counter ? '<span class="bhand-count' + (cards.length === 13 ? ' full' : '') + '">' + cards.length + ' / 13 · ' + bHcp(cards) + ' оч.</span>' : '') +
+        '</div>' + B_SUITS.map(([s, sym]) => {
+            const cs = sorted.filter(c => c.s === s);
+            return '<div class="bhand-row"><div class="bsym ' + s + '">' + sym + '</div><div class="bcards">' +
+                (cs.length ? cs.map(c => '<div class="bcard ' + bCls(s) + (editable ? ' pick' : '') + '"' +
+                    (editable ? ' onclick="buildReturn(\'' + s + '\',\'' + c.r + '\')"' : '') +
+                    '><div>' + c.r + '</div><div class="s">' + sym + '</div></div>').join('') : '<span class="bempty">—</span>') +
+                '</div></div>';
+        }).join('') + '</div>';
+}
+function buildRender() {
+    const t = currentTask, st = t.steps[BUILD.step], cur = BUILD.hands[st.seat];
+    const other = BUILD.step ? BUILD.hands[t.steps[0].seat] : [];
+    document.getElementById('buildTitle').innerHTML = decText(t.fullTitle + ' · шаг ' + (BUILD.step + 1) + ' из ' + (t.steps.length + 1));
+    document.getElementById('buildTask').innerHTML = st.text;
+    // Торговля: столбцы З С В Ю, первая заявка — у сдающего
+    const seats = ['W', 'N', 'E', 'S'];
+    const cells = Array(seats.indexOf(t.dealer)).fill('').concat(t.auction);
+    let rows = '';
+    for (let i = 0; i < cells.length; i += 4)
+        rows += '<tr>' + [0, 1, 2, 3].map(k => '<td>' + decText(cells[i + k] || '') + '</td>').join('') + '</tr>';
+    document.getElementById('buildAuction').innerHTML = '<div class="auction-label">Торговля</div><table><tr><th>З</th><th>С</th><th>В</th><th>Ю</th></tr>' + rows + '</table>';
+    document.getElementById('buildFixed').innerHTML = BUILD.step ? buildHandHtml(other, t.steps[0].label, false, false) : '';
+    document.getElementById('buildHand').innerHTML = buildHandHtml(cur, st.label, true, true);
+    document.getElementById('buildMsg').innerText = BUILD.msg;
+    document.getElementById('buildDeck').innerHTML = B_SUITS.map(([s, sym]) =>
+        '<div class="bhand-row"><div class="bsym ' + s + '">' + sym + '</div><div class="bcards">' +
+        LEAD_RANKS.map(r => {
+            const used = bHas(cur, s, r) || bHas(other, s, r);
+            return '<div class="bcard ' + bCls(s) + (used ? ' used' : ' pick') + '"' +
+                (used ? '' : ' onclick="buildPick(\'' + s + '\',\'' + r + '\')"') + '><div>' + r + '</div><div class="s">' + sym + '</div></div>';
+        }).join('') + '</div></div>').join('');
+    // Нижняя панель: отмена последней карты и переход к следующему шагу
+    const extra = document.getElementById('stdExtra');
+    extra.innerHTML = '';
+    const add = (label, fn, dis) => { const b = document.createElement('button'); b.innerText = label; b.onclick = fn; b.disabled = !!dis; extra.appendChild(b); };
+    add('↶ Отменить', buildUndo, !cur.length && !BUILD.step);
+    add(BUILD.step === t.steps.length - 1 ? 'Разыграть →' : 'Готово →', buildNext, cur.length !== 13);
+}
+function buildPick(s, r) {
+    const st = currentTask.steps[BUILD.step], cur = BUILD.hands[st.seat];
+    if (cur.length >= 13) return;
+    const h = cur.concat([{ s, r }]);
+    BUILD.msg = st.check ? st.check(h) : '';
+    if (!BUILD.msg) cur.push({ s, r });
+    buildRender();
+}
+function buildReturn(s, r) {
+    const cur = BUILD.hands[currentTask.steps[BUILD.step].seat];
+    const i = cur.findIndex(c => c.s === s && c.r === r);
+    if (i >= 0) cur.splice(i, 1);
+    BUILD.msg = '';
+    buildRender();
+}
+function buildUndo() {
+    const t = currentTask, cur = BUILD.hands[t.steps[BUILD.step].seat];
+    BUILD.msg = '';
+    if (cur.length) cur.pop();
+    else if (BUILD.step) BUILD.step--;
+    buildRender();
+}
+function buildNext() {
+    const t = currentTask;
+    if (BUILD.hands[t.steps[BUILD.step].seat].length !== 13) return;
+    BUILD.msg = '';
+    if (BUILD.step < t.steps.length - 1) { BUILD.step++; buildRender(); window.scrollTo(0, 0); return; }
+    buildPlay();
+}
+/* Руки Запада и Востока — случайные: очки поровну (разница не больше 2),
+   пятёрка пик — либо у обоих, либо ни у кого */
+function buildDealEW() {
+    const used = BUILD.hands.S.concat(BUILD.hands.N);
+    const rest = [];
+    B_SUITS.forEach(([s]) => LEAD_RANKS.forEach(r => { if (!bHas(used, s, r)) rest.push({ s, r }); }));
+    for (let i = 0; i < 10000; i++) {
+        for (let k = rest.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [rest[k], rest[j]] = [rest[j], rest[k]]; }
+        const W = rest.slice(0, 13), E = rest.slice(13, 26);
+        if (Math.abs(bHcp(W) - bHcp(E)) > 2) continue;
+        const sw = W.filter(c => c.s === 'S').length, se = E.filter(c => c.s === 'S').length;
+        if ((sw >= 5 || se >= 5) && !(sw >= 5 && se >= 5)) continue;
+        return { W, E };
+    }
+    return { W: rest.slice(0, 13), E: rest.slice(13, 26) };
+}
+const bHandStr = h => B_SUITS.map(([s]) => s + ':' + bSort(h).filter(c => c.s === s).map(c => c.r).join('')).join(' ');
+function buildPlay(sameEW) {
+    const t = currentTask;
+    if (!sameEW || !t.hands) {
+        const ew = buildDealEW();
+        t.hands = { N: bHandStr(BUILD.hands.N), S: bHandStr(BUILD.hands.S), W: bHandStr(ew.W), E: bHandStr(ew.E) };
+        // Атака Запада — по правилам защиты движка
+        deal = { hands: {}, trick: [], ledBy: { N: [], E: [], S: [], W: [] }, nsRuffed: [] };
+        DEAL_SEATS.forEach(p => (deal.hands[p] = dealParse(t.hands[p])));
+        const lead = dealLeadCard('W');
+        t.opening = { p: 'W', s: lead.s, r: lead.r };
+    }
+    document.getElementById('buildScreen').classList.add('hidden');
+    document.getElementById('dealScreen').classList.remove('hidden');
+    document.getElementById('dealTitle').innerHTML = decText(t.fullTitle + ' · розыгрыш');
+    const extra = document.getElementById('stdExtra');
+    extra.innerHTML = '';
+    const add = (label, fn) => { const b = document.createElement('button'); b.innerText = label; b.onclick = fn; extra.appendChild(b); };
+    add('↶ Отменить ход', dealUndo);
+    add('Собрать заново', buildStart);
+    dealStart();
+}
+
+const STD_TITLE = { cover: 'coverTitle', deal: 'dealTitle', open: 'openTitle', decide: 'decideTitle', lead: 'leadTitle', build: 'buildTitle' };
 /* Порядок задач раздела (для навигации и счётчика) */
 function sectionList(folderId) {
     if (folderId === 6) return GV_THEMES[0].tasks.slice();
@@ -3502,6 +3904,7 @@ function stdSetup() {
     const add = (label, fn) => { const b = document.createElement('button'); b.innerText = label; b.onclick = fn; extra.appendChild(b); };
     if (!t.type) add('Новая попытка', newDeal);          // розыгрыш масти
     if (t.type === 'open') add('↶ Отменить ход', openUndo);
+    if (t.type === 'deal') add('↶ Отменить ход', dealUndo);
 }
 /* Кнопки «назад» на всех экранах задач: «К разделу» / «К разделам» / нет (раздел по ссылке) */
 function stdBack() {
@@ -3516,7 +3919,7 @@ function stdGo(d) {
     const id = list[list.indexOf(currentTask.id) + d];
     if (id === undefined) return;
     clearTimers();
-    ['taskScreen', 'coverScreen', 'dealScreen', 'openScreen', 'decideScreen', 'leadScreen'].forEach(s =>
+    ['taskScreen', 'coverScreen', 'dealScreen', 'openScreen', 'decideScreen', 'leadScreen', 'buildScreen'].forEach(s =>
         document.getElementById(s).classList.add('hidden'));
     loadTask(id);
 }
